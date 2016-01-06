@@ -1,4 +1,4 @@
-#define ETC_PATH		"/httpd_nh221/web/etc"
+#define ETC_PATH		"etc"
 
 #define SERVER_PORT		80
 #define MOUNT_POINT		"/mnt/hd1"	//"/mnt"
