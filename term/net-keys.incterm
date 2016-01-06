@@ -1,0 +1,65 @@
+//used in "network terms" and "services-prts"
+
+> "AT" 2 33 34 61 1 0 "C1" 0 
+> "AT" 38 33 70 61 2 0 "C2" 0 
+> "AT" 74 33 106 61 3 0 "C3" 0 
+> "AT" 110 33 142 61 11 0 "C<-" 0 
+> "AT" 2 65 34 93 4 0 "C4" 0 
+> "AT" 38 65 70 93 5 0 "C5" 0 
+> "AT" 74 65 106 93 6 0 "C6" 0 
+> "AT" 2 97 34 125 7 0 "C7" 0 
+> "AT" 38 97 70 125 8 0 "C8" 0 
+> "AT" 74 97 106 125 9 0 "C9" 0 
+> "AT" 110 97 142 125 10 0 "C0" 0
+> "AT" 146 97 178 125 14 0 "C." 0
+
+< "A" 1
+    write_char "val:1";
+    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+end
+< "A" 2
+    write_char "val:2";
+    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+end
+< "A" 3
+    write_char "val:3";
+    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+end
+< "A" 4
+    write_char "val:4";
+    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+end
+< "A" 5
+    write_char "val:5";
+    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+end
+< "A" 6
+    write_char "val:6";
+    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+end
+< "A" 7
+    write_char "val:7";
+    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+end
+< "A" 8
+    write_char "val:8";
+    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+end
+< "A" 9
+    write_char "val:9";
+    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+end
+< "A" 10
+    write_char "val:0";
+    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+end
+//remove last char
+< "A" 11
+    write_char "val";
+    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+end
+< "A" 14
+    write_char "val:.";
+    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+end
+

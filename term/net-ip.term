@@ -1,0 +1,30 @@
+//test
+par:17:val:IP:^(([01]?[0-9]{1,2}|2[0-4][0-9]|25[0-5])\.){3}([01]?[0-9]{1,2}|2[0-4][0-9]|25[0-5])$
+par:17:hostname:HOSTNAME:
+readcfg
+
+> "DL"
+> "AL" 0 1
+> "ZR" 80 5 "IP: " 0
+> "ZL" 80 5 $val 0	//step down 10pix (5 -> 15)
+> "ZL" 80 15 $_%val 0
+
+> "AT" 110 65 142 93 12 0 "C\>" 0 
+> "AT" 205 33 237 61 13 0 "C<" 0 
+
+include: net-keys.incterm
+
+< "A" 12
+    fill_cfg "val";
+    savecfg;
+    if_changed "val" {	//restart all upto network
+	change_line "./etc/hosts:/ /?val?/:??_%val?? ??_&hostname??  #httpd\n"{
+	shell "echo \"??_%val?? ??_&hostname?? #httpd\" >> ./etc/hosts";
+	}
+	system "/etc/init.d/rc 3\ 2 stop; /etc/init.d/rc 2\ 3 start &";
+    }
+    boot_page "net-ip.term";
+end
+< "A" 13
+    boot_page "network.term";
+end

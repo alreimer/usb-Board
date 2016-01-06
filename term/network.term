@@ -1,0 +1,82 @@
+par:20:ip:IP:^(([01]?[0-9]{1,2}|2[0-4][0-9]|25[0-5])\.){3}([01]?[0-9]{1,2}|2[0-4][0-9]|25[0-5])$
+par:20:netmask:NETMASK:^(([01]?[0-9]{1,2}|2[0-4][0-9]|25[0-5])\.){3}([01]?[0-9]{1,2}|2[0-4][0-9]|25[0-5])$
+par:20:gateway:GATEWAY:^(([01]?[0-9]{1,2}|2[0-4][0-9]|25[0-5])\.){3}([01]?[0-9]{1,2}|2[0-4][0-9]|25[0-5])$
+par:20:dns_server0:DNS_SERVER0:^(([01]?[0-9]{1,2}|2[0-4][0-9]|25[0-5])\.){3}([01]?[0-9]{1,2}|2[0-4][0-9]|25[0-5])$
+par:20:dns_server1:DNS_SERVER1:^(([01]?[0-9]{1,2}|2[0-4][0-9]|25[0-5])\.){3}([01]?[0-9]{1,2}|2[0-4][0-9]|25[0-5])$
+par:2:dhcp_client:DHCP_ENABLE:[01]
+readcfg
+
+    > "DL" > "AL" 0 1
+    > "AT" 104 1 201 29 1 0 "CDHCP" 0
+    > "AT" 205 1 237 29 8 0 "C<" 0
+
+< "A" 1
+    boot_page "net-dhcp.term";
+end
+< "A" 8
+    boot_page "index-main.term";
+end
+
+//save /etc folder
+if "_etc_save:1"
+    > "AT" 205 65 237 93 9 0 "CS" 0
+< "A" 9
+//    print [ > "DL" > "AL" 0 1 "save etc" ];//need to change
+    write_par "_etc_save:0";
+    system "/etc/save_config.sh";
+    boot_page "network.term";
+end
+fi
+
+if "dhcp_client:0/"
+//    > "AT" 2 1 100 29 1 0 "CIP-Addr" 0
+    > "ZC" 51 13 "Disabled" 0
+    > "AT" 2 33 100 61 2 0 "CIP-Addr" 0
+    > "AT" 104 33 201 61 3 0 "CNetmask" 0
+    > "AT" 2 65 201 93 4 0 "CGateway" 0
+    > "AT" 2 97 100 125 5 0 "CDNS_Server1" 0
+    > "AT" 104 97 201 125 6 0 "CDNS_Server2" 0
+    > "AT" 205 33 237 61 7 0 "Ci" 0
+//    > "AT" 205 97 237 125 7 0 "C>" 0
+
+< "A" 2
+    boot_page "net-ip.term";
+end
+< "A" 3
+    boot_page "net-mask.term";
+end
+< "A" 4
+    boot_page "net-gw.term";
+end
+< "A" 5
+    boot_page "net-dns1.term";
+end
+< "A" 6
+    boot_page "net-dns2.term";
+end
+< "A" 7
+    print [ > "DL" > "AL" 0 1
+    > "AT" 205 1 237 29 100 0 "C<" 0
+    > "ZL" 10 25 "DHCP disabled" 0
+    > "ZL" 10 35 "IP: " $ip 0
+    > "ZL" 10 45 "Netmask: " $netmask 0
+    > "ZL" 10 55 "Gateway: " $gateway 0
+    > "ZL" 10 65 "DNS_Server1: " $dns_server0 0
+    > "ZL" 10 75 "DNS_Server2: " $dns_server1 0
+];
+end
+< "A" 100
+    boot_page "network.term";
+end
+fi
+
+//step down in 10pix
+if "dhcp_client:1/"
+    > "ZC" 51 13 "Enabled" 0
+    > "ZL" 10 35 "IP: " $ip 0
+    > "ZL" 10 45 "Netmask: " $netmask 0
+    > "ZL" 10 55 "Gateway: " $gateway 0
+    > "ZL" 10 65 "DNS_Server1: " $dns_server0 0
+    > "ZL" 10 75 "DNS_Server2: " $dns_server1 0
+fi
+

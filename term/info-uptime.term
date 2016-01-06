@@ -1,0 +1,30 @@
+< "timeout"
+    print [ 12 > "DL" > "AL" 0 1 
+> "AH" 10 10 110 110
+> "AT" 205 1 237 29 8 0 "C<" 0
+>>>> "wait:" 10 0
+> "ZL" 10 45 ];
+
+    my_shell "TIME=`cat /proc/uptime 2>/dev/null | cut -d. -f1`
+MIN=`expr $TIME % 3600 2>/dev/null`
+MINUTES=`expr $MIN / 60 2>/dev/null`
+SECONDS=`expr $MIN % 60 2>/dev/null`
+HR=`expr $TIME / 3600 2>/dev/null`
+HOURS=`expr $HR % 24 2>/dev/null`
+DAYS=`expr $HR / 24 2>/dev/null`
+echo -e \"UPTIME: $DAYS days  $HOURS:$MINUTES:$SECONDS\" ";
+    //NULL is already done by "echo -e"
+//    print [ >>>> "wait:" 10 0 ];
+    //boot_page "info-uptime.term";
+end
+
+cgi: "timeout"
+
+< "A" 8
+    boot_page "??_referrer??";
+end
+
+< "button"
+    boot_page "network.term";
+end
+

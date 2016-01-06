@@ -1,0 +1,52 @@
+area:25000:buffer
+wr_shell: :buffer:df -h
+
+
+table: list
+#-> parse_area: buffer
+while:/[/*/]\n
+if:/ /[//dev/*/]/<- 	/>
+if:/[/*/]/<- 	/>
+if:/*/<- 	/>/*/<- 	/>/[/*/]/<- 	/>
+if:
+#end_table
+
+/*
+Filesystem
+Size
+Use%
+Mountpoint
+*/
+
+< "show" 0
+	print [ 12 > "DL" > "AL" 0 1
+if "_@list+1:" > "ZL" 0 1  ">" $_@list+1#0:24 "| used: " $_@list+1#2:4 " of " $_@list+1#1:6 "|" $_@list+1#3:25 0 fi
+if "_@list+2:" > "ZL" 0 33 ">" $_@list+2#0:24 "| used: " $_@list+2#2:4 " of " $_@list+2#1:6 "|" $_@list+2#3:25 0 fi
+if "_@list+3:" > "ZL" 0 65 ">" $_@list+3#0:24 "| used: " $_@list+3#2:4 " of " $_@list+3#1:6 "|" $_@list+3#3:25 0 fi
+if "_@list+4:" > "ZL" 0 97 ">" $_@list+4#0:24 "| used: " $_@list+4#2:4 " of " $_@list+4#1:6 "|" $_@list+4#3:25 0 fi
+if "_@list+5:" > "AT" 205 97 237 125 7 0 "C->" 0 fi
+
+    > "AT" 205 33 237 61 10 0 "C<-" 0
+    > "AT" 205 1 237 29 13 0 "C<" 0 ];
+end
+
+//next page
+< "A" 7
+	set_tbl "list += 4";
+	boot_cgi [ "show" 0 ];
+end
+
+//page before
+< "A" 10
+    set_tbl "list == 0"{
+	boot_page "??_referrer??";
+    }
+    set_tbl "list != 0"{
+	set_tbl "list -= 4";
+	boot_cgi [ "show" 0 ];
+    }
+end
+< "A" 13
+    boot_page "??_referrer??";
+end
+cgi: "show" 0

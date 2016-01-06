@@ -1,0 +1,74 @@
+area:40000:buffer
+//wr_shell: :buffer:df -h
+
+/*
+Filesystem
+Size
+Use%
+Mountpoint
+*/
+
+< "timeout"
+	write_system ":buffer:ifconfig -a";
+	print [
+table: list
+#-> parse_area: buffer
+while:/[/*\n/]\n
+if:/[/*/] 
+if:/*/[HWaddr/*/]\n
+if:/*/[inet/*/]  
+if:/*/[Bcast/*/]  
+if:/*/[Mask/*/]\n
+if:/t/[/*/]  
+if:/[MTU/*/]  
+if:/*/[RX bytes/*/]  
+if:/*/[TX bytes/*/]\n
+#end_table
+
+12 > "DL" > "AL" 0 1
+if "_@list+1:" 
+> "ZC" 101 0 $_@list+1#0:24 0
+> "ZL" 0 10 $_@list+1#1:24 "|" $_@list+1#2:24 "|" $_@list+1#3:24 "|" $_@list+1#4:24 "|" $_@list+1#5:24
+    "|" $_@list+1#6:24 "|" $_@list+1#7:24 "|" $_@list+1#8:24 0 fi
+if "_@list+2:" > "AT" 205 97 237 125 7 0 "C->" 0 fi
+    > "AT" 205 33 237 61 10 0 "C<-" 0
+    > "AT" 205 1 237 29 13 0 "C<" 0
+if "_@list+1#5:UP" > "AT" 160 97 201 125 1 0 "CDown" 0 fi
+ifnot "_@list+1#5:UP" > "AT" 160 97 201 125 1 0 "CUp" 0 fi
+    >>>> "wait:" 10 0 ];
+end
+
+< "button"
+    boot_page "??_referrer??";
+end
+
+< "A" 1
+	if "_@list+1#5:UP" {
+	    shell "ifconfig ??_@list+1#0?? down";
+	}
+	not "_@list+1#5:UP" {
+	    shell "ifconfig ??_@list+1#0?? up";
+	}
+	boot_cgi [ "timeout" ];
+end
+
+//next page
+< "A" 7
+	set_tbl "list += 1";
+	boot_cgi [ "timeout" ];
+end
+
+//page before
+< "A" 10
+    set_tbl "list == 0"{
+	boot_page "??_referrer??";
+    }
+    set_tbl "list != 0"{
+	set_tbl "list -= 1";
+	boot_cgi [ "timeout" ];
+    }
+end
+< "A" 13
+    boot_page "??_referrer??";
+end
+cgi: "timeout"

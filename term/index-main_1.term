@@ -1,0 +1,24 @@
+12 > "DL" > "TC" 0
+> "AL" 0 1
+> "AT" 9 9 114 58 1 0 "CMount HDD" 0
+> "AT" 9 69 114 117 2 0 "CUmount HDD" 0
+//> "AT" 125 9 229 58 3 0 "CServices" 0
+> "AT" 125 69 172 117 5 0 "CBack|<" 0
+//> "AT" 182 69 229 117 4 0 "CNext|>" 0
+
+< "A" 1
+    boot_page "mounts.term";
+end
+< "A" 2
+    boot_page "umounts.term";
+end
+/*< "A" 3
+    boot_page "services.term";
+end
+*/
+< "A" 4
+    boot_page "index-main_2.term";
+end
+< "A" 5
+    boot_page "index-main.term";
+end

@@ -1,0 +1,10 @@
+> "DL" > "AL" 0 1
+
+shell: ps -o args --cols 28 --rows 16 | sed -e 's/$/\r/'
+//top -b -n 1
+
+> "AT" 205 1 237 29 8 0 "C<" 0
+
+< "A" 8
+    boot_page "index.term";
+end
