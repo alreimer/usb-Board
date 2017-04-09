@@ -11,14 +11,20 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
+//for stat
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+//end for stat
 //#include <errno.h>//errno
 #include <string.h>
+#include "terminal.h"
 #include "term_cgi.h"
 #include "term_tbl.h"
 #include "term_add.h"
 #include "term_parser.h"
 
-char A1_BTN = 0;
+unsigned char A1_BTN = 0;
 struct cgi *cgi_name = NULL;
 struct cgi *cgi_used = NULL;	//connect to cgi that is now in use. Used by print()
 
@@ -70,6 +76,7 @@ unsigned long long parse_cgi_name(char *data, char **tmp, char *buf){
 	data++;
     }
     if(*data != '\0'){*tmp = data + 1;} else {*tmp = data;}
+//printf("AAAAA%lldBBBBB\n", size);
     return (size);// + 1);//'\0' must be included!!
 
 }
@@ -97,7 +104,10 @@ char *search[] = {"print",		//1
 			"set_tbl",		//20
 			"exit_cgi",	//21
 			"copy_ppar",	//22
-
+			"recover_saved",//23
+			"chroot",	//24
+			"get_file",	//25
+			"file_size_16",	//26
 			NULL
 			};
 
@@ -225,7 +235,7 @@ size = parse_cgi_name(data, &end, NULL);
 
 //    tmp = w_strtok(&data, '\n');
 //    if(!tmp){ printf("Unable to def. length\n"); return NULL;}
-    if( size == 0 || size > MAX_NAME_SIZE ){ printf("Length of cgi name: %lld\n", size); return NULL;}
+    if( size == 0 || size > MAX_SIZE_OF_NAME ){ printf("Length of cgi name: %lld\n", size); return NULL;}
     parse_cgi_name(data, &end, tmp1);
     ptr = &cgi_name;
     while(*ptr){
@@ -289,12 +299,12 @@ int print(FILE *out, char *data){
     }
     loop_print++;
 
-    print_(out, data, 1, 0);//make = 1, loop = 0
+    print_(out, data, 1, 0, 0);//make = 1, _else = 0, loop = 0
 
     loop_print--;
 }
 
-char *print_(FILE *out, char *data, int make, int loop){
+char *print_(FILE *out, char *data, int make, char _else, int loop){
 
 	char *tmp, *ptr = data, *ptr1, *a, ch, i;
 	char *name, *digit, *p, *ptr2;
@@ -325,7 +335,7 @@ char *print_(FILE *out, char *data, int make, int loop){
 	    if(make) putc(digi % 256, out);
 //printf("-- %d --\n", digi);
 	    data = data + i;
-	    if(*data != ' ' && *data != '\t' && *data != '\r' && *data != '\n') printf("char #%d is not correct separated!\n", data-ptr);
+	    if(*data != ' ' && *data != '\t' && *data != '\r' && *data != '\n' && *data != '\0') printf("char #%d is not correct separated!\n", data-ptr);
 	    continue;
 	}
 
@@ -384,7 +394,9 @@ char *print_(FILE *out, char *data, int make, int loop){
 				    if(i > 2) break;
 				}
 			    }
+
 			    if(str_size != 0) str_size = MIN(digi, str_size-1);
+//printf("Name: %s, sizeLimit: %lld, value: %s\n", name, str_size, a);
 			    i = 0;
 			    if((ptr2 = parsestr1(ptr1, "\"/[/*/N\\N/]\"/")) != NULL){
 				a = parsestr2(&strct, a, ptr2);
@@ -441,7 +453,7 @@ char *print_(FILE *out, char *data, int make, int loop){
 		mk = 0;
 	    }
 	    data = restore_str(&strct);
-	    data = print_(out, data, mk, loop + 1);
+	    data = print_(out, data, mk, 1, loop + 1);
 	    continue;
 	}else if(tmp = parsestr2(&strct, data, "ifnot/t\"/[/*/]\"")){
 	    if(make == 0) mk = 0;
@@ -450,7 +462,7 @@ char *print_(FILE *out, char *data, int make, int loop){
 		mk = 0;
 	    }
 	    data = restore_str(&strct);
-	    data = print_(out, data, mk, loop + 1);
+	    data = print_(out, data, mk, 1, loop + 1);
 	    continue;
 	}else if(*data == 'f' && *(data+1) == 'i'){
 	    data += 2;
@@ -461,6 +473,19 @@ char *print_(FILE *out, char *data, int make, int loop){
 	    }
 //	    make = 1;
 //	    continue;
+	} else if(tmp = parsestr1(data, "else/t")){	//inverse make.
+	    if(loop == 0) printf("else without if\n");
+	    else {
+		if(_else == 0) printf("double else\n");
+		else{
+		    if(make) make = 0;
+		    else make = 1;
+		    tmp = print_(out, tmp, make, 0, loop);
+		    return tmp;
+		}
+	    }
+	    data = tmp;
+	    continue;
 /*** end of IF configuration ***/
 	}else if(tmp = parsestr2(&strct, data, "table:/t/[/*/]#end_table")){
 	    if(make == 1){
@@ -709,8 +734,9 @@ int get_cgi_body(struct cgi *ptr){
 
     int i = 0, j = 0, jump = 0, allocated, ret;
     unsigned long long size, size1, size2;//size2 - for copy_ppar
-    char *tmp, *tmp1, *tmp2, *arg = NULL;
+    char *tmp, *tmp1, *tmp2, *arg = NULL, ch = 0;
     FILE *f;
+    struct stat stbuf;
 
 //ptr->arg[0] = "privet";
 	    while(i < GET_CGI_MAX && ptr->cmd[i]){
@@ -811,7 +837,7 @@ int get_cgi_body(struct cgi *ptr){
 		    case 19:	//boot_cgi
 			    size = parse_cgi_name(arg, &tmp1, NULL);//ptr1 - is end(\n) of cgi-string
 //printf("-%s--%d->--%s--<<\n", arg, size, tmp1);
-			    if( size == 0 || size > MAX_NAME_SIZE ){
+			    if( size == 0 || size > MAX_SIZE_OF_NAME ){
 				printf("WARN: Length of cgi name: %d\n", size);
 				if(allocated) free(arg);
 				return 0;
@@ -823,7 +849,7 @@ int get_cgi_body(struct cgi *ptr){
 				free(tmp);
 				if(ret == 2){
 				if(allocated) free(arg);
-				return 2;	//go out now!!
+				return 2;	//go out now!! -if get_cgi going out!!
 				}
 			    }
 			    break;
@@ -859,9 +885,48 @@ int get_cgi_body(struct cgi *ptr){
 				}
 			    }
 			    break;
+		    case 23:		//recover_saved
+			    recover_saved(arg);
+			    break;
+		    case 24:		//chroot
+			    if(*arg == '\0') tmp = "/term/"; //if empty str -> use default value
+			    else tmp = arg;
 
+			    if(chdir(tmp)) { jump = 1;}
+			    break;
+		    case 25: //get_file
+			    size = strncpy_(NULL, arg, 0)+1;	//this is max. size of arg-string
+			    if(tmp = malloc(size)){
+				strncpy_(tmp, arg, size);
+//printf("get_file:%s %ld\n", tmp, size);
+				if(!copy_file(tmp, fp)) jump = 1; //exec in braces if file not found 
+									//jump if error memory allocate
+				free(tmp);
+			    }else jump = 1;//error allocate memory
+			    break;
+		    case 26:		//file_size_16
+			    size = strncpy_(NULL, arg, 0)+1;	//this is max. size of arg-string
+			    if(tmp = malloc(size)){
+				strncpy_(tmp, arg, size);
+//printf("get_file:%s %ld\n", tmp, size);
+				if(!stat(tmp, &stbuf) && ((stbuf.st_size -1) < 1024*64)){
+//printf("get_file:%s %ld\n", tmp, stbuf.st_size);
+					ch = (char) (stbuf.st_size >> 8);
+//printf("1:%d\n", ch);
+					putc(ch, fp);
+					ch = (char) (stbuf.st_size);
+//printf("2:%d\n", ch);
+					putc(ch, fp);
+				}
+				//if(!copy_file(tmp, fp)) jump = 1; //exec in braces if file not found 
+									//jump if error memory allocate
+				free(tmp);
+			    }else jump = 1;//error allocate memory
+			    
+			    break;
 
 		}//switch end
+	    fflush(fp);
 	    if(allocated) free(arg);
 //printf("check: [%d]: %s a=%d b=%d\n", i, ptr->arg[i], ptr->a, ptr->b);
 	    if(jump == 1){
@@ -873,7 +938,7 @@ int get_cgi_body(struct cgi *ptr){
 return 1;
 }
 
-int get_cgi(char ch, int num, char *buf){
+int get_cgi(char ch, int num, unsigned char *buf){
 
     int ret = 0;
     struct cgi *ptr;
@@ -884,18 +949,36 @@ int get_cgi(char ch, int num, char *buf){
 //printf("SHOW:%s: %d - %d \n", ptr->name,num, ptr->name_size);
 	if(ch == 'A'){
 	    if(ch == *(ptr->name) && num == 1 && ( ((num+1) == ptr->name_size && *buf == *((ptr->name)+1)) 
-				|| ((num+2) == ptr->name_size && *buf >= *((ptr->name)+1) && *buf<= *((ptr->name)+2)) // "A" 0 10 -> 0>=x<=10
+				|| ((num+2) == ptr->name_size && *buf >= *((ptr->name)+1) && *buf<= *((ptr->name)+2)) // "A" 1 10 -> 1<=x<=10
 				)
 	    ){		//!strcmp(ptr->name, filename)
 printf("!!MATCH!!\n");
 		cgi_used = ptr;
-		A1_BTN = *buf;
+		if(ptr->name_size == num+1) A1_BTN = *buf;//only button
+		else A1_BTN = *buf - *((ptr->name)+1) + 1;//button in range: button_num = num - range_begin + 1
+		//A 3 16 -> A1BTN == 1 ... 14
 		ret = get_cgi_body(ptr);
 		A1_BTN = 0;	//means not defined!!!
 		cgi_used = NULL;
 		return ret;	//ok cgi is found
 	    }
 	    //return 0;//A- match but other is not match
+	}else if(ch == 'B'){
+//printf("!!BARGRAPH!! %d, size:%lld, buf:%d  %d<=%d<=%d\n", num, ptr->name_size, *buf, *((ptr->name)+2), *(buf+1), *((ptr->name)+3));
+	    if(ch == *(ptr->name) && num == 2 && ( (ptr->name_size == 3 && *buf == *((ptr->name)+1) && *(buf+1) == *((ptr->name)+2)) 
+				|| (ptr->name_size == 4 && *buf == *((ptr->name)+1) && *(buf+1) >= *((ptr->name)+2) && *(buf+1)<= *((ptr->name)+3)) // "A" 1 10 -> 1<=x<=10
+				)
+	    ){
+printf("!!MATCH BARGRAPH!!  %d\n", *(buf+1));
+		cgi_used = ptr;
+//		if(ptr->name_size == num+1) A1_BTN = *buf;//only button
+//		else 
+		A1_BTN = *(buf+1);
+		ret = get_cgi_body(ptr);
+		A1_BTN = 0;	//means not defined!!!
+		cgi_used = NULL;
+		return ret;	//ok cgi is found
+	    }
 	}else if(ch == 'H'){
 printf("H PARAM\n");
 		return 1;
@@ -906,6 +989,7 @@ printf("H PARAM\n");
 //		cgi_used = NULL;
 		return ret;	//ok cgi is found
 	}
+//printf("name_size:%d == num:%d\n", ptr->name_size, num);
 	ptr = ptr->next;
     }//while(ptr)
     return 0;

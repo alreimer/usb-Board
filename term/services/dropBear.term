@@ -22,11 +22,11 @@ if "dbear_enable:0/"
     write_par "_%dbear_enable:1";
     fill_cfg "dbear_enable";
     savecfg;
-	change_line "./etc/inetd.conf:/*dropbear:??_&dbear_port??		stream	tcp	nowait	root	/sbin/dropbear dropbear -i\n"{
-		shell "echo \"??_&dbear_port??		stream	tcp	nowait	root	/sbin/dropbear dropbear -i\" >> ./etc/inetd.conf";
+	change_line "/etc/inetd.conf:/*dropbear:??_&dbear_port??		stream	tcp	nowait	root	/sbin/dropbear dropbear -i\n"{
+		shell "echo \"??_&dbear_port??		stream	tcp	nowait	root	/sbin/dropbear dropbear -i\" >> /etc/inetd.conf";
 	}
 
-	system "etc/init.d/S30inetd restart";
+	system "/etc/init.d/S30inetd restart";
     boot_page "services/dropBear.term";
 end
 fi
@@ -37,11 +37,11 @@ if "dbear_enable:1/"
     write_par "_%dbear_enable:0";
     fill_cfg "dbear_enable";
     savecfg;
-	change_line "./etc/inetd.conf:/*dropbear:#??_&dbear_port??		stream	tcp	nowait	root	/sbin/dropbear dropbear -i\n"{
-		shell "echo \"#??_&dbear_port??		stream	tcp	nowait	root	/sbin/dropbear dropbear -i\" >> ./etc/inetd.conf";
+	change_line "/etc/inetd.conf:/*dropbear:#??_&dbear_port??		stream	tcp	nowait	root	/sbin/dropbear dropbear -i\n"{
+		shell "echo \"#??_&dbear_port??		stream	tcp	nowait	root	/sbin/dropbear dropbear -i\" >> /etc/inetd.conf";
 	}
 
-	system "etc/init.d/S30inetd restart";
+	system "/etc/init.d/S30inetd restart";
     boot_page "services/dropBear.term";
 end
 fi

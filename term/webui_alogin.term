@@ -1,0 +1,21 @@
+par:20:val:USERNAME:
+readcfg
+
+< "scripBegin" 0
+    write_par "name:Login: ";
+end
+< "scripEnd" 0
+    print [> "AT" 110 65 142 93 12 0 "C\>" 0 
+> "AT" 205 33 237 61 13 0 "C<" 0 ];
+end
+
+include: abc-keys.incterm
+
+< "A" 12
+    fill_cfg "val";
+    savecfg;
+    boot_page "webui_admin.term";
+end
+< "A" 13
+    boot_page "webui_admin.term";
+end

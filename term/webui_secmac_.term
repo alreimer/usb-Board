@@ -1,0 +1,25 @@
+//in _buf must be:  LEGAL_MACx
+ifnot "_buf:LEGAL_MAC/<10123456789/>/"
+wr_par: _buf:LEGAL_MAC0
+fi
+
+par:18:val:?_buf:^(|([0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}))$
+readcfg
+
+< "scripBegin" 0
+    write_par "name:MAC: ";
+end
+//are in incterm file now!!
+//> "AT" 110 65 142 93 12 0 "C\>" 0 
+//> "AT" 205 33 237 61 13 0 "C<" 0 
+
+include: mac-keys.incterm
+
+< "A" 12
+    fill_cfg "val";
+    savecfg;
+    boot_page "webui_secmac.term";
+end
+< "A" 13
+    boot_page "webui_secmac.term";
+end

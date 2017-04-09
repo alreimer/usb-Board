@@ -1,5 +1,5 @@
-par:2:ftp_enable:FTP_ENABLE:[01]
-par:6:val:FTP_PORT:^[0-5]?([0-9]){1,4}$
+//par:2:ftp_enable:FTP_ENABLE:[01]
+par:6:val:WEB_PORT:^[0-5]?([0-9]){1,4}$
 readcfg
 
 > "DL"
@@ -18,7 +18,7 @@ include: net-keys.incterm
     fill_cfg "val";
     savecfg;
     if_changed "val" {
-	if "_&ftp_enable:1/" {
+/*	if "_&ftp_enable:1/" {
 	    change_line "/etc/inetd.conf:/*vsftpd:??_&val??		stream	tcp	nowait	root	/sbin/vsftpd /sbin/vsftpd\n"{
 		shell "echo \"??_&val??		stream	tcp	nowait	root	/sbin/vsftpd /sbin/vsftpd\" >> /etc/inetd.conf";
 	    }
@@ -28,12 +28,12 @@ include: net-keys.incterm
 		shell "echo \"#??_&val??		stream	tcp	nowait	root	/sbin/vsftpd /sbin/vsftpd\" >> /etc/inetd.conf";
 	    }
 	}
-
-	system "/etc/init.d/S30inetd restart";
+*/
+	system "/etc/init.d/S34thttpd restart";
 
     }
-    boot_page "services/ftpD.term";
+    boot_page "services/webD.term";
 end
 < "A" 13
-    boot_page "services/ftpD.term";
+    boot_page "services/webD.term";
 end

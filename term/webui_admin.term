@@ -1,0 +1,29 @@
+par:20:supername:USERNAME:
+par:20:sup_passwd:PASSWORD:
+readcfg
+
+< "show" 0
+	print [ 12   > "DL" > "AL" 0 1
+    > "AT" 2 1 201 29 1 0 "CLogin:|" $supername:19 0
+    > "AT" 2 33 201 61 2 0 "CPassword:|" $sup_passwd:19 0
+if "_etc_save:1" > "AT" 205 65 237 93 11 0 "CS" 0 fi
+    > "AT" 205 1 237 29 13 0 "C<" 0 ];
+end
+< "A" 1
+    boot_page "webui_alogin.term";
+end
+< "A" 2
+    boot_page "webui_apasswd.term";
+end
+
+< "A" 13
+    boot_page "webui.term";
+end
+
+< "A" 11
+    write_par "_etc_save:0";
+    system "/etc/save_config.sh";
+    boot_cgi [ "show" 0 ];
+end
+
+cgi: "show" 0

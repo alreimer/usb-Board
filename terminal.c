@@ -32,12 +32,14 @@ char buffer[2078];
 char etc_save[2];
 //char buf[16384];
 char buf[65537];//65536 + 1
+unsigned long long buf_size = 0;
 char *referrer = NULL, *ref_ = NULL;
+char version[256];
+char value[16];
 
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 
 
-/*
 int copy_file(char *file, FILE *out)
 {
   FILE *fp;
@@ -62,7 +64,6 @@ int copy_file(char *file, FILE *out)
   }
   return 0;
 }
-*/
 
 struct cfg_parse1 *cfg1 = NULL;	/*new config via web*/
 struct cfg_parse1 **cfg_p = &cfg1;
@@ -301,7 +302,7 @@ printf("Collected parameter: --%s--%lld--\n", cfg_pointer->web_name, cfg_pointer
 	    if(make) putc(digi % 256, fp);
 //printf("-- %d --\n", digi);
 	    data = data + i;
-	    if(*data != ' ' && *data != '\t' && *data != '\r' && *data != '\n') printf("char #%d in file: %s is not correct separated!\n", data-ptr, file_name);
+	    if(*data != ' ' && *data != '\t' && *data != '\r' && *data != '\n' && *data != '\0') printf("char #%d in file: %s is not correct separated!\n", data-ptr, file_name);
 	    continue;
 	}
 
@@ -440,7 +441,7 @@ printf("Collected parameter: --%s--%lld--\n", cfg_pointer->web_name, cfg_pointer
 	    continue;
 	}
 	else if(a = parsestr1(data, "shell:/t")){
-	    while(*a == ' ' || *a == '\t'){a++;}
+//	    while(*a == ' ' || *a == '\t'){a++;}
 	    tmp = a;
 	    while(*tmp && *tmp != '\n' && *tmp != '\r'){tmp++;}
 	    str_size = tmp - a;
@@ -463,7 +464,8 @@ printf("Collected parameter: --%s--%lld--\n", cfg_pointer->web_name, cfg_pointer
 //	    tmp = a;
 	    str_size = parse_cgi_name(a, &ptr1, NULL);//ptr1 - is end(\n) of cgi-string
 //printf("-%s--%d->--%s--<<\n", a, str_size, ptr1);
-	    if( str_size == 0 || str_size > MAX_NAME_SIZE ){ printf("WARN: Length of cgi name: %d\n", str_size); data = ptr1; continue;}
+//printf("%lld\n", str_size);
+	    if( str_size == 0 || str_size > MAX_SIZE_OF_NAME ){ printf("WARN:terminal: Length of cgi name: %lld\n", str_size); data = ptr1; continue;}
 	    tmp = (char *)malloc(str_size+2);
 	    if(tmp != NULL){
 		parse_cgi_name(a, &ptr1, tmp);
@@ -485,6 +487,22 @@ printf("Collected parameter: --%s--%lld--\n", cfg_pointer->web_name, cfg_pointer
 	    }
 	    data = restore_str(&parser);
 	    continue;
+	} else if(tmp = parsestr2(&parser, data, "wr_par:/t/[/*/]\n")){	//wr_par: par:value
+
+		if(make == 1){
+		// write_par  par:value		this is used in copy_CGI.c - the same code!
+		    ptr1 = w_strtok(&tmp, ':');//ptr1 = par, tmp = value
+		    if(ptr1 && *ptr1 && *tmp){
+			a = get_var(&str_size, ptr1);
+			if(a && str_size){
+			    strncpy_(a, tmp, str_size-1);
+//			    tmp[str_size-1] = '\0';
+			}
+			if(ptr1 != tmp) *(tmp-1) = ':';
+		    }
+		}
+	    data = restore_str(&parser);
+	    continue;
 	}else if(tmp = parsestr2(&parser, data, "table:/t/[/*/]#end_table")){
 	    if(make == 1){
 		parse_tbl(tmp, 0);//without clean
@@ -504,7 +522,7 @@ if(make) putc(ch, fp);
 }
 
 
-void sighup(int signo){
+void sighup(int signo){		//not done !!
 //    if(fd != -1) close(fd);
 //    close(sockfd);
 //    ReadConfiguration1();
@@ -540,23 +558,36 @@ char *line[] = {
 			"button",		//3
 			"timeout",		//4
 			"break",
-//			{27, 'A', 1, '\0'},	//3
+			"paSsWord",		//6
+			"script",		//7
+			"##setBuffer",		//8
+			"##getBuffer",		//9
+			(char []) {27, 'A', 1, '\0'},	//10
+			(char []) {27, 'H', 3, '\0'},	//11
+			(char []) {27, 'V', '\0'},	//12
+			"getCard",		//13
+			(char []) {27, 'B', 2, '\0'},	//14
 			NULL };
 
-int read_buf__(char *buf){
+int read_buf__(char *buff){
 //    printf("%d\n", sizeof(buf));
 
-    int n = 0, step = 0;
+    int n = 0;
+    char size = 0;
+    unsigned long long buf_s = 0;
     int i = 0, k;
+    char brk[] = "\n\n\rbreAk\r\rbReaK ";
+
     while(1){
 
     if(line[n] != NULL && line[n][i] == '\0'){
 	printf("Func: %d\n", n);
+
 	switch(n){
 	    case 0:
 		    //print ">SV";
 		    //get dspl-version "<V,len,string"
-		    parse_file("index.term", 0);
+		    parse_file("/term/index.term", 0);
 		    break;
 	    case 1: //fprintf(fp, "07121035142015");//%m%d%H%M%S20%Y
 		    my_system(fp, "date \"+%m%d%H%M%S%Y\"");
@@ -565,39 +596,104 @@ int read_buf__(char *buf){
 		    //time set %m%d%H%M%S20%Y -> 'date %m%d%H%M20%Y.%S`
 		    k = 0;	//14 chars length -is parameter +1char='\n'
 		    while(k < 15){
-			buf[k] = getc(fp);
+			buff[k] = getc(fp);
 			k++;
 		    }
-		    sprintf(buf, "date %c%c%c%c%c%c%c%c%c%c%c%c.%c%c", buf[0], buf[1], buf[2], buf[3], buf[4], buf[5],
-			    buf[6], buf[7], buf[10], buf[11], buf[12], buf[13], buf[8], buf[9]);
-		    system_(buf);
+		    sprintf(buff, "date %c%c%c%c%c%c%c%c%c%c%c%c.%c%c", buff[0], buff[1], buff[2], buff[3], buff[4], buff[5],
+			    buff[6], buff[7], buff[10], buff[11], buff[12], buff[13], buff[8], buff[9]);
+		    system_(buff);
 		    break;
 	    case 3:
 	    case 4:
 	    case 5:
+	    case 7:
+	    case 13:
 //printf("CT:%s - %d\n", line[n], strlen(line[n]));
 		    get_cgi(0, strlen(line[n]), line[n]);	//('A', 1, buf+1)
 		    break;
-/*	    case 3:
-		    buf[i] = getc(fp);
-		    printf("char %d\n", buf[i]);
+	    case 6:
+	    case 8:
+		    buf_s = (getc(fp) << 8) + getc(fp);
+		    if(buf_s == 0) {
+			if( n == 8) buf_s = 65536;
+			else{ buf_size = 0; break;}
+		    }
+		    printf("here must be a password:%lld\n", buf_s);
+		    buf_size = buf_s;
+		    i = 0;
+		    do{
+			buff[0] = getc(fp);
+			buf[buf_size - buf_s] = buff[0];
+			if(buff[0] == 0){
+			    if (n != 8) { buf_size = buf_size - buf_s; break;}
+			    else{
+				//n = 8
+				i++;//at i=1
+				do{
+				    buff[i] = getc(fp);
+				    if(buff[i] != brk[i-1]){// if not "\0BbrREeaK" - put out to buffer!!
+					k = 1;
+					while(k <= i){
+					    if(buf_size - buf_s + k > 65536){ buf_s = 1; break;}
+					    buf[buf_size - buf_s + k] = buff[k];
+					    k++;
+					}
+					if((k > i) && (buf_s > i)) buf_s = buf_s - i;
+					break;
+				    }
+				    i++;
+				}while(brk[i-1] != '\0');
+				if(brk[i-1] == '\0'){ printf("break copy\n"); buf_size = 0; break;}	//clear and goout
+				else { i = 0;}
+			    }
+			}
+			buf_s--;
+		    }while(buf_s != 0);
+		    if(n == 8 && i == 0) get_cgi(0, 9, "setBuffer");	//('A', 1, buf+1)
 		    break;
-*/	}//switch
+	    case 10:
+	    case 11:
+	    case 14:
+		    //size = getc(fp);
+		    size = buff[i-1];
+		    //if(size == 0){ printf("size zero!!\n"); break;}
+		    k = i;
+		    do{
+			buff[i] = getc(fp);
+			i++;
+			size--;
+		    }while(size);
+		    printf("button: %d\n", buff[k]);
+		    get_cgi(buff[k-2], buff[k-1], buff+k);		//char, num, buf: ('A', 1, buf+1)
+		    break;
+	    case 12:
+		    size = getc(fp);
+		    memset(version, 0, 256);
+		    if(size == 0){ printf("size zero!!\n"); break;}
+		    i = 0;
+		    do{
+			version[i] = getc(fp);
+			i++;
+			size--;
+		    }while(size);
+		    printf("version: %s\n", version);
+		    get_cgi(0, 7, "version");		//< "version" -will be started
+	}//switch
 	n = 0; i = 0;		//clear search parameters
     }
 
-    buf[i] = getc(fp);
+    buff[i] = getc(fp);
 //printf("%c %d\n", buf[i], i);
 
     if(line[n] != NULL){
-	if(buf[i] == line[n][i]){
+	if(buff[i] == line[n][i]){
 	    i++;
 	    continue;
 	}else{
 	    n++;
 	    k = 0;
 	    while(k <= i && line[n] != NULL){
-		if(buf[k] != line[n][k]){
+		if(buff[k] != line[n][k]){
 		    n++;
 		    k = 0;
 		    continue;
@@ -611,28 +707,13 @@ int read_buf__(char *buf){
 	}
     }
 
-/* 27 'A' 1 BTN_NUM */
-    if(step == 0 && buf[i] == 27){ step = 1; i++; continue;}
-    if(step == 1 && ( buf[i] == 'A' || buf[i] == 'H')){ step = 2; i++; continue;}
-    if(step == 2){
-	if(buf[i] != 0){
-	    k = i+1;
-	    do{
-		buf[k] = getc(fp);
-		printf("button %d\n", buf[k]);
-		k++;
-	    }while((k - i) <= buf[i]);
-	}
-	get_cgi(buf[i-1], buf[i], buf+i+1);		//('A', 1, buf+1)
-	step = 0; i = 0; n = 0;continue;
-    }
 /* begin of not-recognized, just print out! */
     k = 0;
     do{
-	switch(buf[k]){
+	switch(buff[k]){
 	    case 27:	printf("ESC ");
 			break;
-	    default:	printf(" %d", buf[k]);
+	    default:	printf(" %d", buff[k]);
 	}
 	k++;
     }while(k <= i);
@@ -670,8 +751,9 @@ int main(int argc, char *argv[]){
 
     etc_save[0] = '0';		//set etc_save=0
     etc_save[1] = '\0';
+    buf_size = 0;
 
-    chdir("term/");
+    chdir("/term/");
 //    chdir(CONFIG.WEB_ROOT);		//just use it!!
 
 	if((fp=fopen(dev,"r+")) == NULL){

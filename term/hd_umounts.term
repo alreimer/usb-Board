@@ -45,7 +45,7 @@ end
 //YES
 < "A" 20
     shell "umount ??mntpoint??";
-    boot_page "umounts.term";
+    boot_page "hd_umounts.term";
 end
 
 //NO
@@ -62,7 +62,7 @@ end
 //page before
 < "A" 10
     set_tbl "list == 0"{
-	boot_page "index-main_1.term";
+	boot_page "hd.term";
     }
     set_tbl "list != 0"{
 	set_tbl "list -= 4";
@@ -70,7 +70,7 @@ end
     }
 end
 < "A" 13
-    boot_page "index-main_1.term";
+    boot_page "hd.term";
 end
 /*
 < "A" 11

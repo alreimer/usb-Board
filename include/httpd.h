@@ -1,4 +1,4 @@
-#define ETC_PATH		"etc"
+#define ETC_PATH		"/etc"
 
 #define SERVER_PORT		80
 #define MOUNT_POINT		"/mnt/hd1"	//"/mnt"
@@ -58,6 +58,10 @@ extern char port[];
 extern char dns_name[];
 extern char etc_save[];
 extern char buf[];		//buffer for writting some information
+extern unsigned long long buf_size;
+/*version used in terminal*/
+extern char version[];
+extern char value[];
 
 extern char hdused[];
 extern char uptime[];

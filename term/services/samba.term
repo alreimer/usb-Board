@@ -15,11 +15,11 @@ if "nmb_enable:0/"
     write_par "_%nmb_enable:1";
     fill_cfg "nmb_enable";
     savecfg;
-	change_line "./etc/inetd.conf:/*netbios-ssn:netbios-ssn	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\n"{
-		shell "echo \"netbios-ssn	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\" >> ./etc/inetd.conf";
+	change_line "/etc/inetd.conf:/*netbios-ssn:netbios-ssn	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\n"{
+		shell "echo \"netbios-ssn	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\" >> /etc/inetd.conf";
 	}
-	change_line "./etc/inetd.conf:/*microsoft-ds:microsoft-ds	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\n"{
-		shell "echo \"microsoft-ds	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\" >> ./etc/inetd.conf";
+	change_line "/etc/inetd.conf:/*microsoft-ds:microsoft-ds	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\n"{
+		shell "echo \"microsoft-ds	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\" >> /etc/inetd.conf";
 	}
 
 	system "/etc/init.d/S30inetd reload";
@@ -34,11 +34,11 @@ if "nmb_enable:1/"
     write_par "_%nmb_enable:0";
     fill_cfg "nmb_enable";
     savecfg;
-	change_line "./etc/inetd.conf:/*netbios-ssn:#netbios-ssn	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\n"{
-		shell "echo \"#netbios-ssn	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\" >> ./etc/inetd.conf";
+	change_line "/etc/inetd.conf:/*netbios-ssn:#netbios-ssn	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\n"{
+		shell "echo \"#netbios-ssn	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\" >> /etc/inetd.conf";
 	}
-	change_line "./etc/inetd.conf:/*microsoft-ds:#microsoft-ds	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\n"{
-		shell "echo \"#microsoft-ds	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\" >> ./etc/inetd.conf";
+	change_line "/etc/inetd.conf:/*microsoft-ds:#microsoft-ds	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\n"{
+		shell "echo \"#microsoft-ds	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\" >> /etc/inetd.conf";
 	}
 
 	system "/etc/init.d/S30inetd reload";

@@ -1,8 +1,0 @@
-/dev/sda1        /                ext3        defaults         1   1
-/dev/sda2        /win             ntfs-3g     umask=000        1   0
-/dev/sdb1	 /mnt		  ext4	      encrypt	       1   0
-#/dev/cdrom      /mnt/cdrom       auto        noauto,owner,ro  0   0
-/dev/fd0         /mnt/floppy      auto        noauto,owner     0   0
-devpts           /dev/pts         devpts      gid=5,mode=620   0   0
-proc             /proc            proc        defaults         0   0
-tmpfs            /dev/shm         tmpfs       defaults         0   0

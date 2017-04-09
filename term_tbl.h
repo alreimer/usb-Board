@@ -28,5 +28,6 @@ struct tbl {
     struct tbl		*next;
 };
 
+void free_rnd_tbl(struct rnd_tbl **ptr);
 extern struct tbl *tbl_name;	//begin of cgi
 

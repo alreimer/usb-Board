@@ -1,0 +1,28 @@
+par:17:val:HOSTNAME:
+par:20:ip:IP:
+readcfg
+
+< "scripBegin" 0
+    write_par "name:Hostname: ";
+end
+< "scripEnd" 0
+    print [> "AT" 110 65 142 93 12 0 "C\>" 0 
+> "AT" 205 33 237 61 13 0 "C<" 0 ];
+end
+
+include: abc-keys.incterm
+
+< "A" 12
+    fill_cfg "val";
+	if_changed "val"{	//restart only network
+	    change_line "/etc/hosts:/*/?val?/:??ip?? ??_%val?? #httpd\n"{
+		shell "echo \"??ip?? ??_%val?? #httpd\" >> /etc/hosts";
+	    }
+	}
+    savecfg;
+	system "/etc/init.d/S20network restart";
+    boot_page "network.term";
+end
+< "A" 13
+    boot_page "network.term";
+end

@@ -1,0 +1,148 @@
+//used in "webui_secmac_.terms"
+// used in this include "name", "scripBegin" 0, "scriptEnd" 0
+area:2:switch
+wr_par: switch:0
+area:9:name
+
+< "123" 0
+    boot_cgi [ "scripBegin" 0 ];
+print [ > "DL"
+> "AL" 0 1
+> "ZR" 80 5 $name 0
+> "ZL" 80 5 $val 0	//step down 10pix (5 -> 15)
+> "ZL" 80 15 $_%val 0
+
+> "AT" 2 33 34 61 1 0 "C1" 0 
+> "AT" 38 33 70 61 2 0 "C2" 0 
+> "AT" 74 33 106 61 3 0 "C3" 0 
+> "AT" 110 33 142 61 11 0 "C<-" 0 
+> "AT" 2 65 34 93 4 0 "C4" 0 
+> "AT" 38 65 70 93 5 0 "C5" 0 
+> "AT" 74 65 106 93 6 0 "C6" 0 
+> "AT" 2 97 34 125 7 0 "C7" 0 
+> "AT" 38 97 70 125 8 0 "C8" 0 
+> "AT" 74 97 106 125 9 0 "C9" 0 
+> "AT" 110 97 142 125 10 0 "C0" 0
+> "AT" 146 97 178 125 14 0 "C:" 0
+> "AT" 146 33 201 61 255 0 "CaBc" 0
+
+> "AT" 110 65 142 93 12 0 "C>" 0
+> "AT" 205 33 237 61 13 0 "C<" 0 ];
+    boot_cgi [ "scripEnd" 0 ];
+end
+< "abc" 0
+    boot_cgi [ "scripBegin" 0 ];
+print [ > "DL"
+> "AL" 0 1
+> "ZR" 80 5 $name 0
+> "ZL" 80 5 $val 0	//step down 10pix (5 -> 15)
+> "ZL" 80 15 $_%val 0
+
+> "AT" 2 33 34 61 16 0 "Ca" 0 
+> "AT" 38 33 70 61 17 0 "Cb" 0 
+> "AT" 74 33 106 61 18 0 "Cc" 0 
+> "AT" 110 33 142 61 11 0 "C<-" 0 
+> "AT" 2 65 34 93 19 0 "Cd" 0 
+> "AT" 38 65 70 93 20 0 "Ce" 0 
+> "AT" 74 65 106 93 21 0 "Cf" 0 
+/*> "AT" 2 97 34 125 7 0 "C7" 0 
+> "AT" 38 97 70 125 8 0 "C8" 0 
+> "AT" 74 97 106 125 9 0 "C9" 0 
+> "AT" 110 97 142 125 10 0 "C0" 0
+*/
+> "AT" 146 97 178 125 14 0 "C:" 0
+> "AT" 146 33 201 61 255 0 "C123" 0
+
+> "AT" 110 65 142 93 12 0 "C>" 0
+> "AT" 205 33 237 61 13 0 "C<" 0 ];
+    boot_cgi [ "scripEnd" 0 ];
+end
+
+< "A" 1
+    write_char "val:1";
+    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+end
+< "A" 2
+    write_char "val:2";
+    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+end
+< "A" 3
+    write_char "val:3";
+    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+end
+< "A" 4
+    write_char "val:4";
+    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+end
+< "A" 5
+    write_char "val:5";
+    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+end
+< "A" 6
+    write_char "val:6";
+    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+end
+< "A" 7
+    write_char "val:7";
+    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+end
+< "A" 8
+    write_char "val:8";
+    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+end
+< "A" 9
+    write_char "val:9";
+    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+end
+< "A" 10
+    write_char "val:0";
+    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+end
+//remove last char
+< "A" 11
+    write_char "val";
+    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+end
+//key 12 and 13 is in calling term
+< "A" 14
+    write_char "val::";
+    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+end
+
+
+//at here next screen
+< "A" 16
+    write_char "val:a";
+    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+end
+< "A" 17
+    write_char "val:b";
+    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+end
+< "A" 18
+    write_char "val:c";
+    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+end
+< "A" 19
+    write_char "val:d";
+    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+end
+< "A" 20
+    write_char "val:e";
+    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+end
+< "A" 21
+    write_char "val:f";
+    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+end
+< "A" 255
+    if "switch:0/"{
+	write_par "switch:1";
+	boot_cgi [ "abc" 0 ];
+	exit_cgi;
+    }
+    write_par "switch:0";
+    boot_cgi [ "123" 0 ];
+end
+
+cgi: "123" 0

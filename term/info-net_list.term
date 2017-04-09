@@ -1,0 +1,64 @@
+/*with timeout*/
+area:60000:buffer
+//wr_shell: :buffer:df -h
+
+
+
+/*
+Protocol
+Local Addr
+Foreign Addr
+State
+*/
+//chars 24
+
+< "timeout"
+	print [ 12 > "AL" 0 1 
+    > "RL" 205 1 239 61
+    > "GR" 206 2 237 60
+    > "ZC" 222 15 "W|a|i|t" 0
+];	//putout everything for timeout of display
+
+	write_system ":buffer:netstat -l";
+	print [ 12 > "DL" > "AL" 0 1 
+table: list
+#-> parse_area: buffer
+while:/[/*/]\n
+if:/[/Btcp/\udp/E/]/<- 	/>
+if:/*/<- 	/>/*/<- 	/>/[/*/]/<- 	/>
+if:/[/*/]/<- 	/>
+if:
+#end_table
+
+if "_@list+1:" > "ZL" 0 1  ">" $_@list+1#0 "  " $_@list+1#3 "|LocalAddr:| " $_@list+1#1:23 "|ForeignAddr:| " $_@list+1#2:23 0 fi
+if "_@list+2:" > "ZL" 0 65 ">" $_@list+2#0 "  " $_@list+2#3 "|LocalAddr:| " $_@list+2#1:23 "|ForeignAddr:| " $_@list+2#2:23 0 fi
+if "_@list+3:" > "AT" 205 97 237 125 7 0 "C->" 0 fi
+    > "AT" 205 33 237 61 10 0 "C<-" 0
+    > "AT" 205 1 237 29 13 0 "C<" 0
+    >>>> "wait:" 20 0 ];
+end
+
+< "button"
+    boot_page "??_referrer??";
+end
+
+//next page
+< "A" 7
+	set_tbl "list += 2";
+	boot_cgi [ "timeout" ];
+end
+
+//page before
+< "A" 10
+    set_tbl "list == 0"{
+	boot_page "??_referrer??";
+    }
+    set_tbl "list != 0"{
+	set_tbl "list -= 2";
+	boot_cgi [ "timeout" ];
+    }
+end
+< "A" 13
+    boot_page "??_referrer??";
+end
+cgi: "timeout"

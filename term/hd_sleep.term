@@ -1,0 +1,66 @@
+area:16000:buffer
+wr_par: buffer:/dev/sda SLEEP_MODE\n/dev/sdb SLEEP_MODEB\n/dev/sdc SLEEP_MODEC\n/dev/sdd SLEEP_MODED\n/dev/sde SLEEP_MODEE\n/dev/sdf SLEEP_MODEF\n/dev/sdg SLEEP_MODEG\n
+
+table: list
+#-> parse_area: buffer
+while:/[/*/]\n
+if:/[/*/]/<- 	/>
+if:
+#end_table
+
+
+< "show" 0
+	print [ 12   > "DL" > "AL" 0 1
+if "_@list+1:" > "AT" 2 1 100 29 1 0 "C" $_@list+1#0:10 0 fi
+if "_@list+2:" > "AT" 104 1 201 29 2 0 "C" $_@list+2#0:10 0 fi
+if "_@list+3:" > "AT" 2 33 100 61 3 0 "C" $_@list+3#0:10 0 fi
+if "_@list+4:" > "AT" 104 33 201 61 4 0 "C" $_@list+4#0:10 0 fi
+if "_@list+5:" > "AT" 2 65 100 93 5 0 "C" $_@list+5#0:10 0 fi
+if "_@list+6:" > "AT" 104 65 201 93 6 0 "C" $_@list+6#0:10 0 fi
+if "_@list+7:" > "AT" 2 97 100 125 7 0 "C" $_@list+7#0:10 0 fi
+if "_@list+8:" > "AT" 104 97 201 125 8 0 "C" $_@list+8#0:10 0 fi
+if "_@list+9:" > "AT" 205 97 237 125 9 0 "C->" 0 fi
+
+    > "AT" 205 33 237 61 10 0 "C<-" 0
+if "_etc_save:1" > "AT" 205 65 237 93 11 0 "CS" 0 fi
+    > "AT" 205 1 237 29 13 0 "C<" 0 ];
+end
+
+< "A" 1 8
+    write_par "_buf:??_@list#0?? ??_@list#1??\n";
+//print [ 12   > "DL" > "AL" 0 1 "hdparm: " $_buf ];
+    boot_page "hd_sleep_.term";
+end
+
+//next page
+< "A" 9
+	set_tbl "list += 8";
+	boot_cgi [ "show" 0 ];
+end
+
+//page before
+< "A" 10
+    set_tbl "list == 0"{
+	boot_page "hd.term";
+    }
+    set_tbl "list != 0"{
+	set_tbl "list -= 8";
+	boot_cgi [ "show" 0 ];
+    }
+end
+< "A" 13
+    boot_page "hd.term";
+end
+
+< "A" 11
+    write_par "_etc_save:0";
+    system "/etc/save_config.sh";
+//    boot_page "hd_sleep.term";
+    boot_cgi [ "show" 0 ];
+end
+
+cgi: "show" 0
+
+//write_system  "_buf:par_to:mount";
+//clean_par "_buf";
+

@@ -19,17 +19,17 @@ include: net-keys.incterm
     savecfg;
     if_changed "val" {
 	if "_&dbear_enable:1/" {
-	    change_line "./etc/inetd.conf:/*dropbear:??_&val??		stream	tcp	nowait	root	/sbin/dropbear dropbear -i\n"{
-		shell "echo \"??_&val??		stream	tcp	nowait	root	/sbin/dropbear dropbear -i\" >> ./etc/inetd.conf";
+	    change_line "/etc/inetd.conf:/*dropbear:??_&val??		stream	tcp	nowait	root	/sbin/dropbear dropbear -i\n"{
+		shell "echo \"??_&val??		stream	tcp	nowait	root	/sbin/dropbear dropbear -i\" >> /etc/inetd.conf";
 	    }
 	}
 	if "_&dbear_enable:0/" {
-	    change_line "./etc/inetd.conf:/*dropbear:#??_&val??		stream	tcp	nowait	root	/sbin/dropbear dropbear -i\n"{
-		shell "echo \"#??_&val??		stream	tcp	nowait	root	/sbin/dropbear dropbear -i\" >> ./etc/inetd.conf";
+	    change_line "/etc/inetd.conf:/*dropbear:#??_&val??		stream	tcp	nowait	root	/sbin/dropbear dropbear -i\n"{
+		shell "echo \"#??_&val??		stream	tcp	nowait	root	/sbin/dropbear dropbear -i\" >> /etc/inetd.conf";
 	    }
 	}
 
-	system "etc/init.d/S30inetd restart";
+	system "/etc/init.d/S30inetd restart";
 
     }
     boot_page "services/dropBear.term";

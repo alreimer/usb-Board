@@ -1,9 +1,10 @@
 /* change ./etc/fstab to /etc/fstab */
 
 area:25000:mntpoint
+area:200:pool
 
 table: list
-#-> parse_file: ./etc/fstab
+#-> parse_file: /etc/fstab
 while:/[/*/]\n
 if:/ /[//dev//sd/<1abcdefg/>/<1123456789/>/]/<- 	/>
 if:/[/*/]/<- 	/>
@@ -47,9 +48,22 @@ end
     print [ > "ZC" 120 25 "Unable get variable" 0 ];
 end
 
+< "clean_buf" 0
+    clean_par "_buf";
+end
+
+< "script"
+    print [ 12 > "DL" > "AL" 0 1 ];
+//in _buffer is a password
+//write_system  "_buffer:pool:mount ??mntpoint??";
+    print [ > "AT" 205 1 237 29 25 0 "C<" 0 > "ZC" 100 25 "mount: " $mntpoint:14 0 ];
+    clean_par "_buf";
+end
+
 //back to 'show' menu
 < "break"
     boot_cgi [ "show" 0 ];
+    boot_cgi [ "clean_buf" 0 ];
 end
 
 //next page
@@ -61,7 +75,7 @@ end
 //page before
 < "A" 10
     set_tbl "list == 0"{
-	boot_page "index-main_1.term";
+	boot_page "hd.term";
     }
     set_tbl "list != 0"{
 	set_tbl "list -= 8";
@@ -69,7 +83,7 @@ end
     }
 end
 < "A" 13
-    boot_page "index-main_1.term";
+    boot_page "hd.term";
 end
 
 < "A" 11
@@ -82,7 +96,4 @@ end
 end
 
 cgi: "show" 0
-
-//write_system  "_buf:par_to:mount";
-//clean_par "_buf";
-
+cgi: "clean_buf" 0

@@ -1,0 +1,646 @@
+//used in "webui_alogin.term" and "webui_apasswd.term"
+// used in this include "name", "scripBegin" 0, "scriptEnd" 0
+area:2:switch
+wr_par: switch:0
+area:2:case
+wr_par: case:0
+area:18:name
+
+< "123" 0
+    boot_cgi [ "scripBegin" 0 ];
+print [ > "DL"
+> "AL" 0 1
+> "ZC" 120 0 $name 0
+> "ZC" 120 9 $val 0	//step down 9pix (9 -> 18)
+> "ZC" 120 18 $_%val 0
+
+> "AT" 2 33 34 61 1 0 "C1-" 0 
+> "AT" 38 33 70 61 2 0 "C2_" 0 
+> "AT" 74 33 106 61 3 0 "C3/" 0 
+> "AT" 110 33 142 61 11 0 "C<-" 0 
+> "AT" 2 65 34 93 4 0 "C4" 0 
+> "AT" 38 65 70 93 5 0 "C5" 0 
+> "AT" 74 65 106 93 6 0 "C6" 0 
+> "AT" 2 97 34 125 7 0 "C7" 0 
+> "AT" 38 97 70 125 8 0 "C8" 0 
+> "AT" 74 97 106 125 9 0 "C9" 0 
+> "AT" 110 97 142 125 10 0 "C0" 0
+> "AT" 146 97 178 125 14 0 "C:" 0
+> "AT" 146 33 201 61 255 0 if "case:0/" "Ccaps" fi if "case:1/" "CCaps" fi if "case:2/" "CCAPS!" fi 0
+> "AT" 182 65 237 93 254 0 "Cu-z" 0
+> "AT" 182 97 237 125 253 0 "Ca-j" 0 ];
+    boot_cgi [ "scripEnd" 0 ];
+end
+< "a-j" 0
+    boot_cgi [ "scripBegin" 0 ];
+print [ > "DL"
+> "AL" 0 1
+> "ZC" 120 0 $name 0
+> "ZC" 120 9 $val 0	//step down 9pix (9 -> 18)
+> "ZC" 120 18 $_%val 0
+
+> "AT" 2 33 34 61 16 0 "Ca" 0 
+> "AT" 38 33 70 61 17 0 "Cb" 0 
+> "AT" 74 33 106 61 18 0 "Cc" 0 
+> "AT" 110 33 142 61 11 0 "C<-" 0 
+> "AT" 2 65 34 93 19 0 "Cd" 0 
+> "AT" 38 65 70 93 20 0 "Ce" 0 
+> "AT" 74 65 106 93 21 0 "Cf" 0 
+> "AT" 2 97 34 125 22 0 "Cg" 0 
+> "AT" 38 97 70 125 23 0 "Ch" 0 
+> "AT" 74 97 106 125 24 0 "Ci" 0 
+> "AT" 110 97 142 125 25 0 "Cj" 0
+
+> "AT" 146 33 201 61 255 0 if "case:0/" "Ccaps" fi if "case:1/" "CCaps" fi if "case:2/" "CCAPS!" fi 0
+> "AT" 182 65 237 93 254 0 "C123" 0
+> "AT" 182 97 237 125 253 0 "Ck-t" 0 ];
+    boot_cgi [ "scripEnd" 0 ];
+end
+< "k-t" 0
+    boot_cgi [ "scripBegin" 0 ];
+print [ > "DL"
+> "AL" 0 1
+> "ZC" 120 0 $name 0
+> "ZC" 120 9 $val 0	//step down 9pix (9 -> 18)
+> "ZC" 120 18 $_%val 0
+
+> "AT" 2 33 34 61 26 0 "Ck" 0 
+> "AT" 38 33 70 61 27 0 "Cl" 0 
+> "AT" 74 33 106 61 28 0 "Cm" 0 
+> "AT" 110 33 142 61 11 0 "C<-" 0 
+> "AT" 2 65 34 93 29 0 "Cn" 0 
+> "AT" 38 65 70 93 30 0 "Co" 0 
+> "AT" 74 65 106 93 31 0 "Cp" 0 
+> "AT" 2 97 34 125 32 0 "Cq" 0 
+> "AT" 38 97 70 125 33 0 "Cr" 0 
+> "AT" 74 97 106 125 34 0 "Cs" 0 
+> "AT" 110 97 142 125 35 0 "Ct" 0
+
+> "AT" 146 33 201 61 255 0 if "case:0/" "Ccaps" fi if "case:1/" "CCaps" fi if "case:2/" "CCAPS!" fi 0
+> "AT" 182 65 237 93 254 0 "Ca-j" 0
+> "AT" 182 97 237 125 253 0 "Cu-z" 0 ];
+    boot_cgi [ "scripEnd" 0 ];
+end
+< "u-z" 0
+    boot_cgi [ "scripBegin" 0 ];
+print [ > "DL"
+> "AL" 0 1
+> "ZC" 120 0 $name 0
+> "ZC" 120 9 $val 0	//step down 9pix (9 -> 18)
+> "ZC" 120 18 $_%val 0
+
+> "AT" 2 33 34 61 36 0 "Cu" 0 
+> "AT" 38 33 70 61 37 0 "Cv" 0 
+> "AT" 74 33 106 61 38 0 "Cw" 0 
+> "AT" 110 33 142 61 11 0 "C<-" 0 
+> "AT" 2 65 34 93 39 0 "Cx" 0 
+> "AT" 38 65 70 93 40 0 "Cy" 0 
+> "AT" 74 65 106 93 41 0 "Cz" 0 
+/*> "AT" 2 97 34 125 7 0 "Cg" 0 
+> "AT" 38 97 70 125 8 0 "Ch" 0 
+> "AT" 74 97 106 125 9 0 "Ci" 0 
+> "AT" 110 97 142 125 10 0 "Cj" 0
+*/
+> "AT" 146 33 201 61 255 0 if "case:0/" "Ccaps" fi if "case:1/" "CCaps" fi if "case:2/" "CCAPS!" fi 0
+> "AT" 182 65 237 93 254 0 "Ck-t" 0
+> "AT" 182 97 237 125 253 0 "C123" 0 ];
+    boot_cgi [ "scripEnd" 0 ];
+end
+
+< "clear" 0
+    print [ > "RL" 0 18 239 27 > "ZC" 120 18 $_%val 0 ];
+end
+< "case" 0
+    print [ > "AL" 255 1 > "AT" 146 33 201 61 255 0 if "case:0/" "Ccaps" fi if "case:1/" "CCaps" fi if "case:2/" "CCAPS!" fi 0 ];
+end
+
+
+
+< "A" 1
+    if "case:0/"{
+	write_char "val:1";
+    }
+    if "case:1/"{
+	write_char "val:-";
+	write_par "case:0";
+	boot_cgi [ "case" 0 ];
+    }
+    if "case:2/"{
+	write_char "val:-";
+    }
+	boot_cgi [ "clear" 0 ];
+end
+< "A" 2
+    if "case:0/"{
+	write_char "val:2";
+    }
+    if "case:1/"{
+	write_char "val:_";
+	write_par "case:0";
+	boot_cgi [ "case" 0 ];
+    }
+    if "case:2/"{
+	write_char "val:_";
+    }
+	boot_cgi [ "clear" 0 ];
+end
+< "A" 3
+    if "case:0/"{
+	write_char "val:3";
+    }
+    if "case:1/"{
+	write_char "val:/";
+	write_par "case:0";
+	boot_cgi [ "case" 0 ];
+    }
+    if "case:2/"{
+	write_char "val:/";
+    }
+	boot_cgi [ "clear" 0 ];
+end
+< "A" 4
+    write_char "val:4";
+	boot_cgi [ "clear" 0 ];
+end
+< "A" 5
+    write_char "val:5";
+	boot_cgi [ "clear" 0 ];
+end
+< "A" 6
+    write_char "val:6";
+	boot_cgi [ "clear" 0 ];
+end
+< "A" 7
+    write_char "val:7";
+	boot_cgi [ "clear" 0 ];
+end
+< "A" 8
+    write_char "val:8";
+	boot_cgi [ "clear" 0 ];
+end
+< "A" 9
+    write_char "val:9";
+	boot_cgi [ "clear" 0 ];
+end
+< "A" 10
+    write_char "val:0";
+	boot_cgi [ "clear" 0 ];
+end
+//remove last char
+< "A" 11
+    write_char "val";
+	boot_cgi [ "clear" 0 ];
+end
+//key 12 and 13 is in calling term
+< "A" 14
+    write_char "val::";
+	boot_cgi [ "clear" 0 ];
+end
+
+//**************************************
+//at here next screen
+< "A" 16
+    if "case:0/"{
+	write_char "val:a";
+    }
+    if "case:1/"{
+	write_char "val:A";
+	write_par "case:0";
+	boot_cgi [ "case" 0 ];
+    }
+    if "case:2/"{
+	write_char "val:A";
+    }
+	boot_cgi [ "clear" 0 ];
+end
+< "A" 17
+    if "case:0/"{
+	write_char "val:b";
+    }
+    if "case:1/"{
+	write_char "val:B";
+	write_par "case:0";
+	boot_cgi [ "case" 0 ];
+    }
+    if "case:2/"{
+	write_char "val:B";
+    }
+	boot_cgi [ "clear" 0 ];
+end
+< "A" 18
+    if "case:0/"{
+	write_char "val:c";
+    }
+    if "case:1/"{
+	write_char "val:C";
+	write_par "case:0";
+	boot_cgi [ "case" 0 ];
+    }
+    if "case:2/"{
+	write_char "val:C";
+    }
+	boot_cgi [ "clear" 0 ];
+end
+< "A" 19
+    if "case:0/"{
+	write_char "val:d";
+    }
+    if "case:1/"{
+	write_char "val:D";
+	write_par "case:0";
+	boot_cgi [ "case" 0 ];
+    }
+    if "case:2/"{
+	write_char "val:D";
+    }
+	boot_cgi [ "clear" 0 ];
+end
+< "A" 20
+    if "case:0/"{
+	write_char "val:e";
+    }
+    if "case:1/"{
+	write_char "val:E";
+	write_par "case:0";
+	boot_cgi [ "case" 0 ];
+    }
+    if "case:2/"{
+	write_char "val:E";
+    }
+	boot_cgi [ "clear" 0 ];
+end
+< "A" 21
+    if "case:0/"{
+	write_char "val:f";
+    }
+    if "case:1/"{
+	write_char "val:F";
+	write_par "case:0";
+	boot_cgi [ "case" 0 ];
+    }
+    if "case:2/"{
+	write_char "val:F";
+    }
+	boot_cgi [ "clear" 0 ];
+end
+< "A" 22
+    if "case:0/"{
+	write_char "val:g";
+    }
+    if "case:1/"{
+	write_char "val:G";
+	write_par "case:0";
+	boot_cgi [ "case" 0 ];
+    }
+    if "case:2/"{
+	write_char "val:G";
+    }
+	boot_cgi [ "clear" 0 ];
+end
+< "A" 23
+    if "case:0/"{
+	write_char "val:h";
+    }
+    if "case:1/"{
+	write_char "val:H";
+	write_par "case:0";
+	boot_cgi [ "case" 0 ];
+    }
+    if "case:2/"{
+	write_char "val:H";
+    }
+	boot_cgi [ "clear" 0 ];
+end
+< "A" 24
+    if "case:0/"{
+	write_char "val:i";
+    }
+    if "case:1/"{
+	write_char "val:I";
+	write_par "case:0";
+	boot_cgi [ "case" 0 ];
+    }
+    if "case:2/"{
+	write_char "val:I";
+    }
+	boot_cgi [ "clear" 0 ];
+end
+< "A" 25
+    if "case:0/"{
+	write_char "val:j";
+    }
+    if "case:1/"{
+	write_char "val:J";
+	write_par "case:0";
+	boot_cgi [ "case" 0 ];
+    }
+    if "case:2/"{
+	write_char "val:J";
+    }
+	boot_cgi [ "clear" 0 ];
+end
+//**************************************
+< "A" 26
+    if "case:0/"{
+	write_char "val:k";
+    }
+    if "case:1/"{
+	write_char "val:K";
+	write_par "case:0";
+	boot_cgi [ "case" 0 ];
+    }
+    if "case:2/"{
+	write_char "val:K";
+    }
+	boot_cgi [ "clear" 0 ];
+end
+< "A" 27
+    if "case:0/"{
+	write_char "val:l";
+    }
+    if "case:1/"{
+	write_char "val:L";
+	write_par "case:0";
+	boot_cgi [ "case" 0 ];
+    }
+    if "case:2/"{
+	write_char "val:L";
+    }
+	boot_cgi [ "clear" 0 ];
+end
+< "A" 28
+    if "case:0/"{
+	write_char "val:m";
+    }
+    if "case:1/"{
+	write_char "val:M";
+	write_par "case:0";
+	boot_cgi [ "case" 0 ];
+    }
+    if "case:2/"{
+	write_char "val:M";
+    }
+	boot_cgi [ "clear" 0 ];
+end
+< "A" 29
+    if "case:0/"{
+	write_char "val:n";
+    }
+    if "case:1/"{
+	write_char "val:N";
+	write_par "case:0";
+	boot_cgi [ "case" 0 ];
+    }
+    if "case:2/"{
+	write_char "val:N";
+    }
+	boot_cgi [ "clear" 0 ];
+end
+< "A" 30
+    if "case:0/"{
+	write_char "val:o";
+    }
+    if "case:1/"{
+	write_char "val:O";
+	write_par "case:0";
+	boot_cgi [ "case" 0 ];
+    }
+    if "case:2/"{
+	write_char "val:O";
+    }
+	boot_cgi [ "clear" 0 ];
+end
+< "A" 31
+    if "case:0/"{
+	write_char "val:p";
+    }
+    if "case:1/"{
+	write_char "val:P";
+	write_par "case:0";
+	boot_cgi [ "case" 0 ];
+    }
+    if "case:2/"{
+	write_char "val:P";
+    }
+	boot_cgi [ "clear" 0 ];
+end
+< "A" 32
+    if "case:0/"{
+	write_char "val:q";
+    }
+    if "case:1/"{
+	write_char "val:Q";
+	write_par "case:0";
+	boot_cgi [ "case" 0 ];
+    }
+    if "case:2/"{
+	write_char "val:Q";
+    }
+	boot_cgi [ "clear" 0 ];
+end
+< "A" 33
+    if "case:0/"{
+	write_char "val:r";
+    }
+    if "case:1/"{
+	write_char "val:R";
+	write_par "case:0";
+	boot_cgi [ "case" 0 ];
+    }
+    if "case:2/"{
+	write_char "val:R";
+    }
+	boot_cgi [ "clear" 0 ];
+end
+< "A" 34
+    if "case:0/"{
+	write_char "val:s";
+    }
+    if "case:1/"{
+	write_char "val:S";
+	write_par "case:0";
+	boot_cgi [ "case" 0 ];
+    }
+    if "case:2/"{
+	write_char "val:S";
+    }
+	boot_cgi [ "clear" 0 ];
+end
+< "A" 35
+    if "case:0/"{
+	write_char "val:t";
+    }
+    if "case:1/"{
+	write_char "val:T";
+	write_par "case:0";
+	boot_cgi [ "case" 0 ];
+    }
+    if "case:2/"{
+	write_char "val:T";
+    }
+	boot_cgi [ "clear" 0 ];
+end
+//****************************************
+< "A" 36
+    if "case:0/"{
+	write_char "val:u";
+    }
+    if "case:1/"{
+	write_char "val:U";
+	write_par "case:0";
+	boot_cgi [ "case" 0 ];
+    }
+    if "case:2/"{
+	write_char "val:U";
+    }
+	boot_cgi [ "clear" 0 ];
+end
+< "A" 37
+    if "case:0/"{
+	write_char "val:v";
+    }
+    if "case:1/"{
+	write_char "val:V";
+	write_par "case:0";
+	boot_cgi [ "case" 0 ];
+    }
+    if "case:2/"{
+	write_char "val:V";
+    }
+	boot_cgi [ "clear" 0 ];
+end
+< "A" 38
+    if "case:0/"{
+	write_char "val:w";
+    }
+    if "case:1/"{
+	write_char "val:W";
+	write_par "case:0";
+	boot_cgi [ "case" 0 ];
+    }
+    if "case:2/"{
+	write_char "val:W";
+    }
+	boot_cgi [ "clear" 0 ];
+end
+< "A" 39
+    if "case:0/"{
+	write_char "val:x";
+    }
+    if "case:1/"{
+	write_char "val:X";
+	write_par "case:0";
+	boot_cgi [ "case" 0 ];
+    }
+    if "case:2/"{
+	write_char "val:X";
+    }
+	boot_cgi [ "clear" 0 ];
+end
+< "A" 40
+    if "case:0/"{
+	write_char "val:y";
+    }
+    if "case:1/"{
+	write_char "val:Y";
+	write_par "case:0";
+	boot_cgi [ "case" 0 ];
+    }
+    if "case:2/"{
+	write_char "val:Y";
+    }
+	boot_cgi [ "clear" 0 ];
+end
+< "A" 41
+    if "case:0/"{
+	write_char "val:z";
+    }
+    if "case:1/"{
+	write_char "val:Z";
+	write_par "case:0";
+	boot_cgi [ "case" 0 ];
+    }
+    if "case:2/"{
+	write_char "val:Z";
+    }
+	boot_cgi [ "clear" 0 ];
+end
+
+< "set" 0
+    if "switch:0/"{
+	boot_cgi [ "a-j" 0 ];
+	exit_cgi;
+    }
+    if "switch:1/"{
+	boot_cgi [ "k-t" 0 ];
+	exit_cgi;
+    }
+    if "switch:2/"{
+	boot_cgi [ "u-z" 0 ];
+	exit_cgi;
+    }
+    if "switch:3/"{
+	boot_cgi [ "123" 0 ];
+	exit_cgi;
+    }
+end
+
+< "A" 255
+    if "case:0/"{
+	write_par "case:1";
+	boot_cgi [ "case" 0 ];
+	exit_cgi;
+    }
+    if "case:1/"{
+	write_par "case:2";
+	boot_cgi [ "case" 0 ];
+	exit_cgi;
+    }
+	write_par "case:0";
+	boot_cgi [ "case" 0 ];
+end
+
+//forwarts
+< "A" 253
+    if "switch:0/"{
+	write_par "switch:1";
+	boot_cgi [ "set" 0 ];
+	exit_cgi;
+    }
+    if "switch:1/"{
+	write_par "switch:2";
+	boot_cgi [ "set" 0 ];
+	exit_cgi;
+    }
+    if "switch:2/"{
+	write_par "switch:3";
+	boot_cgi [ "set" 0 ];
+	exit_cgi;
+    }
+
+    write_par "switch:0";
+    boot_cgi [ "set" 0 ];
+end
+//backwarts
+< "A" 254
+    if "switch:0/"{
+	write_par "switch:3";
+	boot_cgi [ "set" 0 ];
+	exit_cgi;
+    }
+    if "switch:3/"{
+	write_par "switch:2";
+	boot_cgi [ "set" 0 ];
+	exit_cgi;
+    }
+    if "switch:2/"{
+	write_par "switch:1";
+	boot_cgi [ "set" 0 ];
+	exit_cgi;
+    }
+
+    write_par "switch:0";
+    boot_cgi [ "set" 0 ];
+end
+
+cgi: "set" 0

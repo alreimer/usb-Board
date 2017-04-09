@@ -50,6 +50,7 @@ void parse_tbl(char *data, char clean){
     char *tmp, *tmp2, *err = "ERR: allocate memory %d\n";
     struct tbl **ptr;
     struct rnd_tbl **rnd_ptr, *rnd_p;
+    struct parsestr prsstr;
 //    long int rnd;
     unsigned int num = 1;
     int flag = 1;//used 
@@ -294,7 +295,7 @@ printf("Special: %d %s %d\n", rnd_p->rnd_entry, rnd_p->entry, dirent->d_type);
 			if(tmp5 == point[1]) break;
 			tmp5 = point[1];
 			if(! *tmp) continue;//new
-			if((tmp6 = parsestr1(tmp, tmp4[0])) == NULL)//think about!!
+			if((tmp6 = parsestr2(&prsstr, tmp, tmp4[0])) == NULL)//think about!!	//was parsestr1
 			    continue;
 
 			*rnd_ptr = (struct rnd_tbl *)malloc(sizeof(struct rnd_tbl));
@@ -342,13 +343,14 @@ printf("Special: %d %s %d\n", rnd_p->rnd_entry, rnd_p->entry, dirent->d_type);
 			sprintf(rnd_p->entries[flag], "%s", tmp6);
 		}
 		if(flag+1 < i){
-		    tmp = point[1];
-		    tmp6 = parsestr1(tmp, tmp4[flag+1]);//think about!
+//		    tmp = point[1];
+		    tmp = restore_str(&prsstr);//new. was point[1];
+		    tmp6 = parsestr2(&prsstr, tmp, tmp4[flag+1]);//think about!//was parsestr1
 		} else tmp6 = NULL;
 	    } else {
 		rnd_p->entries[flag] = NULL;
 		if(flag+1 < i){
-		    tmp6 = parsestr1(tmp, tmp4[flag+1]);
+		    tmp6 = parsestr2(&prsstr, tmp, tmp4[flag+1]);
 		}
 	    }
 	flag ++;

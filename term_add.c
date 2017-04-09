@@ -14,8 +14,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "include/httpd.h"
+
 #include "term_add.h"
 #include "term_tbl.h"
+#include "term_cgi.h"
 #include "term_parser.h"
 #include "terminal.h"
 
@@ -65,7 +68,8 @@ char *parsestr1( char *d, char *c)	//try identic strings!, "xxx*NULL" combinatio
 				else return tmp2;
 
 		    case '\\':
-		    case 'E': return d;
+		    case 'E': point[1] = d;//NEW 20.03.2016
+				return d;
 	    /* skip zero or one character*/
 		    case '0': tmp = d; while(tmp <= d+1){tmp = parsestr1(tmp, c+1); if (tmp) return tmp; tmp++;} return NULL;
 	    /* skip one symbol in d, exept \0 */
@@ -163,11 +167,12 @@ char *parsestr1( char *d, char *c)	//try identic strings!, "xxx*NULL" combinatio
 			tmp++;
 		    }
 		    
-		    if(tmp2){
+		    if(tmp2 && *tmp2){
 			i = strlen(tmp2);
 			if(i && strncmp(d, tmp2, i)) return NULL;
 			d = d + i;
 		    }
+		    else return NULL;//new here!!!!
 
 		    continue;		//it's or c++ or c=tmp+2
 
@@ -568,6 +573,7 @@ char *get_var(unsigned long long *size_ptr, char *var_index){
 	}else if(*var_index == '@'){	//??_@variable?? - show variable from rnd table
 	    var_index++;
 	    ptr = get_tbl(var_index);
+	    if(ptr != NULL) size = strlen(ptr) + 1;		//for limit by show str.
 	}else if(*var_index == '?'){	//??_?file|expression?? -> in file this expression
 	    var_index++;
 
@@ -612,17 +618,25 @@ char *get_var(unsigned long long *size_ptr, char *var_index){
 */	}else if(!strcmp(var_index,"etc_save")){
 	    ptr = etc_save;
 	    size = 2;
-//	}else if(!strcmp(var_index,"file_name")){
-//	    ptr = file;
-	}else if(!strcmp(var_index,"buf")){
+	}else if(!strcmp(var_index,"value")){
+//	    memset(value, 0, 16);
+	    snprintf(value, 15, "%d", A1_BTN);
+	    ptr = value;
+	}else if(!strcmp(var_index,"version")){
+	    ptr = version;
+	    size = 256;
+	}else if(!strcmp(var_index,"buf")){	//whole buffer
 	    ptr = buf;
 	    size = 65537;
+	}else if(!strcmp(var_index,"buffer")){
+	    ptr = buf;
+	    if(buf_size >= 65537 /*|| buf_size == 0*/) size = 65537;//i think, it is right here!!
+	    else size = buf_size;
 	}
 
-    
     }/*end of global variables*/
     else  return get_cfg_value(size_ptr, var_index, 0); /*if not found - return NULL*/
-    
+
     if(size_ptr) *size_ptr = size; 
     return ptr;
 }

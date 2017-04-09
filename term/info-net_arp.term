@@ -1,0 +1,47 @@
+/*with timeout*/
+area:60000:buffer
+
+< "timeout"
+	write_system ":buffer:cat /proc/net/arp";
+	print [ 12 > "DL" > "AL" 0 1 
+table: list
+#-> parse_area: buffer
+while:/[/*/]\n
+if:/!/BIP/\/!/*/]/<- 	/>
+if:/*/<- 	/>/*/<- 	/>/*/<- 	/>/[/*/]/<- 	/>
+if:/*/<- 	/>
+#end_table
+
+if "_@list+1:" > "ZL" 0 1  "IP Address:| " $_@list+1#0 "|HW Address:| " $_@list+1#1 "|Device: " $_@list+1#2 0 fi
+if "_@list+2:" > "ZL" 0 65  "IP Address:| " $_@list+2#0 "|HW Address:| " $_@list+2#1 "|Device: " $_@list+2#2 0 fi
+if "_@list+3:" > "AT" 205 97 237 125 7 0 "C->" 0 fi
+    > "AT" 205 33 237 61 10 0 "C<-" 0
+    > "AT" 205 1 237 29 13 0 "C<" 0
+    >>>> "wait:" 20 0 ];
+end
+
+< "button"
+    boot_page "??_referrer??";
+end
+
+//next page
+< "A" 7
+	set_tbl "list += 2";
+	boot_cgi [ "timeout" ];
+end
+
+//page before
+< "A" 10
+    set_tbl "list == 0"{
+	boot_page "??_referrer??";
+    }
+    set_tbl "list != 0"{
+	set_tbl "list -= 2";
+	boot_cgi [ "timeout" ];
+    }
+end
+< "A" 13
+    boot_page "??_referrer??";
+end
+cgi: "timeout"
+

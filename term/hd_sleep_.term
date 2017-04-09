@@ -1,0 +1,93 @@
+//in _buf must be:  /dev/sdb SLEEP_MODEB
+ifnot "_buf://dev//sd/<1abcdefg/>/tSLEEP_MODE"
+wr_par: _buf:/dev/sda SLEEP_MODE\n
+fi
+
+table: slp_mode
+#-> parse_area: _buf
+while:/[/*/]\n
+if:/[//dev//sd/<1abcdefg/>/]/<- 	/>
+if:/[SLEEP_MODE
+#end_table
+
+par:4:sleep_mode:?_@slp_mode+1#1:0|120|180|240|241|242|244|246|248|250
+readcfg
+area:16000:buffer
+wr_par: buffer:0 Off\n120 10 minutes\n180 15 minutes\n240 20 minutes\n241 30 minutes\n242 1 hour\n244 2 hours\n246 3 hours\n248 4 hours\n250 5 hours\n
+
+table: list
+#-> parse_area: buffer
+while:/[/*/]\n
+if:/[/*/]/<- 	/>
+if:
+#end_table
+
+
+< "show" 0
+	print [ 12   > "DL" > "AL" 0 1
+if "_@list+1:" > "AT" 2 1 100 29 1 0 "C" if "_@list+1#0:/?_&sleep_mode?/" "->" fi $_@list+1#1:10 0 fi
+if "_@list+2:" > "AT" 104 1 201 29 2 0 "C" if "_@list+2#0:/?_&sleep_mode?/" "->" fi $_@list+2#1:10 0 fi
+if "_@list+3:" > "AT" 2 33 100 61 3 0 "C" if "_@list+3#0:/?_&sleep_mode?/" "->" fi $_@list+3#1:10 0 fi
+if "_@list+4:" > "AT" 104 33 201 61 4 0 "C" if "_@list+4#0:/?_&sleep_mode?/" "->" fi $_@list+4#1:10 0 fi
+if "_@list+5:" > "AT" 2 65 100 93 5 0 "C" if "_@list+5#0:/?_&sleep_mode?/" "->" fi $_@list+5#1:10 0 fi
+if "_@list+6:" > "AT" 104 65 201 93 6 0 "C" if "_@list+6#0:/?_&sleep_mode?/" "->" fi $_@list+6#1:10 0 fi
+if "_@list+7:" > "AT" 2 97 100 125 7 0 "C" if "_@list+7#0:/?_&sleep_mode?/" "->" fi $_@list+7#1:10 0 fi
+if "_@list+8:" > "AT" 104 97 201 125 8 0 "C" if "_@list+8#0:/?_&sleep_mode?/" "->" fi $_@list+8#1:10 0 fi
+if "_@list+9:" > "AT" 205 97 237 125 9 0 "C->" 0 fi
+
+    > "AT" 205 33 237 61 10 0 "C<-" 0
+if "_etc_save:1" > "AT" 205 65 237 93 11 0 "CS" 0 fi
+    > "AT" 205 1 237 29 13 0 "C<" 0 ];
+end
+
+< "A" 1 8
+	copy_ppar "_@list:_%sleep_mode:0";
+//print [ 12   > "DL" > "AL" 0 1   $_@list ];
+//print [ 12   > "DL" > "AL" 0 1 "mntpt: " $mntpoint ];
+    fill_cfg "sleep_mode";
+    savecfg;
+    if_changed "sleep_mode" {
+//	system "/etc/init.d/S15mount start &";
+//print [ 12   > "DL" > "AL" 0 1 "hdparm: " $_&sleep_mode " " $_@slp_mode+1#0
+// " Sleep_mode: "  $_@slp_mode+1#1 ];
+
+	shell "hdparm -S??_&sleep_mode?? ??_@slp_mode+1#0?? ";
+    }
+    recover_saved;
+    boot_cgi [ "show" 0 ];
+end
+
+//next page
+< "A" 9
+	set_tbl "list += 8";
+	boot_cgi [ "show" 0 ];
+end
+
+//page before
+< "A" 10
+    set_tbl "list == 0"{
+	clean_par "_buf";
+	boot_page "hd_sleep.term";
+    }
+    set_tbl "list != 0"{
+	set_tbl "list -= 8";
+	boot_cgi [ "show" 0 ];
+    }
+end
+< "A" 13
+    clean_par "_buf";
+    boot_page "hd_sleep.term";
+end
+
+< "A" 11
+    write_par "_etc_save:0";
+    system "/etc/save_config.sh";
+//    boot_page "hd_sleep.term";
+    boot_cgi [ "show" 0 ];
+end
+
+cgi: "show" 0
+
+//write_system  "_buf:par_to:mount";
+//clean_par "_buf";
+

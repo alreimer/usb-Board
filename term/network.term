@@ -4,6 +4,7 @@ par:20:gateway:GATEWAY:^(([01]?[0-9]{1,2}|2[0-4][0-9]|25[0-5])\.){3}([01]?[0-9]{
 par:20:dns_server0:DNS_SERVER0:^(([01]?[0-9]{1,2}|2[0-4][0-9]|25[0-5])\.){3}([01]?[0-9]{1,2}|2[0-4][0-9]|25[0-5])$
 par:20:dns_server1:DNS_SERVER1:^(([01]?[0-9]{1,2}|2[0-4][0-9]|25[0-5])\.){3}([01]?[0-9]{1,2}|2[0-4][0-9]|25[0-5])$
 par:2:dhcp_client:DHCP_ENABLE:[01]
+par:17:hostname:HOSTNAME:
 readcfg
 
     > "DL" > "AL" 0 1
@@ -38,6 +39,8 @@ if "dhcp_client:0/"
     > "AT" 104 97 201 125 6 0 "CDNS_Server2" 0
     > "AT" 205 33 237 61 7 0 "Ci" 0
 //    > "AT" 205 97 237 125 7 0 "C>" 0
+    > "AT" 205 97 237 125 101 0 "CHo|st" 0
+
 
 < "A" 2
     boot_page "net-ip.term";
@@ -54,6 +57,7 @@ end
 < "A" 6
     boot_page "net-dns2.term";
 end
+//*********  info  **********
 < "A" 7
     print [ > "DL" > "AL" 0 1
     > "AT" 205 1 237 29 100 0 "C<" 0
@@ -63,12 +67,17 @@ end
     > "ZL" 10 55 "Gateway: " $gateway 0
     > "ZL" 10 65 "DNS_Server1: " $dns_server0 0
     > "ZL" 10 75 "DNS_Server2: " $dns_server1 0
+    > "AT" 2 97 201 125 101 0 "CHostname:|" $hostname 0
 ];
 end
 < "A" 100
     boot_page "network.term";
 end
 fi
+< "A" 101
+    boot_page "net-hostname.term";
+end
+
 
 //step down in 10pix
 if "dhcp_client:1/"
@@ -78,5 +87,6 @@ if "dhcp_client:1/"
     > "ZL" 10 55 "Gateway: " $gateway 0
     > "ZL" 10 65 "DNS_Server1: " $dns_server0 0
     > "ZL" 10 75 "DNS_Server2: " $dns_server1 0
+    > "AT" 2 97 201 125 101 0 "CHostname:|" $hostname 0
 fi
 

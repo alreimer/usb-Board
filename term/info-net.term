@@ -1,12 +1,6 @@
+/*with timeout*/
 area:40000:buffer
 //wr_shell: :buffer:df -h
-
-/*
-Filesystem
-Size
-Use%
-Mountpoint
-*/
 
 < "timeout"
 	write_system ":buffer:ifconfig -a";
@@ -33,6 +27,10 @@ if "_@list+1:"
 if "_@list+2:" > "AT" 205 97 237 125 7 0 "C->" 0 fi
     > "AT" 205 33 237 61 10 0 "C<-" 0
     > "AT" 205 1 237 29 13 0 "C<" 0
+if "_@list+1#5:/*PROMISC" > "AT" 42 97 111 125 3 0 "CnPROMISC" 0 fi
+ifnot "_@list+1#5:/*PROMISC" > "AT" 42 97 111 125 3 0 "CPROMISC" 0 fi
+if "_@list+1#5:/*NOARP" > "AT" 115 97 156 125 2 0 "CARP" 0 fi
+ifnot "_@list+1#5:/*NOARP" > "AT" 115 97 156 125 2 0 "CnARP" 0 fi
 if "_@list+1#5:UP" > "AT" 160 97 201 125 1 0 "CDown" 0 fi
 ifnot "_@list+1#5:UP" > "AT" 160 97 201 125 1 0 "CUp" 0 fi
     >>>> "wait:" 10 0 ];
@@ -48,6 +46,24 @@ end
 	}
 	not "_@list+1#5:UP" {
 	    shell "ifconfig ??_@list+1#0?? up";
+	}
+	boot_cgi [ "timeout" ];
+end
+< "A" 2
+	if "_@list+1#5:/*NOARP" {
+	    shell "ifconfig ??_@list+1#0?? arp";
+	}
+	not "_@list+1#5:/*NOARP" {
+	    shell "ifconfig ??_@list+1#0?? -arp";
+	}
+	boot_cgi [ "timeout" ];
+end
+< "A" 3
+	if "_@list+1#5:/*PROMISC" {
+	    shell "ifconfig ??_@list+1#0?? -promisc";
+	}
+	not "_@list+1#5:/*PROMISC" {
+	    shell "ifconfig ??_@list+1#0?? promisc";
 	}
 	boot_cgi [ "timeout" ];
 end

@@ -1,0 +1,23 @@
+par:6:val:ADMIN_PORT:^[0-5]?([0-9]){1,4}$
+readcfg
+
+> "DL"
+> "AL" 0 1
+> "ZR" 80 5 "Port: " 0
+> "ZL" 80 5 $val 0	//step down 10pix (5 -> 15)
+> "ZL" 80 15 $_%val 0
+
+> "AT" 110 65 142 93 12 0 "C\>" 0 
+> "AT" 205 33 237 61 13 0 "C<" 0 
+
+include: net-keys.incterm
+> "AL" 14 1	//remove "."
+
+< "A" 12
+    fill_cfg "val";
+    savecfg;
+    boot_page "webui.term";
+end
+< "A" 13
+    boot_page "webui.term";
+end

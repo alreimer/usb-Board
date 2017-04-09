@@ -3,7 +3,7 @@ par:6:ftp_port:FTP_PORT:^[0-5]?([0-9]){1,4}$
 readcfg
 
 12  > "DL" > "AL" 0 1
-    > "AT" 104 1 201 29 1 0 "Cftp Demon" 0
+    > "AT" 104 1 201 29 1 0 "Cftp Daemon" 0
     > "AT" 205 1 237 29 8 0 "C<" 0
     > "AT" 2 33 100 61 2 0 "CPort: " $ftp_port 0 //len of string is 11
 
@@ -21,11 +21,11 @@ if "ftp_enable:0/"
     write_par "_%ftp_enable:1";
     fill_cfg "ftp_enable";
     savecfg;
-	change_line "./etc/inetd.conf:/*vsftpd:??_&ftp_port??		stream	tcp	nowait	root	/sbin/vsftpd /sbin/vsftpd\n"{
-		shell "echo \"??_&ftp_port??		stream	tcp	nowait	root	/sbin/vsftpd /sbin/vsftpd\" >> ./etc/inetd.conf";
+	change_line "/etc/inetd.conf:/*vsftpd:??_&ftp_port??		stream	tcp	nowait	root	/sbin/vsftpd /sbin/vsftpd\n"{
+		shell "echo \"??_&ftp_port??		stream	tcp	nowait	root	/sbin/vsftpd /sbin/vsftpd\" >> /etc/inetd.conf";
 	}
 
-	system "etc/init.d/S30inetd restart";
+	system "/etc/init.d/S30inetd restart";
     boot_page "services/ftpD.term";
 end
 fi
@@ -36,11 +36,11 @@ if "ftp_enable:1/"
     write_par "_%ftp_enable:0";
     fill_cfg "ftp_enable";
     savecfg;
-	change_line "./etc/inetd.conf:/*vsftpd:#??_&ftp_port??		stream	tcp	nowait	root	/sbin/vsftpd /sbin/vsftpd\n"{
-		shell "echo \"#??_&ftp_port??		stream	tcp	nowait	root	/sbin/vsftpd /sbin/vsftpd\" >> ./etc/inetd.conf";
+	change_line "/etc/inetd.conf:/*vsftpd:#??_&ftp_port??		stream	tcp	nowait	root	/sbin/vsftpd /sbin/vsftpd\n"{
+		shell "echo \"#??_&ftp_port??		stream	tcp	nowait	root	/sbin/vsftpd /sbin/vsftpd\" >> /etc/inetd.conf";
 	}
 
-	system "etc/init.d/S30inetd restart";
+	system "/etc/init.d/S30inetd restart";
     boot_page "services/ftpD.term";
 end
 fi

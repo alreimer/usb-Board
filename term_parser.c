@@ -277,8 +277,8 @@ int ReadConfiguration(void){
 
     struct cfg_parse1 *p;
     FILE *fip;
-    char LineBuf[256];
-    char *ptr, *end, *config = ETC_PATH "/config";
+    char LineBuf[1024];
+    char *ptr, *end, *name, *config = ETC_PATH "/config";
     int i;
 
     if((fip = fopen(config, "r")) == NULL){
@@ -287,17 +287,24 @@ int ReadConfiguration(void){
 	return 0;
     }
 
-    while(fgets(LineBuf,255,fip) != NULL){
+    while(fgets(LineBuf,1023,fip) != NULL){
 	p = cfg1;
     
         while(p){
-	    if((p->str != NULL) && (p->size != 0) && (p->size != 1) && (p->name) && *(p->name) && (ptr = strstrcfg(LineBuf, p->name, &i)) != NULL){
+	    if((p->str != NULL) && (p->size != 0) && (p->size != 1) && (p->name) && *(p->name)){
+		name = p->name;
+		if(*name == '?'){
+		    name++;
+		    name = get_var(NULL, name);
+		}
+		if(name && *name && (ptr = strstrcfg(LineBuf, name, &i)) != NULL){
 		strncpy(p->value, ptr, MIN(i, (p->size)-1));	//it seems to be OK, but is always p->value[(p->size)-1] == '\0'
 		p->value[(p->size)-1] = '\0';	//make it for shure
 //		strcpy(p->value, ptr);
 		strncpy(p->new_value, ptr, MIN(i, (p->size)-1));
 		p->new_value[(p->size)-1] = '\0';
-		printf("%s=%s %lld  %d\n", p->name, p->value, p->size, p->changed);
+		printf("%s=%s %lld  %d\n", name, p->value, p->size, p->changed);
+		}
 	    }
 	    p = p->next;
 	}
@@ -311,7 +318,7 @@ int SaveConfiguration(void){	//new function to write to config direct from struc
     FILE *fip, *fop;
     struct cfg_parse1 *p;
     int i;
-    char LineBuf[256];	//maybe buffer is to small
+    char LineBuf[1024], *name;	//maybe buffer is to small
 
     if((fip = fopen(ETC_PATH "/config","r")) == NULL || (fop = fopen(ETC_PATH "/config1","w+")) == NULL){
 #ifdef DEBUG
@@ -324,18 +331,26 @@ int SaveConfiguration(void){	//new function to write to config direct from struc
 	fprintf( stdout, "*****Save: Success open config file *****\n" );
 #endif
 
-    while(fgets(LineBuf,255,fip) != NULL){
+    while(fgets(LineBuf,1023,fip) != NULL){
 	    p = cfg1;		//need be more selective!
 	    while(p){
 		if((p->str != NULL) && (p->size != 0) && (p->size != 1) && 
-				p->name && *(p->name) && p->changed && (! p->saved) && strstrcfg(LineBuf,p->name, &i)){
-		    fprintf(fop,"%s=\'%s\'\n", p->name, p->new_value);
-printf("%s=\'%s\' changed=%d\n", p->name, p->new_value, p->changed);
+				p->name && *(p->name) && p->changed && (! p->saved)){
+		name = p->name;
+//printf("SAVEDDDDD\n", name);
+		if(*name == '?'){
+		    name++;
+		    name = get_var(NULL, name);
+		}
+		if(name && *name && strstrcfg(LineBuf, name, &i)){
+		    fprintf(fop,"%s=\'%s\'\n", name, p->new_value);
+printf("par__%s=\'%s\' changed=%d\n", name, p->new_value, p->changed);
 		p->saved=1;
 		    etc_save[0] = '1';		//set etc_save=1 - so /etc must be saved in memory
 		    etc_save[1] = '\0';
 
 	        goto next;
+		}
 		}
 		p = p->next;
 	    }
@@ -346,12 +361,20 @@ printf("%s=\'%s\' changed=%d\n", p->name, p->new_value, p->changed);
     p = cfg1;
     while(p){
 	if((p->str != NULL) && (p->size != 0) && (p->size != 1) && p->name && *(p->name) && p->changed && (!p->saved)){
-	    fprintf(fop,"%s=\'%s\'\n", p->name, p->new_value);
-printf("%s=\'%s\' changed=%d\n", p->name, p->new_value, p->changed);
+		name = p->name;
+		if(*name == '?'){
+		    name++;
+		    name = get_var(NULL, name);
+		}
+		if(name && *name){
+
+	    fprintf(fop,"%s=\'%s\'\n", name, p->new_value);
+printf("%s=\'%s\' changed=%d\n", name, p->new_value, p->changed);
 	    p->saved=1;
-	        etc_save[0] = '1';
+		etc_save[0] = '1';
 		etc_save[1] = '\0';
 
+		}
 	}
 	p = p->next;
     }
@@ -367,3 +390,20 @@ printf("%s=\'%s\' changed=%d\n", p->name, p->new_value, p->changed);
 #endif
     return 1;
 }
+
+//recover the 'par'-saved flag to 0
+void recover_saved(char *par){
+    struct cfg_parse1 *p;
+    p = cfg1;
+    if(par == NULL || *par == '\0'){
+	while(p){
+	    if((p->str != NULL) && (p->size != 0) && (p->size != 1) && p->name && *(p->name) && p->changed && (p->saved)){
+//printf("recover: %s\n", p->name);
+		p->saved = 0;
+	    }
+	    p = p->next;
+	}
+    }else printf("par is not empty\n");//test
+
+}
+
