@@ -1,0 +1,33 @@
+#!/bin/sh
+
+start() {
+#	if [ ! -e /mnt/.no_httpd ] & [ -d /mnt/hd0/www ]; then
+	if [ -d /mnt/hd0/www ]; then
+	echo " *** Start thttpd ***>>"
+	/sbin/thttpd -C /etc/thttpd.conf
+	fi
+}
+stop() {
+	echo " *** Stop thttpd ***>>"
+	killall -15 thttpd >/dev/null 2>&1 
+}
+restart() {
+	stop
+	start
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart)
+	restart
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|restart}"
+	exit 1
+esac
+exit $?

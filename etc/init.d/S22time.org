@@ -1,0 +1,92 @@
+#!/bin/sh
+#
+# rdate
+#
+
+DESC="set time"
+TICK="10076"
+
+start() {
+	echo " *** Start $DESC ***>>"
+	. /etc/config
+	/sbin/adjtimex -t $TICK >/dev/null 2>&1
+	export TZ=$TZ
+	case "$TIME_MODE" in 
+	1)	#from ntp-server 123
+	    [ $NTPSERV ] && NTP_SERVER=$NTPSERV
+	    x=1
+	    echo "ping ${NTP_SERVER} -c 1"
+
+	    while [ "$x" -ne 3 ]; do
+	    echo "try NTP $x time"
+	    ping -c 1 ${NTP_SERVER}
+	    if [ $? -eq 0 ] ; then   
+	    ntpclient -h ${NTP_SERVER} -i 86400 -c 0 -s &  #86400 is one day
+	    [ $? -eq 0 ] && {
+	    sleep 1
+	    echo "ntpclient: Updated local time from ${NTP_SERVER}"
+	    touch /tmp/ntpclient.run
+	    break
+	    }
+	    fi
+	    sleep 3
+	    x=$(($x+1))
+	    done
+
+	    [ "$x" -eq 3 ] && TZ=xxx+0 date ${TIME_VALUE}
+	    ;;
+	
+	2)	#from time-server 37
+	    [ $TIMESERV ] && TIME_SERVER=$TIMESERV
+	    x=1
+	    echo "ping ${TIME_SERVER} -c 1"
+
+	    while [ "$x" -ne 3 ]; do
+	    echo "try TIME $x time"
+	    ping -c 1 ${TIME_SERVER}
+	    if [ $? -eq 0 ] ; then   
+	    rdate -s ${TIME_SERVER}
+	    [ $? -eq 0 ] && {
+	    sleep 1
+	    echo "rdate: Updated local time from ${TIME_SERVER}"
+	    break
+	    }
+	    fi
+	    sleep 3
+	    x=$(($x+1))
+	    done
+
+	    [ "$x" -eq 3 ] && TZ=xxx+0 date ${TIME_VALUE}
+	    ;;
+	*)	#from config
+#	    TZ=xxx+0 date ${TIME_VALUE}
+	    ;;
+	esac
+}
+stop() {
+	echo " *** Save time ***>>"
+	httpd_cfg TIME_VALUE=`date "+%m%d%H%M%Y"`
+	killall ntpclient
+}
+restart() {
+	stop
+	start
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart)
+	restart
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|restart}"
+	exit 1
+esac
+
+exit $?
+

@@ -1,0 +1,40 @@
+#!/bin/sh
+
+start() {
+	. /etc/config
+	[ ${NFS_ENABLE:=0} -eq 0 ] && exit 0
+	if [ ! -e /mnt/.no_nfs ]; then
+	echo " *** Start NFS Daemon ***>>"
+	/sbin/portmap
+	/sbin/nfsd
+	/sbin/mountd
+	/sbin/exportfs -a
+	fi
+}
+stop() {
+	echo " *** Stop NFS Daemon ***>>"
+	/sbin/exportfs -ua
+	killall -15 mountd >/dev/null 2>&1
+	killall -9 nfsd >/dev/null 2>&1
+	killall -15 portmap >/dev/null 2>&1
+}
+restart() {
+	stop
+	start
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart)
+	restart
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|restart}"
+	exit 1
+esac
+exit $?

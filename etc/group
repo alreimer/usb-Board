@@ -1,0 +1,10 @@
+root:x:0:
+daemon:x:1:
+bin:x:2:
+rpc:x:5:
+users:x:100:
+ftp:x:105:
+httpd:x:106:
+usb:x:500:
+nobody:x:65534:
+nogroup:x:65534:

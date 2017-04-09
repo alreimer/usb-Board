@@ -1,0 +1,49 @@
+#!/bin/sh
+# Start all init scripts in /etc/init.d
+# executing them in numerical order.
+#
+
+
+#/mnt/hd0/usr/user/user_init.sh stop || echo "   *** Can't find user_init.sh! ***>>"
+
+case $2 in
+    start)
+    	echo " *** Start User Init ***>>"
+    	CMD=""
+    ;;
+    stop)
+	echo " *** Stop User Init ***>>"
+	CMD="| sort -r"
+    ;;
+    restart)
+	./$0 "$1" stop; ./$0 "`echo $1`" start #not done
+	exit 0
+    ;;
+    *)
+	echo "Usage: $0 {{1\ 2\ 3..} start} | {{3\ 2\ 1..} stop}"
+	exit 1
+esac
+
+for j in $1 ; do
+for i in `ls /etc/init.d/S$j?* $CMD` ;do
+
+#echo $i
+     # Ignore dangling symlinks (if any).
+     ([ ! -f "$i" ] || [ ! -x "$i" ] ) && continue
+
+     case "$i" in
+	*.sh)
+	    # Source shell script for speed.
+	    (
+		trap - INT QUIT TSTP
+		set $2
+		. $i
+	    )
+	    ;;
+	*)
+	    # No sh extension, so fork subprocess.
+	    $i $2
+	    ;;
+    esac
+done
+done

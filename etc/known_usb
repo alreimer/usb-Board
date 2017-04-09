@@ -1,0 +1,17 @@
+###  128 MB Musik Stick ###
+NTXPRIVATE0002:/mnt/home/usb/128MB_MP3_Stick
+
+###  Backup Disk 250 GB ###
+EEF100795B55:/mnt/home/backup-disk
+
+###  128 MB Musik Stick ###
+NTXPRIVATE0001:/mnt/home/usb/128MB_MP3_Stick
+
+### AUTOSTART can be empty
+#$SERIAL:$PARTITIONNR:$MOUNTPFAD:$AUTOSTART
+EEF100795B55:2:/mnt/home/backup-disk:/usr/script
+
+### ADATA MYFLASH 8GB ###
+A400000000000022:1:/mnt/home/usb/myflash_8gb:
+
+

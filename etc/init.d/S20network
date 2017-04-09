@@ -1,0 +1,54 @@
+#!/bin/sh
+
+start() {
+	. /etc/config
+	echo " *** Configure Network Interfaces ***>>"
+	if [ -n "${HOSTNAME}" ]; then
+	    echo ${HOSTNAME} > /etc/hostname
+	fi
+	hostname -F /etc/hostname
+
+	/sbin/ifconfig lo 127.0.0.1 up
+	/sbin/ifconfig eth0 $IP netmask $NETMASK up > /dev/null 2>&1
+	/sbin/route add default gw $GATEWAY eth0
+#	/sbin/ifconfig eth0 up
+
+	case "$JUMBO" in 
+	1)
+	    ifconfig eth0 mtu 4000
+	    ;;
+	2)
+	    ifconfig eth0 mtu 7000
+	    ;;
+	*)
+	    ifconfig eth0 mtu 1500
+	    ;;
+	esac
+
+}
+stop() {
+	echo " *** Disabling Network Interfaces ***>>"
+	/sbin/ifconfig eth0 down
+}
+restart() {
+	stop
+	start
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart)
+	restart
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|restart}"
+	exit 1
+esac
+
+exit $?
+

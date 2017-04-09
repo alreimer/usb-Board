@@ -1,0 +1,60 @@
+#!/bin/sh
+start() {
+. /etc/config
+#if [ ${DDNS_ENABLE:-0} -eq '1' ]; then
+if [ "$DYDNS_ENABLE" = "1" ]; then
+
+	echo " *** Start DynDNS ***>>"
+
+	if [ -n "$2" ]; then
+		DYDNS_IP=$2
+	else
+#wget -t 3	#tries
+		DYDNS_IP=$(wget -qO- http://checkip.dyndns.org | sed -e 's/.*Current IP Address: //' -e 's/<.*$//')
+		httpd_cfg DYDNS_IP=$DYDNS_IP
+	fi
+
+	EZIPUPDATE="/usr/bin/ez-ipupdate"
+
+	if [ -f ${EZIPUPDATE} ]; then
+		if [ ${DYDNS_WILDCARD:-0} -eq '1' ]; then
+		echo "with Wildcard!"
+		w_option="-w "
+		fi
+		if [ -n "$DYDNS_MX" ]; then
+		mx_option="-m ${DYDNS_MX}"
+		fi
+
+		echo "Bind ${DYDNS_HOST} with ${DYDNS_IP}:"
+		${EZIPUPDATE} -S ${DYDNS_SERVICE} -u ${DYDNS_USER}:${DYDNS_PASS} -a ${DYDNS_IP} -i eth0 -h ${DYDNS_HOST} -b /tmp/ez-ipupdate.log ${w_option} ${mx_option}
+		ret_val=$?
+		echo "dyndns: ${EZIPUPDATE} returned ${ret_val}"
+	else
+		echo "dyndns: Cannot find ${EZIPUPDATE}!"
+	fi
+fi
+}
+stop() {
+	echo " *** Stop DynDNS ***>>"
+#	killall -15 nmbd >/dev/null 2>&1
+}
+restart() {
+	stop
+	start
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart)
+	restart
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|restart} IP"
+	exit 1
+esac
+exit ${ret_val}

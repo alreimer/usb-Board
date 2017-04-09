@@ -1,0 +1,41 @@
+#!/bin/sh
+RUN_DAEMON="yes"
+DESC="Syslog Daemon"
+
+start() {
+	if [ "$RUN_DAEMON" != "yes" ] ; then
+		echo " *** $DESC disabled ***>>"
+		exit 0
+	fi
+
+ 	echo " *** Start $DESC ***>>"
+	/sbin/syslogd
+	/sbin/klogd
+}	
+stop() {
+	echo " *** Stop $DESC ***>>"
+	killall -15 klogd >/dev/null 2>&1 
+	killall -15 syslogd >/dev/null 2>&1
+}
+restart() {
+	stop
+	start
+}	
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart)
+	restart
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|restart}"
+	exit 1
+esac
+
+exit $?
+

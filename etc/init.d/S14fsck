@@ -1,0 +1,62 @@
+#!/bin/sh
+RUN_DAEMON="no"
+DESC="Partition check"
+
+DEVICES="/dev/hda1 /dev/sda1 /dev/my_volume_group/my_logical_volume"
+
+start() {
+        if [ "$RUN_DAEMON" != "yes" ] ; then
+                echo " *** $DESC disabled ***>>"
+                exit 0
+        fi
+
+	for i in $DEVICES
+	do
+		mounts=`tune2fs -l $i 2>/dev/null | grep "Mount count:" | sed "s/[1234567890]/\n&/" | grep [0123456789]`
+		maxmounts=`tune2fs -l $i 2>/dev/null | grep "Maximum mount count:" | sed "s/[1234567890]/\n&/" | grep [0123456789]`
+
+		if [ $? != 0 ]
+		then
+			echo "  *** $i not ext2/3 formated. device skipped. ***>>"
+			continue
+		fi
+
+		if [ "`grep $i /proc/mounts | cut -d " " -f 4 | cut -d "," -f 1`" == "rw" ]
+		then
+			echo "  *** $i already mounted. device skipped. ***>>"
+			continue
+		fi
+
+		if [ $mounts -ge $maxmounts ]
+		then
+			echo "  *** mounted $i $mounts times. check forced. ***>>"
+			e2fsck -p -f $i
+		fi
+	done
+
+	umount /mnt 2>/dev/null
+}
+
+stop() 
+
+restart() {
+	stop
+	start
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart)
+	restart
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|restart}"
+	exit 1
+esac
+
+exit $?

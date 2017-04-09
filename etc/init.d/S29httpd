@@ -1,0 +1,35 @@
+#!/bin/sh
+DESC="httpd Daemon"
+
+start() {
+    if [ ! -e /tmp/term ]; then
+	echo " *** Start $DESC ***>>"
+	httpd_watchdog &
+    fi
+}	
+stop() {
+	echo " *** Stop $DESC ***>>"
+	killall httpd_watchdog
+	killall httpd
+}
+restart() {
+	killall httpd
+}	
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart)
+	restart
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|restart}"
+	exit 1
+esac
+
+exit $?
+

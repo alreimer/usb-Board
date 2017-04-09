@@ -1,0 +1,35 @@
+#!/bin/sh
+DESC="DHCP Client"
+
+start() {
+	. /etc/config
+	[ ${DHCP_ENABLE:=0} -eq 0 ] && exit 0
+	echo " *** Start $DESC ***>>"
+	/sbin/udhcpc -n -H `cat /etc/hostname`
+}	
+stop() {
+	echo " *** Stop $DESC ***>>"
+	killall -15 udhcpc >/dev/null 2>&1 
+}
+restart() {
+	stop
+	start
+}	
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart)
+	restart
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|restart}"
+	exit 1
+esac
+
+exit $?
+

@@ -1,0 +1,72 @@
+#!/bin/sh
+# udhcpc script edited by Tim Riker <Tim@Rikers.org>
+# and by Alexander Reimer alex_raw@rambler.ru
+
+. /etc/config
+
+[ -z "$1" ] && echo "Error: should be called from udhcpc" && exit 1
+    echo "parameters for check"
+    echo $timezone, $timesvr, $nisdomain, $nissrv, $ntpsrv, $wins, > /dev/console
+
+case "$1" in
+	deconfig)
+		/sbin/ifconfig $interface 0.0.0.0
+		;;
+
+	renew|bound)
+		RESOLV_CONF="/etc/resolv.conf"
+		httpd_cfg IP=$ip		#added by alex_raw 21.06.2011
+		[ -n "$broadcast" ] && BROADCAST="broadcast $broadcast"
+		if [ -n "$subnet" ] ; then
+		    NETMASK="netmask $subnet"
+		    httpd_cfg NETMASK=$subnet	#added by alex_raw 21.06.2011
+		fi
+		[ -n "$hostname" ] && /bin/hostname $hostname
+
+		/sbin/ifconfig $interface $ip $BROADCAST $NETMASK
+		
+		#JUMBO is in /etc/config
+		case "$JUMBO" in 
+		1)	
+		    ifconfig $interface mtu 4000
+		    ;;
+		2)	
+		    ifconfig $interface mtu 7000
+		    ;;
+		*)	
+		    ifconfig $interface mtu 1500
+		    ;;
+		esac
+
+
+
+		if [ -n "$router" ] ; then
+			echo "deleting routers"
+			while route del default gw 0.0.0.0 dev $interface ; do
+				:
+			done
+
+			metric=0
+			for i in $router ; do
+				route add default gw $i dev $interface metric $((metric++))
+				httpd_cfg GATEWAY=$i	#added by alex_raw 21.06.2011
+			done
+		fi
+
+		echo -n > $RESOLV_CONF
+		[ -n "$domain" ] && echo domain $domain >> $RESOLV_CONF
+		k=0
+		for i in $dns ; do
+			echo adding dns $i
+			echo nameserver $i >> $RESOLV_CONF
+			[ $k -lt 2 ] && httpd_cfg DNS_SERVER$k=$i		#added by alex_raw 21.06.2011 and 12.10.2014
+			k=$(($k+1))
+		done
+		;;
+	nak)
+		echo Received a NAK: $message
+		;;
+	*)
+		echo Unknown task $1 for $0
+esac
+exit 0

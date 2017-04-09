@@ -1,0 +1,69 @@
+#!/bin/sh
+
+start () {
+	for i in /usr/etc/init.d/S??* ;do
+	    # Ignore dangling symlinks (if any).
+	    ([ ! -f "$i" ] || [ ! -x "$i" ] ) && continue
+
+	    case "$i" in
+		*.sh)
+		    # Source shell script for speed.
+		    (
+			trap - INT QUIT TSTP
+			set start
+			. $i
+		    )
+		    ;;
+		*)
+		    # No sh extension, so fork subprocess.
+		    $i start
+		    ;;
+	    esac
+	done
+}
+
+stop () {
+	for i in `ls /usr/etc/init.d/S??* | sort -r` ;do
+
+	    # Ignore dangling symlinks (if any).
+	    ([ ! -f "$i" ] || [ ! -x "$i" ] ) && continue
+
+	    case "$i" in
+		*.sh)
+		    # Source shell script for speed.
+		    (
+			trap - INT QUIT TSTP
+			set stop
+			. $i
+		    )
+		    ;;
+		*)
+		    # No sh extension, so fork subprocess.
+		    $i stop
+		    ;;
+	    esac
+	done
+}
+
+restart () {
+	stop
+	start
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart)
+	restart
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|restart}"
+	exit 1
+esac
+
+exit $?
+

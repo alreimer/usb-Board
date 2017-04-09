@@ -1,0 +1,45 @@
+#!/bin/sh
+
+start() {
+ 	echo " *** Loading Modules ***>>"
+	/sbin/modprobe vfat
+	/sbin/modprobe xfs
+	/sbin/modprobe reiserfs
+	/sbin/modprobe ehci-hcd
+	/sbin/modprobe usb-ohci
+	/sbin/modprobe usb-storage
+	/sbin/modprobe printer
+	/sbin/modprobe ftdi_sio
+
+	if [ -e /dev/usb/lp* ]; then
+		/bin/chmod 666 /dev/usb/lp*
+	fi
+}	
+stop() {
+	echo " *** Unloading Modules ***>>"
+	/sbin/modprobe -r usb-storage
+	/sbin/modprobe -r printer
+	/sbin/modprobe -r ftdi_sio
+}
+restart() {
+	stop
+	start
+}	
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart)
+	restart
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|restart}"
+	exit 1
+esac
+
+exit $?
+

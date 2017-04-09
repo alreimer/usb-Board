@@ -1,0 +1,46 @@
+#!/bin/sh
+RUN_DAEMON="no"
+DESC="detecting architecture"
+
+start() {
+	if [ "$RUN_DAEMON" != "yes" ] ; then
+		echo " *** $DESC disabled ***>>"
+		exit 0
+	fi
+
+ 	echo " *** Start $DESC ***>>"
+	if [ -e /dev/hda ]; then
+		echo "   *** PATA drive detected ***>>"
+		sed -i -e 's,RUN_DAEMON="no",RUN_DAEMON="no",g' /etc/init.d/S13sysdetect
+		sed -i -e 's,\(.*\)/dev/[s|h]da1\(.*\)/mnt,\1/dev/hda1\2/mnt,g' /etc/fstab
+	elif [ -e /dev/sda ]; then
+		echo "   *** SATA/USB drive detected ***>>"
+		sed -i -e 's,RUN_DAEMON="no",RUN_DAEMON="no",g' /etc/init.d/S13sysdetect
+		sed -i -e 's,\(.*\)/dev/[s|h]da1\(.*\)/mnt,\1/dev/sda1\2/mnt,g' /etc/fstab
+	fi
+}	
+stop() {
+	echo " *** Stop $DESC ***>>"
+}
+restart() {
+	stop
+	start
+}	
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart)
+	restart
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|restart}"
+	exit 1
+esac
+
+exit $?
+

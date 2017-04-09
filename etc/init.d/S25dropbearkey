@@ -1,0 +1,46 @@
+#!/bin/sh
+RUN_DAEMON="yes"
+DESC="SSH Key generation"
+
+start() {
+	if [ "$RUN_DAEMON" != "yes" ] ; then
+		echo " *** $DESC disabled ***>>"
+		exit 0
+	fi
+
+	echo " *** Start $DESC ***>>"
+
+# Check for the Dropbear RSA key
+if [ ! -f /etc/dropbear/dropbear_rsa_host_key ] ; then
+	echo Generating RSA Key...
+	mkdir -p /etc/dropbear
+	/bin/dropbearkey -t rsa -f /etc/dropbear/dropbear_rsa_host_key
+else
+	echo "  rsa key already created"
+
+fi
+
+# Check for the Dropbear DSS key
+if [ ! -f /etc/dropbear/dropbear_dss_host_key ] ; then
+	echo Generating DSS Key...
+	mkdir -p /etc/dropbear
+	/bin/dropbearkey -t dss -f /etc/dropbear/dropbear_dss_host_key
+else
+	echo "  dss key already created"
+fi
+
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	;;
+  *)
+	echo $"Usage: $0 {start|stop}"
+	exit 1
+esac
+
+exit $?
+

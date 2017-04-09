@@ -1,0 +1,54 @@
+#!/bin/sh
+. /etc/config
+
+
+start() {
+	[ ${SWAP_ENABLE:=1} -eq 1 ] && /sbin/swapon -a
+
+	echo " *** Mount Harddisks ***>>"
+	/bin/mount -a || echo "   *** Can't mount devices! ***>>"
+
+#hdparm -X69 -d1 -u1 -m16 -c1 -S180 /dev/hda
+#	hdparm -u1 -d1 -c1 -A1 -a255 -m16 -S$SLEEP_MODE /dev/sda
+	hdparm -S$SLEEP_MODE /dev/sda
+}	
+stop() {
+	echo " *** Unmount Harddisks ***>>"
+	/bin/sync
+#Remove umount and swapoff from inittab
+	/bin/umount /mnt
+
+	echo " *** Checking non-root filesystems ***>>"
+	[ ${FSCK_ENABLE:=1} -eq 1 ] && {
+		#2-toggle HD_FULL flash
+		#3-toggle BACKUP flash
+		/sbin/nh23X_ioctl 2 > /dev/null
+		/sbin/fsck -A -R
+		/sbin/nh23X_ioctl 2 > /dev/null
+	}
+	/bin/sync
+
+	/sbin/swapoff -a
+}
+restart() {
+	stop
+	start
+}	
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart)
+	restart
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|restart}"
+	exit 1
+esac
+
+exit $?
+

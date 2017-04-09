@@ -1,0 +1,34 @@
+# /etc/inittab
+#
+# Format for each entry: <id>:<runlevels>:<action>:<process>
+#
+# id        == tty to run on, or empty for /dev/console
+# runlevels == ignored
+# action    == one of sysinit, respawn, askfirst, wait, and once
+# process   == program to run
+
+# Startup the system
+::sysinit:/bin/mount -n -t proc proc /proc
+::sysinit:/bin/mount -t tmpfs tmpfs /var
+::sysinit:/sbin/devfsd /dev
+::sysinit:/etc/load_config.sh
+::sysinit:/bin/hostname -F /etc/hostname
+::sysinit:/etc/create_files.sh
+
+# now run rc scripts
+::sysinit:/etc/init.d/rcS
+
+# Put a getty on the serial port
+#ttyS0::respawn:/sbin/getty -L ttyS0 9600 vt100
+
+::askfirst:-/bin/sh
+
+# Stuff to do for the 3-finger salute
+::ctrlaltdel:/etc/init.d/rcK
+::ctrlaltdel:/sbin/reboot
+
+# Stuff to do before rebooting
+::shutdown:/etc/init.d/rcK
+#::shutdown:/etc/save_config.sh
+#::shutdown:/bin/umount -a -r
+#::shutdown:/sbin/swapoff -a

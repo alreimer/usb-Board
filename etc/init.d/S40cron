@@ -1,0 +1,44 @@
+#!/bin/sh
+DESC="cron Daemon"
+
+start() {
+	. /etc/config
+	if [ ${CRON_ENABLE:=1} -eq 1 ] ; then
+	echo " *** Start $DESC ***>>"
+	/sbin/crond -c /etc/crontab
+	fi
+}
+stop() {
+	echo " *** Stop $DESC ***>>"
+	killall crond
+}
+restart() {
+	stop
+	start
+}
+
+reload() {
+	echo " *** Reload inetd Daemon ***>>"
+	killall -HUP crond
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart)
+	restart
+	;;
+  reload)
+	reload
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|restart}"
+	exit 1
+esac
+
+exit $?
+

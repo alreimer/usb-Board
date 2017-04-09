@@ -1,0 +1,34 @@
+#!/bin/sh
+# Start all init scripts in /etc/init.d
+# executing them in numerical order.
+#
+
+#1-start flash
+/sbin/nh23X_ioctl 1 > /dev/null
+
+for i in /etc/init.d/S??* ;do
+
+     # Ignore dangling symlinks (if any).
+     ([ ! -f "$i" ] || [ ! -x "$i" ] ) && continue
+
+     case "$i" in
+	*.sh)
+	    # Source shell script for speed.
+	    (
+		trap - INT QUIT TSTP
+		set start
+		. $i
+	    )
+	    ;;
+	*)
+	    # No sh extension, so fork subprocess.
+	    $i start
+	    ;;
+    esac
+done
+
+#echo " *** Start User Init ***>>"
+#/mnt/hd0/usr/user/user_init.sh start || echo "   *** Can't find user_init.sh! ***>>"
+
+#0-stop flash
+/sbin/nh23X_ioctl 0 > /dev/null
