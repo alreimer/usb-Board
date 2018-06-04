@@ -1,0 +1,119 @@
+area:20:h_name
+area:20:mac
+area:20:h_name_raw
+area:250:mac_raw
+area:2048:pool
+
+table: help
+"Save" - shows actual
+ethernetAddress and Host
+name.
+-By pressing of it -
+theose data will be saved
+to file.
+Next 3 lines shows a
+contend of file.
+-By pressing of "Set" the
+showed data can be setted
+to device.
+-By pressing of "X" the
+entry can be eresed from
+file.
+#end_table
+//3456789012345678901234567890
+//       1         2         3
+
+
+< "show" 0
+not "_buf:eth/<10123456/>/" {
+write_par "_buf:eth0";
+}
+
+write_system ":h_name_raw:hostname";
+write_system ":mac_raw:ifconfig ??_buf?? | grep HWaddr ";
+write_ppar "h_name_raw:h_name:/[/*/]\n";
+write_ppar "mac_raw:mac:/*HWaddr/t/[/*/]/<- \t\n/>";
+
+	print [
+table: list
+#-> parse_file: /mnt/macs_list.txt
+while:/[/*/]\n
+if:/[/*/]/<- 	/>
+if:
+#end_table
+
+12  > "DL" > "AL" 0 1
+> "AT" 2 1 201 29 4 0 "CSave|" $mac:17 "|" $h_name:18 0
+
+if "_@list+1:" > "AT" 2 33 165 61 1 0 "CSet:|" $_@list+1#0:17 "|" $_@list+1#1:20 0 > "AT" 169 33 201 61 5 0 "CX" 0 fi
+if "_@list+2:" > "AT" 2 65 165 93 2 0 "CSet:|" $_@list+2#0:17 "|" $_@list+2#1:20 0 > "AT" 169 65 201 93 6 0 "CX" 0 fi
+if "_@list+3:" > "AT" 2 97 165 125 3 0 "CSet:|" $_@list+3#0:17 "|" $_@list+3#1:20 0 > "AT" 169 97 201 125 7 0 "CX" 0 fi
+if "_@list+4:" > "AT" 205 97 237 125 9 0 "C->" 0 fi
+    > "AT" 205 33 237 61 10 0 "C<-" 0
+    > "AT" 205 65 237 93 11 0 "Cm" 0
+    > "AT" 205 1 237 29 13 0 "C<" 0 ];
+end
+
+//set hostname and ethernet addrMac
+< "A" 1 3
+//print [ 12   > "DL" > "AL" 0 1 "IP_name: " $_@list#0 ];
+    write_system  ":pool:ifconfig ??_buf?? hw ether \"??_@list#0??\"; hostname \"??_@list#1??\" ";
+    not "pool:/" {
+	print [ 12  > "DL" > "AL" 0 1 "??pool??" > "AT" 205 97 237 125 21 0 "C<" 0 ];
+	exit_cgi ;
+    }
+
+    boot_cgi [ "show" 0 ];
+end
+
+< "A" 4
+	write_system ":h_name_raw:hostname";
+	write_system ":mac_raw:ifconfig ??_buf?? | grep HWaddr ";
+	write_ppar "h_name_raw:h_name:/[/*/]\n";
+	write_ppar "mac_raw:mac:/*HWaddr/t/[/*/]/<- \t\n/>";
+
+    change_line "/mnt/macs_list.txt:/?mac?/:??mac??	??h_name??\n"{
+	shell "echo -e \"??mac??	??h_name??\" >> /mnt/macs_list.txt";
+    }
+
+    boot_cgi [ "show" 0 ];
+end
+
+//remove line from file
+< "A" 5 7
+    change_line "/mnt/macs_list.txt:/?_@list#0?// /?_@list#1?/:";
+
+//    copy_ppar "_@list#0:file:0";
+    boot_cgi [ "show" 0 ];
+end
+
+//next page
+< "A" 9
+	set_tbl "list += 3";
+	boot_cgi [ "show" 0 ];
+end
+
+//page before
+< "A" 10
+    set_tbl "list == 0"{
+	boot_page "??_referrer??";
+    }
+    set_tbl "list != 0"{
+	set_tbl "list -= 3";
+	boot_cgi [ "show" 0 ];
+    }
+end
+< "A" 11
+    include "menu.term";
+//    boot_page "save_config.term";
+end
+< "A" 13
+    boot_page "??_referrer??";
+end
+
+//NO
+< "A" 21
+    boot_cgi [ "show" 0 ];
+end
+
+cgi: "show" 0

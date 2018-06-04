@@ -1,7 +1,9 @@
 /* change ./etc/fstab to /etc/fstab */
 
 area:25000:mntpoint
-area:200:pool
+area:2048:pool
+area:300:info
+wr_par: info:info-mount.term
 
 table: list
 #-> parse_file: /etc/fstab
@@ -25,7 +27,7 @@ if "_@list+8:" > "AT" 104 97 201 125 8 0 "C" $_@list+8#0:10 if "_@list+8#2:/*enc
 if "_@list+9:" > "AT" 205 97 237 125 9 0 "C->" 0 fi
 
     > "AT" 205 33 237 61 10 0 "C<-" 0
-    > "AT" 205 65 237 93 11 0 "Ci" 0
+    > "AT" 205 65 237 93 11 0 "Cm" 0
     > "AT" 205 1 237 29 13 0 "C<" 0 ];
 end
 
@@ -41,8 +43,13 @@ end
     print [ 12 > "DL" > "AL" 0 1 ];
 //simple mount
     not "_@list#2:/*encrypt" {
+//	shell "mount ??_@list??";
+	write_system  ":pool:mount ??_@list??";
+	not "pool:/" {
+	    print [ "??pool??" > "AT" 205 97 237 125 25 0 "C<" 0 ];
+	    exit_cgi;
+	}
 	print [ > "AT" 205 1 237 29 25 0 "C<" 0 > "ZC" 100 25 "mount: " $_@list:14 0 ];
-	shell "mount ??_@list??";
 	exit_cgi;
     }
     print [ > "ZC" 120 25 "Unable get variable" 0 ];
@@ -55,7 +62,12 @@ end
 < "script"
     print [ 12 > "DL" > "AL" 0 1 ];
 //in _buffer is a password
-//write_system  "_buffer:pool:mount ??mntpoint??";
+//needed stdin implement
+    write_system  "_buffer:pool:mount ??mntpoint??";
+    not "pool:/" {
+	print [ "??pool??" > "AT" 205 97 237 125 25 0 "C<" 0 ];
+	exit_cgi;
+    }
     print [ > "AT" 205 1 237 29 25 0 "C<" 0 > "ZC" 100 25 "mount: " $mntpoint:14 0 ];
     clean_par "_buf";
 end
@@ -87,7 +99,7 @@ end
 end
 
 < "A" 11
-    boot_page "info-mount.term";
+    include "menu.term";
 end
 
 //back to 'show' menu

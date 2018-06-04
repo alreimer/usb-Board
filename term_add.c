@@ -100,7 +100,16 @@ char *parsestr1( char *d, char *c)	//try identic strings!, "xxx*NULL" combinatio
 			    case '-': //  /<-CHARS/> matches chars 1 or more times
 			    case '*': //  /<*CHARS/> matches chars zero or more times
 				c++; tmp = c; i=0; while((*c != '/'|| c[1] != '>') && *c){
-				if(*c==*d){ do{d++;}while(*c==*d);
+				if(*c == '\\'){
+				    c++;
+				    switch(*c){
+				    case '\\':	ch = '\\';break;
+				    case 't':	ch = '\t';break;
+				    case 'n':	ch = '\n';break;
+				    default: c--; ch = *c; break;
+				    }
+				} else ch = *c;
+				if(ch==*d){ do{d++;}while(ch==*d);
 				    c = tmp; i=1; continue;
 				}
 				c++;}
@@ -277,6 +286,44 @@ unsigned long long strmycpy(char *tmp, char *tmp1, unsigned long long size){
 	return s;
 }
 
+//line="from_par:to_par:parsestr"
+int write_ppar(char *line){
+	char *par[2], *tmp, *tmp1;
+	int i = 0, jump = 0;
+	unsigned long long k, size;
+
+	while(i <= 1){
+		tmp = w_strtok(&line, ':');
+		if(!tmp || !(*tmp) || !(*line)) {printf("[ERR]: write_ppar step: %d\n", i); return 0;}
+//printf("%s , %d\n", tmp, i);
+		par[i] = get_var((i==1)? &size : NULL, tmp);
+	i++;
+	}
+	if(!par[0]) {printf("[ERR]: parameter not found\n"); return 0;}
+
+// par[1]=to_par, par[0]=from_par, line=parsestr, size=to_par_size
+	if(par[1]){
+	    if(size){
+		k = strlen(par[0])+1;
+		//size == 1
+		tmp = (char *)malloc(k);
+		if(tmp){
+		    strncpy(tmp, par[0], k);
+		    if(tmp1 = parsestr1(tmp, line)){
+			strmycpy(par[1], tmp1, size);
+			jump = 1;//everything is OK - so jump
+		    }
+		free(tmp);
+		}
+	    }
+	}else{
+	    //tmp[1] == NULL
+	    if(tmp1 = parsestr1(par[0], line)){	//par[0] - can be zeroed!! by /[/*/]
+		jump = reg_par(tmp, tmp1, strlen(tmp1)+1);	//tmp = to_par, on success = 1
+	    }
+	}
+	return jump;
+}
 
 unsigned long long strncpy_(char *tmp, char *tmp1, long long size){
     //tmp -is out, tmp1 -is in. and return the size of string!
@@ -597,8 +644,13 @@ char *get_var(unsigned long long *size_ptr, char *var_index){
 	    }
 	}
 	return ptr;
-	} else if(!strcmp(var_index,"referrer")){	//last .term file
-	    ptr = referrer;
+	} else if(!strncmp(var_index,"referrer", 8)){	//last .term file
+	    struct page_n *p;
+	    p = get_last_page(var_index+8);
+	    if(p){
+		ptr = p->name;
+		size = p->size;
+	    }
 /*	} else if(!strcmp(var_index,"short_referer")){
 		ptr = parsestr1_(referer, "/L/L");	//get the last '/'
 	}else if(!strcmp(var_index,"user_agent")){
@@ -619,7 +671,6 @@ char *get_var(unsigned long long *size_ptr, char *var_index){
 	    ptr = etc_save;
 	    size = 2;
 	}else if(!strcmp(var_index,"value")){
-//	    memset(value, 0, 16);
 	    snprintf(value, 15, "%d", A1_BTN);
 	    ptr = value;
 	}else if(!strcmp(var_index,"version")){

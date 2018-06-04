@@ -1,6 +1,9 @@
 area:25000:buffer
 area:25000:mntpoint
+area:2048:pool
 wr_shell: :buffer:mount
+area:300:info
+wr_par: info:info-mount.term
 
 
 table: list
@@ -29,7 +32,7 @@ if "_@list+8:" > "AT" 104 97 201 125 8 0 "C" $_@list+8:11 0 fi
 if "_@list+9:" > "AT" 205 97 237 125 9 0 "C->" 0 fi
 */
     > "AT" 205 33 237 61 10 0 "C<-" 0
-//    > "AT" 205 65 237 93 11 0 "Ci" 0
+    > "AT" 205 65 237 93 11 0 "Cm" 0
     > "AT" 205 1 237 29 13 0 "C<" 0 ];
 end
 
@@ -44,7 +47,13 @@ end
 
 //YES
 < "A" 20
-    shell "umount ??mntpoint??";
+//    shell "umount ??mntpoint??";
+    print [ 12  > "DL" > "AL" 0 1 ];
+    write_system  ":pool:umount ??mntpoint??";
+    not "pool:/" {
+	print [ "??pool??" > "AT" 205 97 237 125 21 0 "C<" 0 ];
+	exit_cgi ;
+    }
     boot_page "hd_umounts.term";
 end
 
@@ -72,11 +81,9 @@ end
 < "A" 13
     boot_page "hd.term";
 end
-/*
 < "A" 11
-    boot_page "info-mount.term";
+    include "menu.term";
 end
-*/
 cgi: "show" 0
 
 //write_system  "_buf:par_to:mount";

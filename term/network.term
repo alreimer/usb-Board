@@ -18,16 +18,24 @@ end
     boot_page "index-main.term";
 end
 
+    > "AT" 205 65 237 93 9 0 "Cm" 0
+< "A" 9
+    include "menu.term";
+end
+
+/*
 //save /etc folder
 if "_etc_save:1"
     > "AT" 205 65 237 93 9 0 "CS" 0
 < "A" 9
-//    print [ > "DL" > "AL" 0 1 "save etc" ];//need to change
-    write_par "_etc_save:0";
-    system "/etc/save_config.sh";
-    boot_page "network.term";
+    boot_page "save_config.term";
+////    print [ > "DL" > "AL" 0 1 "save etc" ];//need to change
+//    write_par "_etc_save:0";
+//    system "/etc/save_config.sh";
+//    boot_page "network.term";
 end
 fi
+*/
 
 if "dhcp_client:0/"
 //    > "AT" 2 1 100 29 1 0 "CIP-Addr" 0

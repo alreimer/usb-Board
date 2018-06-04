@@ -16,6 +16,7 @@
 #include <sys/types.h>
 #include <dirent.h>		//opendir, readdir
 #include <sys/stat.h>
+#include "terminal.h"
 #include "term_cgi.h"
 #include "term_add.h"	//w_strtok, cfg_arg_strcmp, cfg_arg_changed
 #include "term_parser.h"
@@ -23,11 +24,7 @@
 
 #define DEBUG
 
-struct tbl *tbl_name = NULL;
-//void get_folder(struct rnd_tbl **rnd_ptr, char *folder_name){
-//
-//}
-
+struct tbl **tbl_name = NULL;
 
 //if i = 0 or Return NULL -> not found, if i!=0 and return not NULL ->found
 char *parsestr_mass(char *str, char **massive, int *i){
@@ -63,7 +60,9 @@ void parse_tbl(char *data, char clean){
     tmp = w_strtok(&data, '\n');
     if(!tmp){ printf("Unable to def. length\n"); return;}
 //    if(data - tmp > 30){ printf("Length of cgi name > 30\n"); return;}
-    ptr = &tbl_name;
+    ptr = tbl_name;
+    if(ptr == NULL) return;
+
     while(*ptr){
 	if(!strcmp((*ptr)->name, tmp)){
 	    flag = 0;
@@ -371,7 +370,7 @@ printf("Special: %d %s\n", rnd_p->rnd_entry, rnd_p->entry);
 		    
 		}
 //***********************
-		if(tmp2 = parsestr1(tmp+3, "begin:/t")){//#->begin: _par
+		if(tmp2 = parsestr1(tmp+3, "/tbegin:/t")){//#->begin: _par
 		    if(tmp2 = get_var(NULL, tmp2)){
 			(*ptr)->begin = atoi(tmp2);
 		    }
@@ -418,8 +417,34 @@ printf("%d %s\n", rnd_p->rnd_entry, rnd_p->entry);
 char *get_tbl(char *par){
     char *tmp, *tmp1, *var;
     unsigned int part = 0, number = 0, entry;
-    struct tbl *ptr = tbl_name;
+    struct page_n *n;
+    struct tbl *ptr;
     struct rnd_tbl *rnd_ptr;
+    if(tbl_name == NULL) return NULL;
+    ptr = *tbl_name;
+
+	tmp1 = par;		//par="table_name+5#1%1"
+	while(*tmp1){		//par="table_name+5#1@parseFrase"
+	    if(*tmp1 == '@'){
+		*tmp1 = '\0';
+//		flag = 1;
+		n = get_page(tmp1+1);
+		if(n) ptr = n->tbl_name;
+		break;
+	    }else if(*tmp1 == '%'){
+//printf("get tbl:%s\n", par);
+		*tmp1 = '\0';
+//		flag = 2;
+		n = get_last_page(tmp1+1);
+//printf("get tbl1:%s\n", tmp1+1);
+
+		if(n) ptr = n->tbl_name;
+//printf("get tbl2:%s\n", ptr->name);
+		break;
+	    }
+	    tmp1++;
+	}
+
 
     tmp1 = w_strtok(&par, '#');//par="table_name#1"
     if(tmp1 == NULL) return NULL;
@@ -438,12 +463,12 @@ char *get_tbl(char *par){
 
     while(ptr){
 	if(!strcmp(ptr->name, var)){
-//printf("NAMe: %s", var);
+//printf("NAMe: %s ", var);
 	    if(*tmp1) *(tmp1-1) = '+';	//var is in use
 	    if(*par) *(par-1) = '#';
 	    if(number) entry = ptr->begin + number;
 	    else {	if(A1_BTN) entry = ptr->begin + A1_BTN;
-			else entry = 0;//for now
+			else entry = 1;//for now, was =0
 	    }
 //printf("Entry: %d\n", entry);
 		rnd_ptr = ptr->ptr;
@@ -454,6 +479,7 @@ char *get_tbl(char *par){
 		    }
 		rnd_ptr = rnd_ptr->next;
 		}
+//printf("not found\n");
 
 
 /*for now
@@ -480,13 +506,41 @@ char *get_tbl(char *par){
 
 
 unsigned int *get_tbl_begin(char *name){
-    struct tbl *ptr = tbl_name;
+    struct tbl *ptr;
+    char *tmp1;
+    struct page_n *n;
+
+    if(tbl_name){
+    ptr = *tbl_name;
+
+	tmp1 = name;		//par="table_name+5#1%1"
+	while(*tmp1){		//par="table_name+5#1@parseFrase"
+	    if(*tmp1 == '@'){
+		*tmp1 = '\0';
+//		flag = 1;
+		n = get_page(tmp1+1);
+		if(n) ptr = n->tbl_name;
+		break;
+	    }else if(*tmp1 == '%'){
+//printf("tbl:%s\n", par);
+		*tmp1 = '\0';
+//		flag = 2;
+		n = get_last_page(tmp1+1);
+//printf("tbl1:%s\n", tmp1+1);
+
+		if(n) ptr = n->tbl_name;
+//printf("tbl2:%s\n", ptr->name);
+		break;
+	    }
+	    tmp1++;
+	}
 
     while(ptr){
 	if(!strcmp(ptr->name, name)){
 	    return &(ptr->begin);
 	}
     ptr = ptr->next;
+    }
     }
     return NULL;
 }
@@ -782,12 +836,15 @@ next:
 */
 //find table by name
 struct rnd_tbl *find_tbl(char *name){
-	struct tbl *ptr = tbl_name;
+	struct tbl *ptr;
+	if(tbl_name){
+	ptr = *tbl_name;
 
 	while(ptr){
 		if(!strcmp(ptr->name, name))
 			return (ptr->ptr);
 		ptr = ptr->next;
+	}
 	}
 	return NULL;
 }
@@ -816,22 +873,14 @@ void free_rnd_tbl(struct rnd_tbl **ptr){
     *ptr = NULL;
 }
 
-void free_tbl_1(struct tbl **ptr){
-    if(!ptr || !*ptr) return;
-    free_tbl_1(&((*ptr)->next));
+void free_tbl(struct tbl *ptr){
+    if(!ptr) return;
+    free_tbl(ptr->next);
 #ifdef DEBUG
-    printf("free tbl '%s'\n", (*ptr)->name);
+    printf("free tbl '%s'\n", ptr->name);
 #endif
-    free_rnd_tbl(&((*ptr)->ptr));
-    free((*ptr)->name);
-    free(*ptr);	//at hier action
-    *ptr = NULL;
+    free_rnd_tbl(&(ptr->ptr));	//at hier action
+    free(ptr->name);
+    free(ptr);
 }
-
-void free_tbl(void){
-    free_tbl_1(&tbl_name);
-    tbl_name = NULL;
-}
-
-
 

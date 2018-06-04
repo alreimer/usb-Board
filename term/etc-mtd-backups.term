@@ -1,0 +1,98 @@
+area:64000:ar_name
+area:2048:pool
+area:2048:file
+//wr_shell: :ar_name:cd /mnt/packages/ 2>/dev/null; [ $? -eq 0 ] && for i in *.ipk ; do [[ -f "$i" ]] && echo "$i"; done 
+
+< "show" 0
+	write_system ":ar_name:cd /mnt/etc-cfgs/ 2>/dev/null; [ $? -eq 0 ] && for i in mtd_*.tar.gz ; do [[ -f \"$i\" ]] && echo \"$i\"; done ";
+
+	print [ 12  > "DL" > "AL" 0 1
+table: list
+#-> parse_area: ar_name
+while:/[/*/]\n
+if:
+#end_table
+> "AT" 104 1 201 29 4 0 "Cmtd|BackUp" 0
+
+if "_@list+1:" > "AT" 2 33 165 61 1 0 "Crestore|" $_@list+1:18:"/[/*/].tar.gz" 0 > "AT" 169 33 201 61 5 0 "CX" 0 fi
+if "_@list+2:" > "AT" 2 65 165 93 2 0 "Crestore|" $_@list+2:18:"/[/*/].tar.gz" 0 > "AT" 169 65 201 93 6 0 "CX" 0 fi
+if "_@list+3:" > "AT" 2 97 165 125 3 0 "Crestore|" $_@list+3:18:"/[/*/].tar.gz" 0 > "AT" 169 97 201 125 7 0 "CX" 0 fi
+if "_@list+4:" > "AT" 205 97 237 125 9 0 "C->" 0 fi
+    > "AT" 205 33 237 61 10 0 "C<-" 0
+//if "_etc_save:1" > "AT" 205 65 237 93 11 0 "CS" 0 fi
+    > "AT" 205 1 237 29 13 0 "C<" 0 ];
+end
+
+< "A" 1 3
+    copy_ppar "_@list#0:file:0";
+    print [ > "AL" 0 0 > "RL" 34 23 204 98 > "GR" 36 25 202 96
+	    > "ZC" 120 30 "Really write to |mtdblock4?|" $file:18:"/[/*/].tar.gz" 0
+	    > "AT" 40 60 116 92 20 0 "CYES" 0
+	    > "AT" 124 60 198 92 21 0 "CNO" 0 ];
+end
+
+//YES
+< "A" 20
+    write_system  ":pool:mkdir /mnt/etc-cfgs/; chmod 700 /mnt/etc-cfgs; TEMP=/mnt/etc-cfgs/??file?? ; /bin/dd if=$TEMP of=/dev/mtdblock4 > /dev/null 2>&1 ; ";
+//print [ 12   > "DL" > "AL" 0 1 "IP_name: " $file ];
+    not "pool:/" {
+	print [ 12  > "DL" > "AL" 0 1 "??pool??" > "AT" 205 97 237 125 21 0 "C<" 0 ];
+	exit_cgi ;
+    }
+    boot_cgi [ "show" 0 ];
+end
+
+< "A" 5 7
+    copy_ppar "_@list#0:file:0";
+    print [ > "AL" 0 0 > "RL" 34 28 204 98 > "GR" 36 30 202 96
+	    > "ZC" 120 40 "Really remove?|" $file:18 0
+	    > "AT" 40 60 116 92 22 0 "CYES" 0
+	    > "AT" 124 60 198 92 21 0 "CNO" 0 ];
+end
+
+//YES_rm
+< "A" 22
+    write_system  ":pool:cd /mnt/etc-cfgs/ 2>/dev/null; rm \"??file??\" ";
+//print [ 12   > "DL" > "AL" 0 1 "IP_name: " $_@list#0 ];
+    not "pool:/" {
+	print [ 12  > "DL" > "AL" 0 1 "??pool??" > "AT" 205 97 237 125 21 0 "C<" 0 ];
+	exit_cgi ;
+    }
+    boot_cgi [ "show" 0 ];
+end
+
+//NO
+< "A" 21
+    boot_cgi [ "show" 0 ];
+end
+
+< "A" 4
+    write_system  ":pool:mkdir -p /mnt/etc-cfgs/; chmod 700 /mnt/etc-cfgs; TEMP=/mnt/etc-cfgs/mtd_`date +%Y%m%d%H%M%S`.tar.gz ; /bin/dd if=/dev/mtdblock4 of=$TEMP >/dev/null 2>&1 ; chmod 600 $TEMP ";
+    not "pool:/" {
+	print [ 12  > "DL" > "AL" 0 1 "??pool??" > "AT" 205 97 237 125 21 0 "C<" 0 ];
+	exit_cgi ;
+    }
+    boot_cgi [ "show" 0 ];
+end
+
+//next page
+< "A" 9
+	set_tbl "list += 3";
+	boot_cgi [ "show" 0 ];
+end
+
+//page before
+< "A" 10
+    set_tbl "list == 0"{
+	boot_page "etc.term";
+    }
+    set_tbl "list != 0"{
+	set_tbl "list -= 3";
+	boot_cgi [ "show" 0 ];
+    }
+end
+< "A" 13
+    boot_page "etc.term";
+end
+
+cgi: "show" 0

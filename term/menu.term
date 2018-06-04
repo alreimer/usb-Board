@@ -1,0 +1,77 @@
+
+area:2000:menu_name
+wr_par: menu_name:??_referrer??
+
+< "show" 0
+	print [
+> "AL" 0 0
+> "RL" 30 24 208 102 > "GR" 32 26 206 100
+//	    > "ZC" 120 40 "Really save|config?" 0
+	    > "AT" 36 30 68 58 1 0 "C<" 0
+if "info%1:" > "AT" 72 30 104 58 2 0 "Ci" 0 fi
+if "_etc_save:1/" > "AT" 108 30 140 58 3 0 "CS" 0 fi
+if "_@help%1:" > "AT" 144 30 176 58 4 0 "Ch" 0 fi
+];
+end
+
+< "A" 1
+    switch "/?menu_name?/";
+    boot_cgi [ "show" 0 ] {
+	boot_cgi [ "timeout" ] {
+	    boot_page "??_referrer??";
+	}
+    }
+    boot_page "??_referrer??";
+end
+if "info%1:"
+< "A" 2
+    boot_page "??info%1??";
+end
+fi
+if "_etc_save:1/"
+< "A" 3
+    boot_page "save_config.term";
+end
+fi
+if "_@help%1:"
+< "A" 4
+	print [ 12  > "DL" > "AL" 0 1
+if "_@help+1%1:" > "ZL" 0 0 $_@help+1%1:30 0 fi
+if "_@help+2%1:" > "ZL" 0 8 $_@help+2%1:30 0 fi
+if "_@help+3%1:" > "ZL" 0 16 $_@help+3%1:30 0 fi
+if "_@help+4%1:" > "ZL" 0 24 $_@help+4%1:30 0 fi
+if "_@help+5%1:" > "ZL" 0 32 $_@help+5%1:30 0 fi
+if "_@help+6%1:" > "ZL" 0 40 $_@help+6%1:30 0 fi
+if "_@help+7%1:" > "ZL" 0 48 $_@help+7%1:30 0 fi
+if "_@help+8%1:" > "ZL" 0 56 $_@help+8%1:30 0 fi
+if "_@help+9%1:" > "ZL" 0 64 $_@help+9%1:30 0 fi
+if "_@help+10%1:" > "ZL" 0 72 $_@help+10%1:30 0 fi
+if "_@help+11%1:" > "ZL" 0 80 $_@help+11%1:30 0 fi
+if "_@help+12%1:" > "ZL" 0 88 $_@help+12%1:30 0 fi
+if "_@help+13%1:" > "ZL" 0 96 $_@help+13%1:30 0 fi
+if "_@help+14%1:" > "ZL" 0 104 $_@help+14%1:30 0 fi
+if "_@help+15%1:" > "ZL" 0 112 $_@help+15%1:30 0 fi
+if "_@help+16%1:" > "ZL" 0 120 $_@help+16%1:30 0 fi
+if "_@help+17%1:" > "AT" 205 97 237 125 9 0 "C->" 0 fi
+    > "AT" 205 33 237 61 10 0 "C<-" 0
+    > "AT" 205 1 237 29 1 0 "C<" 0 ];
+end
+
+//next page
+< "A" 9
+	set_tbl "help%1 += 16";
+	boot_cgi [ "A" 4 ];
+end
+
+//page before
+< "A" 10
+    set_tbl "help%1 == 0"{
+	boot_cgi [ "A" 1 ];
+    }
+    set_tbl "help%1 != 0"{
+	set_tbl "help%1 -= 16";
+	boot_cgi [ "A" 4 ];
+    }
+end
+fi
+cgi: "show" 0

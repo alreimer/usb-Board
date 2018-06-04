@@ -15,6 +15,7 @@ char *get_var(unsigned long long *size_ptr, char *var_index);		//parse Varialble
 char *w_strtok(char **str, char mark);
 unsigned long long strmycpy(char *tmp, char *tmp1, unsigned long long size);
 unsigned long long strncpy_(char *tmp, char *tmp1, long long size);
+int write_ppar(char *line);
 int copy(FILE *read_f, FILE *write_f);
 
 void write_system(char *b_in, long long s_in, char *buf, long long size, int mode, char *cmd);

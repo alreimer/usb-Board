@@ -1,5 +1,4 @@
 void parse_tbl(char *data, char clean);
-void free_tbl(void);
 struct rnd_tbl *find_tbl(char *name);
 void show_tbl(char *var, FILE *out);
 void show_tbl_chck(char *var, FILE *out);
@@ -23,11 +22,12 @@ struct rnd_tbl {
 
 struct tbl {
     char		*name;	//name of cgi
-    unsigned int	begin;	//begin of window!
+    unsigned int	begin;	//begin of window!, scrolling throw table
     struct rnd_tbl	*ptr;
     struct tbl		*next;
 };
 
 void free_rnd_tbl(struct rnd_tbl **ptr);
-extern struct tbl *tbl_name;	//begin of cgi
+void free_tbl(struct tbl *ptr);
+extern struct tbl **tbl_name;	//begin of table
 

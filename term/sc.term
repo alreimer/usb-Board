@@ -26,6 +26,6 @@ end*/
 end
 
 < "setBuffer"
-    write_system  "_buffer:pool:mkdir /mnt/sc_images/; chmod 700 /mnt/sc_images; TEMP=/mnt/sc_images/sc_`date +%Y%m%d%H%M%S`.bin ; /bin/dd if=/dev/stdin of=$TEMP; chmod 600 $TEMP";
+    write_system  "_buffer:pool:mkdir -p /mnt/sc_images/; chmod 700 /mnt/sc_images; TEMP=/mnt/sc_images/sc_`date +%Y%m%d%H%M%S`.bin ; /bin/dd if=/dev/stdin of=$TEMP; chmod 600 $TEMP";
 //    shell "echo '??pool??' > /tmp/loggg.txt";
 end

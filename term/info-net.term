@@ -37,6 +37,15 @@ ifnot "_@list+1#5:UP" > "AT" 160 97 201 125 1 0 "CUp" 0 fi
 end
 
 < "button"
+    if "_referrer:/*menu.term/" {	//if last page was *menu.term
+	switch_n "2";
+	boot_cgi [ "show" 0 ] {		//if cgi not found
+	    boot_cgi [ "timeout" ] {
+		boot_page "??_referrer2??";
+	    }
+	}
+	exit_cgi;
+    }
     boot_page "??_referrer??";
 end
 
@@ -77,6 +86,16 @@ end
 //page before
 < "A" 10
     set_tbl "list == 0"{
+    if "_referrer:/*menu.term/" {	//if last page was *menu.term
+	switch_n "2";
+	boot_cgi [ "show" 0 ] {		//if cgi not found
+	    boot_cgi [ "timeout" ] {
+		boot_page "??_referrer2??";
+	    }
+	}
+	exit_cgi;
+    }
+
 	boot_page "??_referrer??";
     }
     set_tbl "list != 0"{
@@ -85,6 +104,15 @@ end
     }
 end
 < "A" 13
+    if "_referrer:/*menu.term/" {	//if last page was *menu.term
+	switch_n "2";
+	boot_cgi [ "show" 0 ] {		//if cgi not found
+	    boot_cgi [ "timeout" ] {
+		boot_page "??_referrer2??";
+	    }
+	}
+	exit_cgi;
+    }
     boot_page "??_referrer??";
 end
 cgi: "timeout"

@@ -20,14 +20,14 @@ struct cgi {
 };
 
 extern unsigned char A1_BTN;
-extern struct cgi *cgi_name;	//begin of cgi
+extern struct cgi **cgi_name;	//begin of cgi
 
 //struct cgi *find_cgi(char *filename);	//find cgi in cgi-tree. if not found return NULL
 
 int get_cgi(char ch, int num, unsigned char *buf);
 void wr_shell(char *tmp1, char flag);
 int print(FILE *out, char *text);//returns 1 on success
-char *print_(FILE *out, char *data, int make, char _else, int loop);
+char *print_(FILE *out, char *data, int make, int loop);
 int print_str(FILE *out, char *text);
 //void shell(char *tmp);
 //void my_shell(FILE *out, char *tmp);

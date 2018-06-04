@@ -23,13 +23,14 @@
 #include <regex.h>
 #include "term_parser.h"
 #include "term_add.h"
+#include "terminal.h"
 
 #define DEBUG
 #undef DEBUG
 
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 
-extern struct cfg_parse1 *cfg1;
+extern struct cfg_parse1 **cfg_p;
 //extern struct cfg_parse2 cfg2[];
 
 char *strstrcfg(char *d, char *c, int *len)	/*check c string in d string*/
@@ -59,7 +60,10 @@ char *strstrcfg(char *d, char *c, int *len)	/*check c string in d string*/
 
 int cfg_arg_changed(char *web_name){	//if not found - returns 0 (as not changed)
 
-    struct cfg_parse1 *p = cfg1;
+    struct cfg_parse1 *p;
+
+    if(cfg_p){
+    p = *cfg_p;
 
     while (p){		/* search the variable value  */
         if((p->str != NULL) && (p->size != 0) && (p->size != 1) && 
@@ -68,6 +72,7 @@ int cfg_arg_changed(char *web_name){	//if not found - returns 0 (as not changed)
 	}
 	p = p->next;
     }
+    }
 
     return 0;
 }
@@ -75,7 +80,7 @@ int cfg_arg_changed(char *web_name){	//if not found - returns 0 (as not changed)
 /* parm = web_name:value */
 int cfg_arg_strcmp(char *parm, char flag){	//if not found or ':' not found - returns -1 (as not same)
 
-    struct cfg_parse1 *p = cfg1;
+//    struct cfg_parse1 *p = cfg1;
     char *ptr;
 #ifdef DEBUG
 printf("cfg_arg_strcmp: %s\n", parm);
@@ -143,16 +148,17 @@ void fill_cfg(char *parm){
     size_t nmatch;
     regmatch_t pmatch;
 
+    if(cfg_p == NULL) return;
     while(tmp = w_strtok(&parm, ':')){
 	if(*tmp){
-	    p = cfg1;
+	    p = *cfg_p;
 	    while(p){
 		if((p->str != NULL) && (p->size != 0) && (p->size != 1) && !strcmp(tmp, p->web_name)){
 	
 //		    tmp = get_arg(tmp, NULL, 0);//NULL - only get value
 //		    if(tmp){
-		    if(*(p->new_value) != '\0'){
-//			if(strcmp(tmp, p->value) != 0){
+//		    if(strcmp(tmp, p->value) != 0){
+		    ////////////////////////if(*(p->new_value) != '\0'){ //why i set it here??? -must be removed
 			if(strcmp(p->new_value, p->value) != 0){
 printf("fill web:%s = --%s--%s--\n", p->web_name, p->new_value, p->pattern);
 			    p->changed = 1;
@@ -174,7 +180,7 @@ printf("Not matched --%s--\n", p->pattern);
 			    	regfree(&preg);
 			    }
 			}
-		    }
+		    //////////////////////////}
 		    break;
 		}
 		p = p->next;
@@ -187,10 +193,35 @@ printf("Not matched --%s--\n", p->pattern);
 
 char *get_cfg_value(long long *size_ptr, char *field_name, int i){
 
-    struct cfg_parse1 *p = cfg1;
+    struct cfg_parse1 *p;
+    struct page_n *n;
+    char flag = 0, *ptr = field_name;
+
+    if(cfg_p){
+	p = *cfg_p;
+
+	while(*ptr){
+	    if(*ptr == '@'){
+		*ptr = '\0';
+		flag = 1;
+		n = get_page(ptr+1);
+		if(n) p = n->cfg;
+		break;
+	    }else if(*ptr == '%'){
+		*ptr = '\0';
+		flag = 2;
+		n = get_last_page(ptr+1);
+		if(n) p = n->cfg;
+		break;
+	    }
+	    ptr++;
+	}
 
 	while (p){		/* search the variable value  */
 	    if((p->str != NULL) && (p->size != 0) && (p->size != 1) && (p->web_name != NULL) && strcmp(p->web_name, field_name) == 0 ){
+		if(flag == 1) *ptr = '@';
+		else if(flag == 2) *ptr = '%';
+
 		if(size_ptr) *size_ptr = p->size;	//if pointer is given, return value
 		if(i == 0) return p->value;
 		else if(i == 1) return p->new_value;
@@ -201,15 +232,38 @@ char *get_cfg_value(long long *size_ptr, char *field_name, int i){
 	    }
 	    p = p->next;
 	}
+	if(flag == 1) *ptr = '@';
+	else if(flag == 2) *ptr = '%';
+    }
     if(size_ptr) *size_ptr = 0; // if given but not matched, return 0
     return NULL;
+}
+
+//register new parameter called name, from value, size-lang.
+//return 1=success and 0=false
+int reg_par(char *name, char *value, long long size)
+{
+	struct cfg_parse1 *ptr = *cfg_p;
+	while(ptr){
+		if(ptr->type == CFG_TMP && !strcmp(name, ptr->web_name)){
+			ptr->size = size;
+			ptr->value = value;
+			ptr->new_value = value;
+			return 1;
+		}
+	ptr = ptr->next;
+	}
+	return 0;
+
 }
 
 void write_char(char *arg){
 
     char *tmp;
-    struct cfg_parse1 *p = cfg1;
+    struct cfg_parse1 *p;
 
+    if(cfg_p == NULL) return;
+    p = *cfg_p;
     tmp = w_strtok(&arg, ':');
     if(tmp && *tmp){
 	while (p){		/* search the variable value  */
@@ -220,11 +274,11 @@ void write_char(char *arg){
 			(p->position)++;
 			*(p->new_value + p->position) = '\0';
 		    }
-		}else{
+		}else{		//erase option - if nothing is given
 		    if(p->position > 0){
 			(p->position)--;
-			*(p->new_value + p->position) = '\0';
 		    }
+		    *(p->new_value + p->position) = '\0';
 		}
 	    break;
 	    }
@@ -287,8 +341,9 @@ int ReadConfiguration(void){
 	return 0;
     }
 
+    if(cfg_p){
     while(fgets(LineBuf,1023,fip) != NULL){
-	p = cfg1;
+	p = *cfg_p;
     
         while(p){
 	    if((p->str != NULL) && (p->size != 0) && (p->size != 1) && (p->name) && *(p->name)){
@@ -309,6 +364,7 @@ int ReadConfiguration(void){
 	    p = p->next;
 	}
     }
+    }
     fclose(fip);
     return 1;
 }
@@ -320,6 +376,8 @@ int SaveConfiguration(void){	//new function to write to config direct from struc
     int i;
     char LineBuf[1024], *name;	//maybe buffer is to small
 
+    if(cfg_p == NULL) return 1;
+
     if((fip = fopen(ETC_PATH "/config","r")) == NULL || (fop = fopen(ETC_PATH "/config1","w+")) == NULL){
 #ifdef DEBUG
         fprintf( stderr, "Save: Cannot open one of config files\n" );
@@ -330,9 +388,8 @@ int SaveConfiguration(void){	//new function to write to config direct from struc
 #if 1
 	fprintf( stdout, "*****Save: Success open config file *****\n" );
 #endif
-
     while(fgets(LineBuf,1023,fip) != NULL){
-	    p = cfg1;		//need be more selective!
+	    p = *cfg_p;		//need be more selective!
 	    while(p){
 		if((p->str != NULL) && (p->size != 0) && (p->size != 1) && 
 				p->name && *(p->name) && p->changed && (! p->saved)){
@@ -358,7 +415,7 @@ printf("par__%s=\'%s\' changed=%d\n", name, p->new_value, p->changed);
     next:	;
     }
     //save the rest of parameters which are not in file
-    p = cfg1;
+    p = *cfg_p;
     while(p){
 	if((p->str != NULL) && (p->size != 0) && (p->size != 1) && p->name && *(p->name) && p->changed && (!p->saved)){
 		name = p->name;
@@ -379,7 +436,6 @@ printf("%s=\'%s\' changed=%d\n", name, p->new_value, p->changed);
 	p = p->next;
     }
 
-
     fclose(fip);
     fclose(fop);
     rename(ETC_PATH "/config1", ETC_PATH "/config");
@@ -394,7 +450,8 @@ printf("%s=\'%s\' changed=%d\n", name, p->new_value, p->changed);
 //recover the 'par'-saved flag to 0
 void recover_saved(char *par){
     struct cfg_parse1 *p;
-    p = cfg1;
+    if(cfg_p == NULL) return;
+    p = *cfg_p;
     if(par == NULL || *par == '\0'){
 	while(p){
 	    if((p->str != NULL) && (p->size != 0) && (p->size != 1) && p->name && *(p->name) && p->changed && (p->saved)){

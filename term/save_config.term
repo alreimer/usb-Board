@@ -1,0 +1,34 @@
+	    > "AL" 0 0 > "RL" 34 28 204 98 > "GR" 36 30 202 96
+	    > "ZC" 120 40 "Really save|config?" 0
+	    > "AT" 40 60 116 92 11 0 "CYES" 0
+	    > "AT" 124 60 198 92 12 0 "CNO" 0
+
+//YES
+< "A" 11
+    write_par "_etc_save:0";
+    system "/etc/save_config.sh";
+    if "_referrer:/*menu.term/" {	//if last page was *menu.term
+	switch_n "2";
+	boot_cgi [ "show" 0 ] {		//if cgi not found
+	    boot_cgi [ "timeout" ] {
+		boot_page "??_referrer2??";
+	    }
+	}
+	exit_cgi;
+    }
+    boot_page "??_referrer??";
+end
+
+//NO
+< "A" 12
+    if "_referrer:/*menu.term/" {	//if last page was *menu.term
+	switch_n "2";
+	boot_cgi [ "show" 0 ] {		//if cgi not found
+	    boot_cgi [ "timeout" ] {
+		boot_page "??_referrer2??";
+	    }
+	}
+	exit_cgi;
+    }
+    boot_page "??_referrer??";
+end

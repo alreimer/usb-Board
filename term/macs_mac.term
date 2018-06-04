@@ -1,0 +1,33 @@
+//in _buf must be:  ethx
+ifnot "_buf:eth/<10123456/>/"
+wr_par: _buf:eth0
+fi
+
+area:18:val
+area:2048:pool
+
+
+< "scripBegin" 0
+    write_par "name:MAC: ";
+end
+//are in incterm file now!!
+//> "AT" 110 65 142 93 12 0 "C\>" 0 
+//> "AT" 205 33 237 61 13 0 "C<" 0 
+
+include: mac-keys.incterm
+
+< "A" 12
+    not "val:/<10123456789abcdef/>/<10123456789abcdef/>:/<10123456789abcdef/>/<10123456789abcdef/>:/<10123456789abcdef/>/<10123456789abcdef/>:/<10123456789abcdef/>/<10123456789abcdef/>:/<10123456789abcdef/>/<10123456789abcdef/>:/<10123456789abcdef/>/<10123456789abcdef/>/"{
+	print [ 12  > "DL" > "AL" 0 1 > "ZC" 120 0 "ERROR:||format is not correct:||??val??" 0 > "AT" 205 97 237 125 13 0 "C<" 0 ];
+	exit_cgi ;
+    }
+    write_system  ":pool:ifconfig ??_buf?? hw ether \"??val??\";";
+    not "pool:/" {
+	print [ 12  > "DL" > "AL" 0 1 "??pool??" > "AT" 205 97 237 125 13 0 "C<" 0 ];
+	exit_cgi ;
+    }
+    print [ 12  > "DL" > "AL" 0 1 > "ZC" 120 0 "OK" 0 > "AT" 205 97 237 125 13 0 "C<" 0 ];
+end
+< "A" 13
+    boot_page "macs.term";
+end

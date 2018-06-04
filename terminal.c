@@ -23,7 +23,10 @@
 //#include "include/httpd_config.h"	//cfg_parse1
 #include "term_parser.h"
 #include "term_add.h"
+#include "term_tbl.h"
 #include "term_cgi.h"
+#include "t_config.h"
+#include "terminal.h"
 
 FILE *fp;
 char buffer[2078];
@@ -33,11 +36,13 @@ char etc_save[2];
 //char buf[16384];
 char buf[65537];//65536 + 1
 unsigned long long buf_size = 0;
-char *referrer = NULL, *ref_ = NULL;
 char version[256];
 char value[16];
 
+char *ptr_n;//begin of parse_file
+
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
+
 
 
 int copy_file(char *file, FILE *out)
@@ -65,72 +70,104 @@ int copy_file(char *file, FILE *out)
   return 0;
 }
 
-struct cfg_parse1 *cfg1 = NULL;	/*new config via web*/
-struct cfg_parse1 **cfg_p = &cfg1;
 
+//struct cfg_parse1 *cfg1 = NULL;	/*new config via web*/
+struct cfg_parse1 **cfg_p = NULL;
+struct page_n *p_n = NULL;
 
 //clear all parameters
-void free_par(struct cfg_parse1 **ptr){
-	if(!ptr || !*ptr) return;
-	free_par(&((*ptr)->next));
-printf("FREEpar %s\n", (*ptr)->str);
-	if((*ptr)->str) free((*ptr)->str);
-	free(*ptr);
-	*ptr = NULL;
+void free_par(struct cfg_parse1 *ptr){
+	if(!ptr) return;
+	free_par(ptr->next);
+printf("FREEpar %s\n", ptr->str);
+	if(ptr->str) free(ptr->str);
+	free(ptr);
 }
-
+/*
 void free_page_mem(void){
-    free_par(&cfg1);
-    cfg_p = &cfg1;
-
-    free_cgi(cgi_name);
-    cgi_name = NULL;
     free_tbl();
 }
-
-
-int parse_file(char *file_name, char flag){
-//copy_file(file_name, fp);
-	FILE *f;
-	char *ptr, *ptr1, *data, *tmp, *a, ch, i;//ptr - is busy
-	unsigned long long digi, str_size;
-	int make = 1;
-	struct stat stbuf;
-	struct cfg_parse1 *cfg_pointer;
-	struct parsestr parser;
-	char *name, *digit, *p, *ptr2;
-//	struct parsestr strct;
-
-
-
-//limit size of file to 64kb
-	if(stat(file_name, &stbuf) || stbuf.st_size > 1024*64 || (f=fopen(file_name, "r")) == NULL){
-	    printf("Error open file: %s\n", file_name);
-	    return 1;
-	}
-	ptr = (char *)malloc(stbuf.st_size+1);
-	if(ptr == NULL){
-	    printf("ERR: Allocate memory\n");
-	    fclose(f);
-	    return 1;
-	}
-
-	data = ptr;
-	fread(data, stbuf.st_size, 1, f);
-	data[stbuf.st_size] = '\0';
-	fclose(f);
-
-
-
-    if(flag == 0){
-	if(referrer) free(referrer);
-	referrer = ref_;
-	str_size = strlen(file_name) + 1;
-	ref_ = malloc(str_size + 1);
-	if(ref_) strncpy(ref_, file_name, str_size);
-
-	free_page_mem();	//flag == 0
+*/
+void free_page_n(struct page_n *ptr){
+    if(ptr == NULL) return;
+    free_page_n(ptr->next);
+    if(ptr->name){
+	printf("Free PAGE:%s\n", ptr->name);
+	free(ptr->name);
     }
+    if(ptr->cfg){
+	free_par(ptr->cfg);
+	ptr->cfg = NULL;//maybe not needed
+    }
+    if(ptr->tbl_name){
+        free_tbl(ptr->tbl_name);
+        ptr->tbl_name = NULL;//here too
+    }
+    if(ptr->cgi_name){
+	free_cgi(ptr->cgi_name);
+	ptr->cgi_name = NULL;//maybe not needed
+    }
+    free(ptr);
+}
+
+struct page_n *get_last_p(struct page_n *ptr, int digi, int *i){
+    struct page_n *p;
+    if(ptr == NULL){
+	*i = 0;
+	return NULL;
+    }
+    p = get_last_p(ptr->next, digi, i);
+//printf("loop: %s   %d\n",ptr->name, *i);
+    if(p != NULL) return p;
+    if(*i == digi) return ptr;
+    (*i)++;
+    return NULL;
+
+}
+
+struct page_n *get_last_page(char *num){
+    int digi = 1, i = 0;	//if digi = 1 -> get page "forlast". if digi = 0 -> get last page
+
+    if(num != NULL && *num != '\0'){
+	digi = 0;
+	while(num[i] >= '0' && num[i] <= '9'){
+	    digi = digi*10 + (num[i] - '0');
+	    i++;
+	    if(i > 3) break;
+	}
+    }
+
+    return get_last_p(p_n, digi, &i);
+}
+
+struct page_n *get_page(char *name){
+    struct page_n *ptr = p_n;
+    while(ptr){
+	if(ptr->name && !parsestr1(ptr->name, name))	return ptr;	//matched name with entry_name
+	ptr = ptr->next;
+    }
+    return NULL;
+
+}
+
+struct page_n *get_page_cmp(char *name){
+    struct page_n *ptr = p_n;
+    while(ptr){
+	if(ptr->name && !strcmp(ptr->name, name))	return ptr;	//matched name with entry_name
+	ptr = ptr->next;
+    }
+    return NULL;
+
+}
+
+char *parse_file_(char *data, int make, int loop){
+	char *ptr1, *tmp, *a, ch, i;
+	unsigned long long digi, str_size;
+	struct cfg_parse1 *cfg_pointer, **cfg;
+	struct parsestr parser;
+	char *name, *digit, *p, *ptr2, mk;
+
+
 
     while((data != NULL) && *data){
 
@@ -156,21 +193,25 @@ int parse_file(char *file_name, char flag){
 	    i++;
 //	    if(i > 3) break;
 	}
-	if(!digi || digi > 300) {data = tmp; continue;}	//size is in impassable range - so skip it all (whole parameter string will be skipped!)
+	if(!digi || digi > 300 || (cfg_p == NULL)) {data = tmp; continue;}	//size is in impassable range - so skip it all (whole parameter string will be skipped!)
 
-	*cfg_p = (struct cfg_parse1 *)malloc(sizeof(struct cfg_parse1));
+	cfg_pointer = (struct cfg_parse1 *)malloc(sizeof(struct cfg_parse1));
 
-	cfg_pointer = *cfg_p;
 	if(cfg_pointer == NULL){ data = tmp; continue;}
+
+	cfg = cfg_p;
+	while(*cfg){
+	    cfg = &((*cfg)->next);
+	}
+	*cfg = cfg_pointer;
 
 	str_size = tmp - data - i - 1;		//   v - (2chars) is for shore
 	ptr1 = (char*)malloc(str_size + 1 + 2*digi + 2);//str = "[part of string][value][new_value]"
 	if(ptr1 == NULL){
 	    printf("ERROR allocate memory\n");
-	    if(cfg_p && *cfg_p){
-		free(*cfg_p);
-		*cfg_p = NULL;	//main criteria to abort moving in array.
-	    }
+	    free(*cfg);
+	    *cfg = NULL;	//main criteria to abort moving in array.
+
 	    data = tmp;
 	    continue;
 	}
@@ -209,7 +250,6 @@ int parse_file(char *file_name, char flag){
 	    i++;
 	    }
 printf("Collected parameter: --%s--%s--%lld--%s--\n", cfg_pointer->web_name, cfg_pointer->name, cfg_pointer->size, cfg_pointer->pattern);
-	cfg_p = &(cfg_pointer->next);
 //insert
 
 
@@ -230,21 +270,24 @@ printf("Collected parameter: --%s--%s--%lld--%s--\n", cfg_pointer->web_name, cfg
 	    i++;
 //	    if(i > 3) break;
 	}
-	if(digi > 64*1024) {data = tmp; continue;}	//size is in impassable range - so skip it all (whole parameter string will be skipped!)
+	if(digi > 64*1024 || (cfg_p == NULL)) {data = tmp; continue;}	//size is in impassable range - so skip it all (whole parameter string will be skipped!)
 
-	*cfg_p = (struct cfg_parse1 *)malloc(sizeof(struct cfg_parse1));
+	cfg_pointer = (struct cfg_parse1 *)malloc(sizeof(struct cfg_parse1));
 
-	cfg_pointer = *cfg_p;
 	if(cfg_pointer == NULL){ data = tmp; continue;}
+
+	cfg = cfg_p;
+	while(*cfg){
+	    cfg = &((*cfg)->next);
+	}
+	*cfg = cfg_pointer;
 
 	str_size = tmp - data - i - 1;		// v - (2chars) is for shore
 	ptr1 = (char*)malloc(str_size + 1 + digi + 2);//str = "[part of string][value]"
 	if(ptr1 == NULL){
 	    printf("ERROR allocate memory\n");
-	    if(cfg_p && *cfg_p){
-		free(*cfg_p);
-		*cfg_p = NULL;	//main criteria to abort moving in array.
-	    }
+	    free(*cfg);
+	    *cfg = NULL;	//main criteria to abort moving in array.
 	    data = tmp;
 	    continue;
 	}
@@ -261,7 +304,8 @@ printf("Collected parameter: --%s--%s--%lld--%s--\n", cfg_pointer->web_name, cfg
 	if(digi != 0){
 	cfg_pointer->value = ptr1 + str_size+1;
 //	*(cfg_pointer->value) = '\0';
-	cfg_pointer->new_value = ptr1 + str_size + 1 + digi;
+	cfg_pointer->new_value = cfg_pointer->value;
+//	cfg_pointer->new_value = ptr1 + str_size + 1 + digi;
 //	*(cfg_pointer->new_value) = '\0';
 	memset(cfg_pointer->value, 0, digi);//fill with zeros
 	}else{//AREA=0:temp_name
@@ -273,8 +317,7 @@ printf("Collected parameter: --%s--%s--%lld--%s--\n", cfg_pointer->web_name, cfg
 	cfg_pointer->next = NULL;
 	cfg_pointer->web_name = ptr1;
 
-printf("Collected parameter: --%s--%lld--\n", cfg_pointer->web_name, cfg_pointer->size);
-	cfg_p = &(cfg_pointer->next);
+printf("Collected area: --%s--%lld--\n", cfg_pointer->web_name, cfg_pointer->size);
 //insert
 	    data = tmp;
 	    continue;
@@ -298,11 +341,11 @@ printf("Collected parameter: --%s--%lld--\n", cfg_pointer->web_name, cfg_pointer
 	    if(i > 2) break;
 	}
 	if(i != 0){
-	    if(digi > 255){ printf("char #%d in file %s is > 255\n", data-ptr, file_name);}
+	    if(digi > 255){ printf("char #%d is > 255\n", data-ptr_n);}
 	    if(make) putc(digi % 256, fp);
 //printf("-- %d --\n", digi);
 	    data = data + i;
-	    if(*data != ' ' && *data != '\t' && *data != '\r' && *data != '\n' && *data != '\0') printf("char #%d in file: %s is not correct separated!\n", data-ptr, file_name);
+	    if(*data != ' ' && *data != '\t' && *data != '\r' && *data != '\n' && *data != '\0') printf("char #%d is not correct separated!\n", data-ptr_n);
 	    continue;
 	}
 
@@ -413,22 +456,50 @@ printf("Collected parameter: --%s--%lld--\n", cfg_pointer->web_name, cfg_pointer
 	    data = tmp;
 	    continue;
 /*** big IF configuration ***/
-	}else if(tmp = parsestr2(&parser, data, "if/t\"/[/*/]\"")){
-	    if(cfg_arg_strcmp(tmp, 0)){//par -not exist or not match
-		make = 0;
+	}else if(tmp = parsestr2(&parser, data, "if/t\"/[/*/N\\N/]\"")){
+	    mk = 1;
+	    if(make){
+		if(cfg_arg_strcmp(tmp, 0)){//par -not exist or not match
+		    mk = 0;
+		}
 	    }
 	    data = restore_str(&parser);
+	    data = parse_file_(data, (make && mk), loop + 1);
+	    if(tmp = parsestr1(data, "else/ ")){
+		if(mk) mk = 0;
+		else mk = 1;
+		data = parse_file_(tmp, (make && mk), loop + 1);
+	    }
 	    continue;
-	}else if(tmp = parsestr2(&parser, data, "ifnot/t\"/[/*/]\"")){
-	    if(cfg_arg_strcmp(tmp, 1)){//par -not exist or match
-		make = 0;
+	}else if(tmp = parsestr2(&parser, data, "ifnot/t\"/[/*/N\\N/]\"")){
+	    mk = 1;
+	    if(make){
+		if(cfg_arg_strcmp(tmp, 1)){//par -not exist or match
+		    mk = 0;
+		}
 	    }
 	    data = restore_str(&parser);
+	    data = parse_file_(data, (make && mk), loop + 1);
+	    if(tmp = parsestr1(data, "else/ ")){
+		if(mk) mk = 0;
+		else mk = 1;
+		data = parse_file_(tmp, (make && mk), loop + 1);
+	    }
 	    continue;
 	}else if(*data == 'f' && *(data+1) == 'i'){
 	    data += 2;
-	    make = 1;
-	    continue;
+	    if(loop) return data;
+	    else {
+		printf("main: \"if\" not present!\n");
+		continue;
+	    }
+	} else if(tmp = parsestr1(data, "else")){	//return for inversing make.
+	    if(loop) return data;
+	    else {
+		printf("main: else without if\n");
+		data = tmp;
+		continue;
+	    }
 /*** end of IF configuration ***/
 	}else if(*data == '<'){
 	    data++;
@@ -454,7 +525,7 @@ printf("Collected parameter: --%s--%lld--\n", cfg_pointer->web_name, cfg_pointer
 		    my_shell(fp, ptr1);
 		    free(ptr1);
 		}
-	    }else{ printf("WARN: shell line, at char %d, is empty!\n", data-ptr);}
+	    }else{ printf("WARN: shell line, at char %d, is empty!\n", data-ptr_n);}
 
 	    data = tmp;
 	    continue;
@@ -503,7 +574,7 @@ printf("Collected parameter: --%s--%lld--\n", cfg_pointer->web_name, cfg_pointer
 		}
 	    data = restore_str(&parser);
 	    continue;
-	}else if(tmp = parsestr2(&parser, data, "table:/t/[/*/]#end_table")){
+	}else if(tmp = parsestr2(&parser, data, "table:/t/[/*\\n/]#end_table\\n")){
 	    if(make == 1){
 		parse_tbl(tmp, 0);//without clean
 	    }
@@ -513,12 +584,110 @@ printf("Collected parameter: --%s--%lld--\n", cfg_pointer->web_name, cfg_pointer
 
 
 
-if(make) putc(ch, fp);
+	if(make) putc(ch, fp);
 	data++;
     }
 
+    if(loop) printf("main: \"fi\" not present!\n");
+    return data;
+}
 
+//return: 0 - OK, 1 - Err open file, 2 - Err allocate
+int parse_file(char *file_name, char flag){
+	FILE *f;
+	char *ptr;
+	unsigned long long str_size;
+	struct stat stbuf;
+	struct page_n **p1;
+
+
+//limit size of file to 64kb
+	if(stat(file_name, &stbuf) || stbuf.st_size > 1024*64 || (f=fopen(file_name, "r")) == NULL){
+	    printf("Error open file: %s\n", file_name);
+	    return 1;
+	}
+	ptr = (char *)malloc(stbuf.st_size+1);
+	if(ptr == NULL){
+	    printf("ERR: Allocate memory\n");
+	    fclose(f);
+	    return 2;
+	}
+
+	fread(ptr, stbuf.st_size, 1, f);
+	ptr[stbuf.st_size] = '\0';
+	fclose(f);
+
+	ptr_n = ptr;//set the begin of file
+	A1_BTN = 0;//for test here
+
+
+/*
+flag == 0 - call parse_file, or boot_page(CGI)
+		clear all parameters, tables. Clear CGI's and Pages up from matched name of file and register new CGI's,
+		pars and tables.
+flag == 1 - call include(parse_file)
+		do not clear parameters and tables. Ignor registring new Page. Register new CGI's, pars and tables.
+flag == 2 - call include(CGI)
+		do not clear parameters and tables. Register new Page, do not remove last Page.
+		If Page exist - clear all Pages next of that. and register new CGI's and pars and tables
+*/
+    if(flag != 1){
+	p1 = &p_n;
+	while(1){
+	    if(*p1 == NULL){
+		*p1 = (struct page_n *)malloc(sizeof(struct page_n));
+		if(*p1 != NULL){
+		    str_size = strlen(file_name) + 1;
+		    (*p1)->name = malloc(str_size + 1);
+		    if((*p1)->name){
+			strncpy((*p1)->name, file_name, str_size);
+			(*p1)->size = str_size;
+			(*p1)->next = NULL;
+			(*p1)->cfg = NULL;
+			cfg_p = &((*p1)->cfg);
+			(*p1)->tbl_name = NULL;
+			tbl_name = &((*p1)->tbl_name);
+			(*p1)->cgi_name = NULL;
+			cgi_name = &((*p1)->cgi_name);
+			break;
+		    }
+		    free(*p1);
+		    *p1 = NULL;
+		}
+		printf("Error allocate memory_page\n");
+		free(ptr);
+		return 1;
+	    }
+	    if((*p1)->name && !strcmp((*p1)->name, file_name)){	//name is existing
+		free_page_n((*p1)->next);	//clear next pages
+		(*p1)->next = NULL;
+		free_par((*p1)->cfg);		//clear all parameters
+		(*p1)->cfg = NULL;
+		cfg_p = &((*p1)->cfg);
+		free_tbl((*p1)->tbl_name);	//clear all tabs
+		(*p1)->tbl_name = NULL;
+		tbl_name = &((*p1)->tbl_name);
+		free_cgi((*p1)->cgi_name);	//clear all cgi's
+		(*p1)->cgi_name = NULL;
+		cgi_name = &((*p1)->cgi_name);
+		break;
+	    }
+	    if(flag == 0 && (*p1)->next == NULL){	//entries of names still remain
+		free_par((*p1)->cfg);		//clear all parameters
+		(*p1)->cfg = NULL;
+		free_tbl((*p1)->tbl_name);	//clear all tabs
+		(*p1)->tbl_name = NULL;
+		free_cgi((*p1)->cgi_name);	//clear all cgi's
+		(*p1)->cgi_name = NULL;
+//		cgi_name = &((*p1)->cgi_name);
+	    }
+	p1 = &((*p1)->next);
+	}
+    }
+
+	parse_file_(ptr, 1, 0);
 	free(ptr);
+	return 0;	//all ok
 }
 
 
@@ -545,9 +714,8 @@ void sig_handler(int signo){
 //#endif
     }
     fclose(fp);
-    free_page_mem();	//clear all memory used for page
-    if(referrer) free(referrer);
-    if(ref_) free(ref_);
+//    free_page_mem();	//clear all memory used for page
+    free_page_n(p_n);
     exit(0);
 }
 
@@ -582,12 +750,11 @@ int read_buf__(char *buff){
 
     if(line[n] != NULL && line[n][i] == '\0'){
 	printf("Func: %d\n", n);
-
 	switch(n){
 	    case 0:
 		    //print ">SV";
 		    //get dspl-version "<V,len,string"
-		    parse_file("/term/index.term", 0);
+		    parse_file(INDEX_NAME, 0);
 		    break;
 	    case 1: //fprintf(fp, "07121035142015");//%m%d%H%M%S20%Y
 		    my_system(fp, "date \"+%m%d%H%M%S%Y\"");
@@ -753,7 +920,7 @@ int main(int argc, char *argv[]){
     etc_save[1] = '\0';
     buf_size = 0;
 
-    chdir("/term/");
+    chdir( ROOT_PATH );
 //    chdir(CONFIG.WEB_ROOT);		//just use it!!
 
 	if((fp=fopen(dev,"r+")) == NULL){

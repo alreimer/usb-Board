@@ -1,0 +1,23 @@
+20180214
+- made "macs_xxxx.term" branch
+- body of parse_file moved to parse_file_ for correct interpritation of if..else..fi
+- cgi: print []; correct interpritation of if..else..fi or if..fi and recursive of that combinations.
+20180131
+- some changed t_readme.txt helpFile
+- added menu.term with 'help'-table parsing && macs_list.term
+- parameters and areas can be get from other page: par_name%2 or par_name@/L/Lmenu.term
+- !!!"page"ing struct is compleated!!!
+- moved "tbl_name" into "page" struct.
+- moved "cfg" parameter into "page" struct. acces to current parameters of page via **cfg_p.
+20170610
+- in include(CGI): is fixed flag (0->2) to parse_file function and added check of existing already registered file
+	with normal return 2 [now!] (break of execution of CGI scripts).
+- changed some CGI functions:
+	last_page -> switch_n "0";
+	return  ->   switch_n "1";
+20170525
+- hd_(u)mounts.term changed: added "pool"-parameter
+- added "nnot", "switch", "return", "last_page" in CGI execution
+- added referending to page befor
+20170507
+- t_config.h is created

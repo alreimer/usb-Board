@@ -1,0 +1,49 @@
+12   > "DL" > "AL" 0 1
+> "AT" 2 1 98 60 1 0 "CChange|MAC" 0
+> "AT" 106 1 201 60 2 0 "CManage|LISTs" 0
+> "AT" 2 67 98 125 3 0 "CChange|Hostname" 0
+//> "AT" 106 67 201 125 4 0 "Ctest" 0
+> "AT" 205 1 237 29 5 0 "C<" 0
+> "AT" 205 97 237 125 6 0 "C>" 0
+> "AT" 205 65 237 93 11 0 "Cm" 0
+
+table: help
+this Page is for manual
+changing of MAC addresses
+and HostName of network-
+devices. After reboot all
+theose parameters will be
+reseted to default values
+. Hostname can be changed
+for ever (not reseted) in
+'Network' menu of Board.
+#end_table
+//3456789012345678901234567890
+//       1         2         3
+
+
+< "A" 1
+    boot_page "macs_mac.term";
+end
+< "A" 2
+    boot_page "macs_list.term";
+end
+< "A" 3
+    boot_page "macs_host.term";
+end
+/*
+< "A" 4
+    boot_page "info-net_route.term";
+end
+*/
+< "A" 5
+    boot_page "index-main_3.term";
+end
+/*
+< "A" 6
+    boot_page "info_1.term";
+end
+*/
+< "A" 11
+    include "menu.term";
+end

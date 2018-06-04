@@ -21,7 +21,7 @@ readcfg
 //> "AT" 205 97 237 125 9 0 "C->" 0
     > "AT" 205 1 237 29 8 0 "C<" 0
 //    > "AT" 205 33 237 61 10 0 "C<-" 0
-if "_etc_save:1" > "AT" 205 65 237 93 11 0 "CS" 0 fi ];
+    > "AT" 205 65 237 93 11 0 "Cm" 0 ];
 end
 
 < "A" 1
@@ -62,9 +62,11 @@ end
     boot_page "hd.term";
 end
 < "A" 11
-    write_par "_etc_save:0";
-    system "/etc/save_config.sh";
-    boot_cgi [ "show" 0 ];
+    include "menu.term";
+//    boot_page "save_config.term";
+//    write_par "_etc_save:0";
+//    system "/etc/save_config.sh";
+//    boot_cgi [ "show" 0 ];
 end
 
 cgi: "show" 0

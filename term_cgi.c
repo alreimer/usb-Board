@@ -25,7 +25,7 @@
 #include "term_parser.h"
 
 unsigned char A1_BTN = 0;
-struct cgi *cgi_name = NULL;
+struct cgi **cgi_name = NULL;
 struct cgi *cgi_used = NULL;	//connect to cgi that is now in use. Used by print()
 
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
@@ -108,6 +108,11 @@ char *search[] = {"print",		//1
 			"chroot",	//24
 			"get_file",	//25
 			"file_size_16",	//26
+			"nnot",		//27
+			"include",	//28
+			"switch_n",	//29
+			"switch",	//30
+			"write_ppar",	//31
 			NULL
 			};
 
@@ -237,7 +242,11 @@ size = parse_cgi_name(data, &end, NULL);
 //    if(!tmp){ printf("Unable to def. length\n"); return NULL;}
     if( size == 0 || size > MAX_SIZE_OF_NAME ){ printf("Length of cgi name: %lld\n", size); return NULL;}
     parse_cgi_name(data, &end, tmp1);
-    ptr = &cgi_name;
+    ptr = cgi_name;
+    if(ptr == NULL){
+	printf("cgi_name not allocated\n");
+	return NULL;
+    }
     while(*ptr){
 	if((*ptr)->name && !strncmp((*ptr)->name, tmp1, size))return NULL;	//if name exist - skip parsing!
 	ptr = &((*ptr)->next);		//add cgi struct to the end
@@ -299,12 +308,12 @@ int print(FILE *out, char *data){
     }
     loop_print++;
 
-    print_(out, data, 1, 0, 0);//make = 1, _else = 0, loop = 0
+    print_(out, data, 1, 0);//make = 1, loop = 0
 
     loop_print--;
 }
 
-char *print_(FILE *out, char *data, int make, char _else, int loop){
+char *print_(FILE *out, char *data, int make, int loop){
 
 	char *tmp, *ptr = data, *ptr1, *a, ch, i;
 	char *name, *digit, *p, *ptr2;
@@ -446,23 +455,35 @@ char *print_(FILE *out, char *data, int make, char _else, int loop){
 	    data = tmp;
 	    continue;
 /*** big IF configuration ***/
-	}else if(tmp = parsestr2(&strct, data, "if/t\"/[/*/]\"")){
-	    if(make == 0) mk = 0;
-	    else mk = 1;
-	    if(cfg_arg_strcmp(tmp, 0)){//par -not exist or not match
-		mk = 0;
+	}else if(tmp = parsestr2(&strct, data, "if/t\"/[/*/N\\N/]\"")){
+	    mk = 1;
+	    if(make){
+		if(cfg_arg_strcmp(tmp, 0)){//par -not exist or not match
+		    mk = 0;
+		}
 	    }
 	    data = restore_str(&strct);
-	    data = print_(out, data, mk, 1, loop + 1);
+	    data = print_(out, data, (make && mk), loop + 1);
+	    if(tmp = parsestr1(data, "else/ ")){
+		if(mk) mk = 0;
+		else mk = 1;
+		data = print_(out, tmp, (make && mk), loop + 1);
+	    }
 	    continue;
-	}else if(tmp = parsestr2(&strct, data, "ifnot/t\"/[/*/]\"")){
-	    if(make == 0) mk = 0;
-	    else mk = 1;
-	    if(cfg_arg_strcmp(tmp, 1)){//par -not exist or match
-		mk = 0;
+	}else if(tmp = parsestr2(&strct, data, "ifnot/t\"/[/*/N\\N/]\"")){
+	    mk = 1;
+	    if(make){
+		if(cfg_arg_strcmp(tmp, 1)){//par -not exist or match
+		    mk = 0;
+		}
 	    }
 	    data = restore_str(&strct);
-	    data = print_(out, data, mk, 1, loop + 1);
+	    data = print_(out, data, (make && mk), loop + 1);
+	    if(tmp = parsestr1(data, "else/ ")){
+		if(mk) mk = 0;
+		else mk = 1;
+		data = print_(out, tmp, (make && mk), loop + 1);
+	    }
 	    continue;
 	}else if(*data == 'f' && *(data+1) == 'i'){
 	    data += 2;
@@ -473,21 +494,15 @@ char *print_(FILE *out, char *data, int make, char _else, int loop){
 	    }
 //	    make = 1;
 //	    continue;
-	} else if(tmp = parsestr1(data, "else/t")){	//inverse make.
-	    if(loop == 0) printf("else without if\n");
+	} else if(tmp = parsestr1(data, "else")){	//return for inversing make.
+	    if(loop) return data;
 	    else {
-		if(_else == 0) printf("double else\n");
-		else{
-		    if(make) make = 0;
-		    else make = 1;
-		    tmp = print_(out, tmp, make, 0, loop);
-		    return tmp;
-		}
+		printf("else without if\n");
+		data = tmp;
+		continue;
 	    }
-	    data = tmp;
-	    continue;
 /*** end of IF configuration ***/
-	}else if(tmp = parsestr2(&strct, data, "table:/t/[/*/]#end_table")){
+	}else if(tmp = parsestr2(&strct, data, "table:/t/[/*\\n/]#end_table\\n")){
 	    if(make == 1){
 		parse_tbl(tmp, 1);//with clean
 	    }
@@ -735,6 +750,7 @@ int get_cgi_body(struct cgi *ptr){
     int i = 0, j = 0, jump = 0, allocated, ret;
     unsigned long long size, size1, size2;//size2 - for copy_ppar
     char *tmp, *tmp1, *tmp2, *arg = NULL, ch = 0;
+    struct page_n *p;
     FILE *f;
     struct stat stbuf;
 
@@ -834,19 +850,21 @@ int get_cgi_body(struct cgi *ptr){
 				}
 			    }
 			    break;
-		    case 19:	//boot_cgi
+		    case 19:	//boot_cgi [ "info" 0 ] { print [ > "ERROR" ]; }
 			    size = parse_cgi_name(arg, &tmp1, NULL);//ptr1 - is end(\n) of cgi-string
 //printf("-%s--%d->--%s--<<\n", arg, size, tmp1);
 			    if( size == 0 || size > MAX_SIZE_OF_NAME ){
 				printf("WARN: Length of cgi name: %d\n", size);
-				if(allocated) free(arg);
-				return 0;
+//				if(allocated) free(arg);
+//				return 0;
+				break;
 			    }
 			    tmp = (char *)malloc(size+2);
 			    if(tmp != NULL){
 				parse_cgi_name(arg, &tmp1, tmp);
 				ret = get_cgi(0, size, tmp);
 				free(tmp);
+				if(ret == 1) jump = 1; //if all ok - jump
 				if(ret == 2){
 				if(allocated) free(arg);
 				return 2;	//go out now!! -if get_cgi going out!!
@@ -924,6 +942,49 @@ int get_cgi_body(struct cgi *ptr){
 			    }else jump = 1;//error allocate memory
 			    
 			    break;
+		    case 27:			//nnot		-not exist or not matches
+			    if(!cfg_arg_strcmp(arg, 0)) { jump = 1;}
+			    break;
+		    case 28:			//include "file_name";
+			    size = strncpy_(NULL, arg, 0)+1;	//this is max. size of arg-string
+			    p = NULL;
+			    if(size > 1 && (tmp = malloc(size))){
+				strncpy_(tmp, arg, size);
+//printf("parse_file:%s %ld\n", tmp, size);
+				if(*tmp != '\0'){
+				    p = get_page_cmp(tmp);
+				    if(!parse_file(tmp, 2)) jump = 1;//jump if tmp != 0 and file exist
+				}
+
+				free(tmp);
+			    }//else jump = 1;//error allocate memory
+			    if(p){
+				if(allocated) free(arg);
+				return 2;	//if file already registered - return now!
+			    }
+			    break;
+		    case 29:			//switch_n "";		get forlast page = "1" or "". get last page = "0" or "something here != 0123456789"
+			    p = get_last_page(arg);
+			    if(p){
+				cfg_p = &(p->cfg);
+				tbl_name = &(p->tbl_name);
+				cgi_name = &(p->cgi_name);
+				jump = 1;	//jump if all ok (find file)
+			    }
+			    break;
+
+		    case 30:			//switch "parse of file_name";
+			    p = get_page(arg);
+			    if(p){
+				cfg_p = &(p->cfg);
+				tbl_name = &(p->tbl_name);
+				cgi_name = &(p->cgi_name);
+				jump = 1;	//jump if all ok (find file)
+			    }
+			    break;
+		    case 31: //arg="from_par:to_par:parsestr"
+			    jump = write_ppar(arg);
+			    break;
 
 		}//switch end
 	    fflush(fp);
@@ -943,7 +1004,8 @@ int get_cgi(char ch, int num, unsigned char *buf){
     int ret = 0;
     struct cgi *ptr;
 //printf("char:%c %d\n", ch, *buf);
-    ptr = cgi_name;
+    if(cgi_name == NULL) return 0;
+    ptr = *cgi_name;
     while(ptr){
 //printf("cgi: %c %d\n", *(ptr->name), *((ptr->name) +1));
 //printf("SHOW:%s: %d - %d \n", ptr->name,num, ptr->name_size);
@@ -985,6 +1047,7 @@ printf("H PARAM\n");
 	}else if((ptr->name_size == num) && !memcmp(ptr->name, buf, num)){//rest of ch, for example: ch == 0
 //think about...
 //		cgi_used = ptr;
+		A1_BTN = 0;			//for now, maybe it must be saved and restored!!!
 		ret = get_cgi_body(ptr);
 //		cgi_used = NULL;
 		return ret;	//ok cgi is found
