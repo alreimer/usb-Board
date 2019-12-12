@@ -1,13 +1,21 @@
 name: C/C++ CI
 
-on: [push]
+on: [push,pull_request]
 
 jobs:
-  build:
+   build-linux:
+    name: Linux build
 
     runs-on: ubuntu-latest
     
     steps:
-    - name: make
-      run: make terminal
+      - uses: actions/checkout@v1
+      - name: List files
+        run: |
+         ls
+         env
+      - name: make
+        run:  make
+         
+
  
