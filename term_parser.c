@@ -292,13 +292,13 @@ void link_cfg(char *arg){
 	}
 	if(cfg_pointer == NULL){
 	    cfg_pointer = (struct cfg_parse1 *)malloc(sizeof(struct cfg_parse1));
-	    if(cfg_pointer == NULL){ printf(err); *(arg-1) = ':'; return;}
+	    if(cfg_pointer == NULL){ printf("%s", err); *(arg-1) = ':'; return;}
 	    *cfg = cfg_pointer;
 
 	    str_size = strlen(tmp);
 	    ptr = (char*)malloc(str_size + 2);
 	    if(ptr == NULL){
-		printf(err);
+		printf("%s", err);
 		*(arg-1) = ':';
 		free(*cfg);
 		*cfg = NULL;	//main criteria to abort moving in array.
