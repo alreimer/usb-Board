@@ -852,7 +852,7 @@ int get_cgi_body(struct cgi *ptr){
 			    size = parse_cgi_name(arg, &tmp1, NULL);//ptr1 - is end(\n) of cgi-string
 //printf("-%s--%d->--%s--<<\n", arg, size, tmp1);
 			    if( size == 0 || size > MAX_SIZE_OF_NAME ){
-				printf("WARN: Length of cgi name: %d\n", size);
+				printf("WARN: Length of cgi name: %lld\n", size);
 //				if(allocated) free(arg);
 //				return 0;
 				break;
