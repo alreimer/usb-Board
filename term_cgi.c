@@ -1,6 +1,6 @@
 /* term_CGI.c:
  *
- * Copyright (C) 2015  Alexander Reimer <alex_raw@rambler.ru>
+ * Copyright (C) 2015-2020  Alexander Reimer <alex_raw@rambler.ru>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -113,6 +113,9 @@ char *search[] = {"print",		//1
 			"switch_n",	//29
 			"switch",	//30
 			"write_ppar",	//31
+			"link",		//32
+			"free_upages",	//33
+			"readcfg",	//34
 			NULL
 			};
 
@@ -217,6 +220,7 @@ char *cgi_loop(char *data, int *i, int *k, struct cgi *ptr){
 	}
 	if(*data == '}'){data++; return data;
 	}
+	
 	if(!strncmp(data, "end", 3)){data+=3; break;}
 #ifdef DEBUG
 putchar(*data);
@@ -283,7 +287,9 @@ size = parse_cgi_name(data, &end, NULL);
     return NULL;
 }
 
+/*
 char *cgi_end(char *data){
+    char *tmp;
     while(*data != '\0'){
 	if(*data != '\\' && *(data+1) == '\"'){
 	    data +=2;
@@ -292,12 +298,14 @@ char *cgi_end(char *data){
 		data++;
 	    }
 	} //else
-	if(!strncmp(data, "end", 3)){data+=3; return data;}
+	else if(tmp = parsestr1(data, "table:/*#end_table")){data = tmp; continue;}
+	else if(!strncmp(data, "end", 3)){data+=3; return data;}
 
 	data++;
     }
     return data;
 }
+*/
 
 int print(FILE *out, char *data){
 
@@ -340,11 +348,11 @@ char *print_(FILE *out, char *data, int make, int loop){
 	    if(i > 2) break;
 	}
 	if(i != 0){
-	    if(digi > 255){ printf("char #%d is > 255\n", data-ptr);}
+	    if(digi > 255){ printf("char #%ld is > 255\n", data-ptr);}
 	    if(make) putc(digi % 256, out);
 //printf("-- %d --\n", digi);
 	    data = data + i;
-	    if(*data != ' ' && *data != '\t' && *data != '\r' && *data != '\n' && *data != '\0') printf("char #%d is not correct separated!\n", data-ptr);
+	    if(*data != ' ' && *data != '\t' && *data != '\r' && *data != '\n' && *data != '\0') printf("char #%ld is not correct separated!\n", data-ptr);
 	    continue;
 	}
 
@@ -522,10 +530,8 @@ char *print_(FILE *out, char *data, int make, int loop){
 //return 0 -exec in braces, 1 - jump
 /*used in get_cgi as print "text to \n be ??_%var?? "*/
 int print_str(FILE *out, char *tmp){
-    char *tmp1, *tmp2;//tmp2 can be replaced via tmp1!!
-    struct cgi *ptr;
+    char ch, *tmp2;//tmp2 can be replaced via tmp1!!
     struct parsestr strct;
-    ptr = cgi_used;
     static int loop_print_1 = 0;	// used if loops exissted
     if(loop_print_1 > 10){
 	fprintf(out, "max loop counter reached\n");
@@ -534,13 +540,19 @@ int print_str(FILE *out, char *tmp){
     loop_print_1++;
 
 	    while(*tmp){
-		tmp1 = tmp;
-		if(*tmp == '\\'){
-		    if(*(tmp+1) == '\"'){ tmp++; tmp1 = tmp;}
-		    else if(*(tmp+1) == 'n'){tmp++; tmp1 = "\n";}
-		    else if(*(tmp+1) == 't'){tmp++; tmp1 = "\t";}
-		    else if(*(tmp+1) == '\\'){tmp++; tmp1 = "\\";}
-		    else if(*(tmp+1) == '?' || *(tmp+1) == '{' || *(tmp+1) == '['){tmp++; tmp1 = tmp;}
+		ch = *tmp;
+		if(ch == '\\'){
+		    tmp++;
+		    switch (*tmp){
+			case '\"':
+			case '?':
+			case '{':
+			case '[':
+			case '\\':	ch = *tmp;break;
+			case 'n':	ch = '\n';break;
+			case 't':	ch = '\t';break;
+			default :	tmp--;
+		    }
 		} else
 		if(tmp2 = parsestr2(&strct, tmp, "??/[/N?N/*/]??")){		//??variable??
 			tmp2 = get_var(NULL, tmp2);		//get_var and get_variable
@@ -564,33 +576,8 @@ int print_str(FILE *out, char *tmp){
 			}
 			tmp = restore_str(&strct);
 			continue;		//it's or tmp=tmp+2 or tmp=tmp2+2
-		} else
-		if(tmp2 = parsestr2(&strct, tmp, "{?/[/N?N/*/]?}")){	//{?condition?}	-switched on if running from cgi-script
-//needed more thinking about
-			if(ptr && ptr->data_ptr){
-				tmp2 = parsestr1(ptr->data_ptr, tmp2);		//parse tmp in data-buffer
-				if(tmp2){
-				    fprintf(out, "%s", tmp2);
-				    ptr->data_ptr = point[1];
-				}//else ptr->data_ptr = NULL;		//be carefull- this mean that no more parses 
-			}
-			tmp = restore_str(&strct);
-			continue;		//it's or tmp=tmp+2 or tmp=tmp2+2
-		} else
-		if(tmp2 = parsestr2(&strct, tmp, "[?/[/N?N/*/]?]")){	//[?condition?]	-switched on if running from cgi-script
-//needed more thinking about
-			if(ptr && ptr->data_ptr){
-				tmp2 = parsestr1(ptr->data_ptr, tmp2);		//parse tmp in data-buffer
-				if(!tmp2){
-				    restore_str(&strct);
-				    loop_print_1--;
-				    return 0;		//if tmp is not matched with data_ptr - break printing
-				}
-			}
-			tmp = restore_str(&strct);
-			continue;		//it's or tmp=tmp+2 or tmp=tmp2+2
 		}
-		putc(*tmp1, out);
+		putc(ch, out);
 	    tmp++;
 	    }
 	loop_print_1--;
@@ -601,20 +588,25 @@ int print_str(FILE *out, char *tmp){
 void rename_(char *old_name, char *new_name){
 //    char LineBuf[256];
     FILE *fp, *fop;
-	if((fp = fopen(old_name,"r")) != NULL && (fop = fopen(new_name, "w")) != NULL){
+    char i = 0;
+	if((fp = fopen(old_name,"r")) != NULL){
+	    if((fop = fopen(new_name, "w")) != NULL){
 /*	    while(fgets(LineBuf,255,fp) != NULL){
 	        fputs(LineBuf,fop);
 	    }
-*/	    copy(fp, fop);
-	    fclose(fp);
+*/	    i = 1;
+	    copy(fp, fop);
 	    fclose(fop);
-	    remove(old_name);
+	    }
+	    fclose(fp);
+	    if(i) remove(old_name);
 	}
 }
 
 //return 0 -exec in braces, 1 - jump
-int change_line(char *line){ //line="/etc/file:/ nameserver: nameserver ??var??" or line="/etc/file:/*/?var?/: nameserver ??_%var??"
-    char *file_name, *cmpstr, LineBuf[256];//, *tmp;
+int change_line(char *line){ //line="/etc/file??name??:/ nameserver: nameserver ??var??" or line="/etc/file:/*/?var?/: nameserver ??_%var??"
+    char *file_name, *cmpstr, LineBuf[256], *tmp;
+    unsigned long long size;
     char *file ="/var/temp1234";
     char *ptr = cgi_used->data_ptr; //!!!!use only in cgi-scripts!!!!
 
@@ -625,9 +617,12 @@ int change_line(char *line){ //line="/etc/file:/ nameserver: nameserver ??var??"
         cmpstr = w_strtok(&line, ':');
         if(!cmpstr || !(*cmpstr)){ printf("change_line: compare_string is empty\n");return 1;}
 
-	if((fp = fopen(file_name,"r")) == NULL) return flag;//cannot open file -> exec. in braces
+    size = strncpy_(NULL, file_name, 0)+1;	//this is max. size of arg-string
+    if(size > 1 && (tmp = malloc(size))){
+	strncpy_(tmp, file_name, size);
 
-	if((fop = fopen(file, "w")) != NULL){
+	if((fp = fopen(tmp,"r")) != NULL){
+	    if((fop = fopen(file, "w")) != NULL){
 	    while(fgets(LineBuf,255,fp) != NULL){
 
 		cgi_used->data_ptr = LineBuf;
@@ -643,14 +638,17 @@ int change_line(char *line){ //line="/etc/file:/ nameserver: nameserver ??var??"
 		}
 	    }
 	    fclose(fop);
-	    if(flag == 1){
-		rename_(file, file_name);//found and changed - rename file
-	    }else{
-		remove(file);//not found - remove file
+		if(flag == 1){
+		    rename_(file, tmp);//found and changed - rename file
+		}else{
+		    remove(file);//not found - remove file
+		}
 	    }
-	}
 	fclose(fp);
+	}
 	cgi_used->data_ptr = ptr;
+	free(tmp);
+    }
 	return flag;
 
 }
@@ -914,7 +912,7 @@ int get_cgi_body(struct cgi *ptr){
 			    break;
 		    case 25: //get_file
 			    size = strncpy_(NULL, arg, 0)+1;	//this is max. size of arg-string
-			    if(tmp = malloc(size)){
+			    if(size > 1 && (tmp = malloc(size))){
 				strncpy_(tmp, arg, size);
 //printf("get_file:%s %ld\n", tmp, size);
 				if(!copy_file(tmp, fp)) jump = 1; //exec in braces if file not found 
@@ -924,7 +922,7 @@ int get_cgi_body(struct cgi *ptr){
 			    break;
 		    case 26:		//file_size_16
 			    size = strncpy_(NULL, arg, 0)+1;	//this is max. size of arg-string
-			    if(tmp = malloc(size)){
+			    if(size > 1 && (tmp = malloc(size))){
 				strncpy_(tmp, arg, size);
 //printf("get_file:%s %ld\n", tmp, size);
 				if(!stat(tmp, &stbuf) && ((stbuf.st_size -1) < 1024*64)){
@@ -964,7 +962,7 @@ int get_cgi_body(struct cgi *ptr){
 			    }
 			    break;
 		    case 29:			//switch_n "";		get forlast page = "1" or "". get last page = "0" or "something here != 0123456789"
-			    p = get_last_page(arg);
+			    p = get_last_page(arg, 0);
 			    if(p){
 				cfg_p = &(p->cfg);
 				tbl_name = &(p->tbl_name);
@@ -984,6 +982,22 @@ int get_cgi_body(struct cgi *ptr){
 			    break;
 		    case 31: //arg="from_par:to_par:parsestr"
 			    jump = write_ppar(arg);
+			    break;
+		    case 32: //arg="to_par:from_par"
+			    link_cfg(arg);
+			    break;
+		    case 33:// free_upages(up to page.term) or free_upages; ->free pages up next from current
+			    if(*arg) p = get_page_cmp_next(arg);
+			    else p = get_last_page("0", 1);
+			    if(p){
+				free_page_n(p->next);
+				p->next = NULL;
+				if(allocated) free(arg);
+				return 2;	//if file already registered - return now!
+			    }
+			    break;
+		    case 34:// readcfg
+			    ReadConfiguration();
 			    break;
 
 		}//switch end

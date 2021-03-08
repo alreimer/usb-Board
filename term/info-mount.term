@@ -30,7 +30,7 @@ if "_@list+3:" > "ZL" 0 65 ">" $_@list+3#0:24 "| used: " $_@list+3#2:4 " of " $_
 if "_@list+4:" > "ZL" 0 97 ">" $_@list+4#0:24 "| used: " $_@list+4#2:4 " of " $_@list+4#1:6 "|" $_@list+4#3:25 0 fi
 if "_@list+5:" > "AT" 205 97 237 125 7 0 "C->" 0 fi
 
-    > "AT" 205 33 237 61 10 0 "C<-" 0
+    > "AT" 205 33 237 61 10 0 "C<" ifnot "_@_list:0/" "-" fi 0
     > "AT" 205 1 237 29 13 0 "C<" 0
     >>>> "wait:" 10 0 ];
 end
@@ -40,7 +40,7 @@ end
 	switch_n "2";
 	boot_cgi [ "show" 0 ] {		//if cgi not found
 	    boot_cgi [ "timeout" ] {
-		boot_page "??_referrer2??";
+		boot_page "??_back2??";
 	    }
 	}
 	exit_cgi;
@@ -61,7 +61,7 @@ end
 	switch_n "2";
 	boot_cgi [ "show" 0 ] {		//if cgi not found
 	    boot_cgi [ "timeout" ] {
-		boot_page "??_referrer2??";
+		boot_page "??_back2??";
 	    }
 	}
 	exit_cgi;
@@ -78,7 +78,7 @@ end
 	switch_n "2";
 	boot_cgi [ "show" 0 ] {		//if cgi not found
 	    boot_cgi [ "timeout" ] {
-		boot_page "??_referrer2??";
+		boot_page "??_back2??";
 	    }
 	}
 	exit_cgi;

@@ -1,28 +1,24 @@
 12 > "DL" > "TC" 0
 > "AL" 0 1
-> "AT" 9 9 114 58 1 0 "CMACs|Menage" 0
-//> "AT" 9 69 114 117 2 0 "CSmartCard" 0
-//> "AT" 125 9 229 58 3 0 "Cetc|folder" 0
+> "AT" 9 9 114 58 1 0 "CMACs|Manage" 0
+> "AT" 9 69 114 117 2 0 "CCron" 0
+> "AT" 125 9 229 58 3 0 "CUSB" 0
 > "AT" 125 69 172 117 5 0 "CBack|<" 0
-//> "AT" 182 69 229 117 4 0 "CNext|>" 0
+> "AT" 182 69 229 117 4 0 "CNext|>" 0
 
 
 < "A" 1
     boot_page "macs.term";
 end
-/*
 < "A" 2
-    boot_page "sc.term";
+    boot_page "cron.term";
 end
 < "A" 3
-    boot_page "etc.term";
+    boot_page "usb.term";
 end
-*/
-/*
 < "A" 4
     boot_page "index-main_4.term";
 end
-*/
 < "A" 5
     boot_page "index-main_2.term";
 end

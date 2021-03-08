@@ -1,0 +1,42 @@
+par:2:cron_enable:CRON_ENABLE:[01]
+readcfg
+
+12   > "DL" > "TC" 0 > "AL" 0 1
+> "AT" 2 1 98 60 1 0 "CCron|" if "cron_enable:1/" "enabled" else "disabled" fi 0
+> "AT" 106 1 201 60 2 0 "CFiles" 0
+if "cron_enable:1/" > "AT" 2 67 98 125 3 0 "CCron|restart" 0 fi
+//> "AT" 106 67 201 125 4 0 "CHDD Tunes" 0
+
+> "AT" 205 1 237 29 5 0 "C<" 0
+//> "AT" 205 97 237 125 6 0 "C>" 0
+
+< "A" 5
+    boot_page "??_referrer??";
+end
+
+if "cron_enable:1/"
+< "A" 1
+    write_par "_%cron_enable:0";
+    fill_cfg "cron_enable";
+    savecfg;
+	system "/etc/init.d/S40cron restart";
+    boot_page "cron.term";
+end
+else
+< "A" 1
+    write_par "_%cron_enable:1";
+    fill_cfg "cron_enable";
+    savecfg;
+	system "/etc/init.d/S40cron restart";
+    boot_page "cron.term";
+end
+fi
+
+< "A" 2
+    boot_page "cron_files.term";
+end
+
+< "A" 3
+    system "/etc/init.d/S40cron restart";
+    boot_page "cron.term";
+end

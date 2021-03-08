@@ -1,0 +1,251 @@
+// used in this include "name", "scripBegin" 0, "scriptEnd" 0
+//out: set->"retinput" 0; back->"retinput_back" 0
+
+link:val:value%1
+
+
+area:2:switch
+wr_par: switch:0
+
+< "first" 0
+print [ > "DL" > "AL" 0 1 ];
+    boot_cgi [ "scripBegin" 0 ]{
+print [
+> "ZC" 120 0 if "name:" $name else "Value:" fi 0
+> "ZC" 120 9 $val 0	//step down 9pix (9 -> 18)
+> "ZC" 120 18 $_%val 0 ];
+    }
+print [
+> "AT" 2 33 57 61 1 0 "Cjan" 0 
+> "AT" 61 33 116 61 2 0 "Cfeb" 0 
+> "AT" 120 33 152 61 22 0 "C<-" 0 
+> "AT" 2 65 57 93 3 0 "Cmar" 0 
+> "AT" 61 65 116 93 4 0 "Capr" 0 
+> "AT" 2 97 57 125 5 0 "Cmay" 0 
+> "AT" 61 97 116 125 6 0 "Cjun" 0 
+> "AT" 120 97 152 125 7 0 "C-" 0
+> "AT" 156 97 188 125 8 0 "C*" 0
+> "AT" 182 65 237 93 255 0 "CNext" 0
+
+> "AT" 120 65 152 93 20 0 "C>" 0
+> "AT" 205 33 237 61 21 0 "C<" 0 ];
+    boot_cgi [ "scripEnd" 0 ];
+end
+< "second" 0
+print [ > "DL" > "AL" 0 1 ];
+    boot_cgi [ "scripBegin" 0 ]{
+print [
+> "ZC" 120 0 if "name:" $name else "Value:" fi 0
+> "ZC" 120 9 $val 0	//step down 9pix (9 -> 18)
+> "ZC" 120 18 $_%val 0 ];
+    }
+print [
+> "AT" 2 33 57 61 9 0 "Cjul" 0 
+> "AT" 61 33 116 61 10 0 "Caug" 0 
+> "AT" 120 33 152 61 22 0 "C<-" 0 
+> "AT" 2 65 57 93 11 0 "Csep" 0 
+> "AT" 61 65 116 93 12 0 "Coct" 0 
+> "AT" 2 97 57 125 13 0 "Cnov" 0 
+> "AT" 61 97 116 125 14 0 "Cdec" 0 
+> "AT" 120 97 152 125 7 0 "C-" 0
+> "AT" 156 97 188 125 8 0 "C*" 0
+> "AT" 182 65 237 93 255 0 "CBack" 0
+
+> "AT" 120 65 152 93 20 0 "C>" 0
+> "AT" 205 33 237 61 21 0 "C<" 0 ];
+    boot_cgi [ "scripEnd" 0 ];
+end
+
+< "clear" 0
+    print [ > "RL" 0 9 239 27 > "ZC" 120 9 $val 0 > "ZC" 120 18 $_%val 0 ];
+end
+
+//"jan""feb""mar""apr""may""jun""jul""aug""sep""oct""nov""dec"
+//"sun""mon""tue""wed""thu""fri""sat"
+
+< "A" 1
+    not "val:/B*\0/\/*jan"{
+	not "val:/B\0/\/*/<1\-*/>/"{
+	    write_char "val:,";
+	}
+	write_char "val:j";
+	write_char "val:a";
+	write_char "val:n";
+    }
+    boot_cgi [ "clear" 0 ];
+end
+< "A" 2
+    not "val:/B*\0/\/*feb"{
+	not "val:/B\0/\/*/<1\-*/>/"{
+	    write_char "val:,";
+	}
+	write_char "val:f";
+	write_char "val:e";
+	write_char "val:b";
+    }
+    boot_cgi [ "clear" 0 ];
+end
+< "A" 3
+    not "val:/B*\0/\/*mar"{
+	not "val:/B\0/\/*/<1\-*/>/"{
+	    write_char "val:,";
+	}
+	write_char "val:m";
+	write_char "val:a";
+	write_char "val:r";
+    }
+    boot_cgi [ "clear" 0 ];
+end
+< "A" 4
+    not "val:/B*\0/\/*apr"{
+	not "val:/B\0/\/*/<1\-*/>/"{
+	    write_char "val:,";
+	}
+	write_char "val:a";
+	write_char "val:p";
+	write_char "val:r";
+    }
+    boot_cgi [ "clear" 0 ];
+end
+< "A" 5
+    not "val:/B*\0/\/*may"{
+	not "val:/B\0/\/*/<1\-*/>/"{
+	    write_char "val:,";
+	}
+	write_char "val:m";
+	write_char "val:a";
+	write_char "val:y";
+    }
+    boot_cgi [ "clear" 0 ];
+end
+< "A" 6
+    not "val:/B*\0/\/*jun"{
+	not "val:/B\0/\/*/<1\-*/>/"{
+	    write_char "val:,";
+	}
+	write_char "val:j";
+	write_char "val:u";
+	write_char "val:n";
+    }
+    boot_cgi [ "clear" 0 ];
+end
+< "A" 7
+    not "val:/B*\0/\\0/\/*-/"{
+	write_char "val:-";
+    }
+    boot_cgi [ "clear" 0 ];
+end
+< "A" 8
+    if "val:/"{
+	write_char "val:*";
+    }
+    boot_cgi [ "clear" 0 ];
+end
+< "A" 9
+    not "val:/B*\0/\/*jul"{
+	not "val:/B\0/\/*/<1\-*/>/"{
+	    write_char "val:,";
+	}
+	write_char "val:j";
+	write_char "val:u";
+	write_char "val:l";
+    }
+    boot_cgi [ "clear" 0 ];
+end
+< "A" 10
+    not "val:/B*\0/\/*aug"{
+	not "val:/B\0/\/*/<1\-*/>/"{
+	    write_char "val:,";
+	}
+	write_char "val:a";
+	write_char "val:u";
+	write_char "val:g";
+    }
+    boot_cgi [ "clear" 0 ];
+end
+< "A" 11
+    not "val:/B*\0/\/*sep"{
+	not "val:/B\0/\/*/<1\-*/>/"{
+	    write_char "val:,";
+	}
+	write_char "val:s";
+	write_char "val:e";
+	write_char "val:p";
+    }
+    boot_cgi [ "clear" 0 ];
+end
+< "A" 12
+    not "val:/B*\0/\/*oct"{
+	not "val:/B\0/\/*/<1\-*/>/"{
+	    write_char "val:,";
+	}
+	write_char "val:o";
+	write_char "val:c";
+	write_char "val:t";
+    }
+    boot_cgi [ "clear" 0 ];
+end
+< "A" 13
+    not "val:/B*\0/\/*nov"{
+	not "val:/B\0/\/*/<1\-*/>/"{
+	    write_char "val:,";
+	}
+	write_char "val:n";
+	write_char "val:o";
+	write_char "val:v";
+    }
+    boot_cgi [ "clear" 0 ];
+end
+< "A" 14
+    not "val:/B*\0/\/*dec"{
+	not "val:/B\0/\/*/<1\-*/>/"{
+	    write_char "val:,";
+	}
+	write_char "val:d";
+	write_char "val:e";
+	write_char "val:c";
+    }
+    boot_cgi [ "clear" 0 ];
+end
+< "A" 20
+    switch "/?_referrer?/";
+    boot_cgi [ "retinput" 0 ] {
+	boot_page "??_back??";
+    }
+end
+< "A" 21
+    switch "/?_referrer?/";
+    boot_cgi [ "retinput_back" 0 ] {
+	boot_page "??_back??";
+    }
+end
+
+//remove last char
+< "A" 22
+    if "val:/B/*jan\0/\/*feb\0/\/*mar\0/\/*apr\0/\/*may\0/\/*jun\0/\/*jul\0/\/*aug\0/\/*sep\0/\/*oct\0/\/*nov\0/\/*dec\0/E"{
+	write_char "val";
+	write_char "val";
+	write_char "val";
+	if "val:/*,/"{
+	    write_char "val";
+	}
+	boot_cgi [ "clear" 0 ];
+	exit_cgi;
+    }
+    if "val:/*/<1\-*/>/"{
+	write_char "val";
+    }
+    boot_cgi [ "clear" 0 ];
+end
+
+< "A" 255
+    if "switch:0/"{
+	write_par "switch:1";
+	boot_cgi [ "second" 0 ];
+	exit_cgi;
+    }
+    write_par "switch:0";
+    boot_cgi [ "first" 0 ];
+end
+
+cgi: "first" 0

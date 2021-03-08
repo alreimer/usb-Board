@@ -2,8 +2,12 @@ par:20:val:PASSWORD:
 readcfg
 
 < "scripBegin" 0
-    write_par "name:Password: ";
+print [
+> "ZC" 120 0 "Password: " 0
+> "ZC" 120 9 $val 0	//step down 9pix (9 -> 18)
+> "ZC" 120 18 $_%val 0 ];
 end
+
 < "scripEnd" 0
     print [> "AT" 110 65 142 93 12 0 "C\>" 0 
 > "AT" 205 33 237 61 13 0 "C<" 0 ];

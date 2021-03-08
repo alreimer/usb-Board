@@ -2,16 +2,17 @@
 // used in this include "name", "scripBegin" 0, "scriptEnd" 0
 area:2:switch
 wr_par: switch:0
-area:9:name
 
 < "123" 0
-    boot_cgi [ "scripBegin" 0 ];
-print [ > "DL"
-> "AL" 0 1
-> "ZR" 80 5 $name 0
-> "ZL" 80 5 $val 0	//step down 10pix (5 -> 15)
-> "ZL" 80 15 $_%val 0
+print [ > "DL" > "AL" 0 1 ];
+    boot_cgi [ "scripBegin" 0 ]{
+print [
+> "ZC" 120 0 if "name:" $name else "Value:" fi 0
+> "ZC" 120 9 $val 0	//step down 9pix (9 -> 18)
+> "ZC" 120 18 $_%val 0 ];
+    }
 
+print [
 > "AT" 2 33 34 61 1 0 "C1" 0 
 > "AT" 38 33 70 61 2 0 "C2" 0 
 > "AT" 74 33 106 61 3 0 "C3" 0 
@@ -31,13 +32,14 @@ print [ > "DL"
     boot_cgi [ "scripEnd" 0 ];
 end
 < "abc" 0
-    boot_cgi [ "scripBegin" 0 ];
-print [ > "DL"
-> "AL" 0 1
-> "ZR" 80 5 $name 0
-> "ZL" 80 5 $val 0	//step down 10pix (5 -> 15)
-> "ZL" 80 15 $_%val 0
-
+print [ > "DL" > "AL" 0 1 ];
+    boot_cgi [ "scripBegin" 0 ]{
+print [
+> "ZC" 120 0 if "name:" $name else "Value:" fi 0
+> "ZC" 120 9 $val 0	//step down 9pix (9 -> 18)
+> "ZC" 120 18 $_%val 0 ];
+    }
+print [
 > "AT" 2 33 34 61 16 0 "Ca" 0 
 > "AT" 38 33 70 61 17 0 "Cb" 0 
 > "AT" 74 33 106 61 18 0 "Cc" 0 
@@ -58,82 +60,86 @@ print [ > "DL"
     boot_cgi [ "scripEnd" 0 ];
 end
 
+< "clear" 0
+    print [ > "RL" 0 9 239 27 > "ZC" 120 9 $val 0 > "ZC" 120 18 $_%val 0 ];
+end
+
 < "A" 1
     write_char "val:1";
-    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+    boot_cgi [ "clear" 0 ];
 end
 < "A" 2
     write_char "val:2";
-    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+    boot_cgi [ "clear" 0 ];
 end
 < "A" 3
     write_char "val:3";
-    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+    boot_cgi [ "clear" 0 ];
 end
 < "A" 4
     write_char "val:4";
-    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+    boot_cgi [ "clear" 0 ];
 end
 < "A" 5
     write_char "val:5";
-    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+    boot_cgi [ "clear" 0 ];
 end
 < "A" 6
     write_char "val:6";
-    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+    boot_cgi [ "clear" 0 ];
 end
 < "A" 7
     write_char "val:7";
-    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+    boot_cgi [ "clear" 0 ];
 end
 < "A" 8
     write_char "val:8";
-    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+    boot_cgi [ "clear" 0 ];
 end
 < "A" 9
     write_char "val:9";
-    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+    boot_cgi [ "clear" 0 ];
 end
 < "A" 10
     write_char "val:0";
-    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+    boot_cgi [ "clear" 0 ];
 end
 //remove last char
 < "A" 11
     write_char "val";
-    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+    boot_cgi [ "clear" 0 ];
 end
 //key 12 and 13 is in calling term
 < "A" 14
     write_char "val::";
-    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+    boot_cgi [ "clear" 0 ];
 end
 
 
 //at here next screen
 < "A" 16
     write_char "val:a";
-    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+    boot_cgi [ "clear" 0 ];
 end
 < "A" 17
     write_char "val:b";
-    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+    boot_cgi [ "clear" 0 ];
 end
 < "A" 18
     write_char "val:c";
-    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+    boot_cgi [ "clear" 0 ];
 end
 < "A" 19
     write_char "val:d";
-    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+    boot_cgi [ "clear" 0 ];
 end
 < "A" 20
     write_char "val:e";
-    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+    boot_cgi [ "clear" 0 ];
 end
 < "A" 21
     write_char "val:f";
-    print [  > "RL" 50 15 239 27 > "ZL" 80 15 $_%val 0 ];
+    boot_cgi [ "clear" 0 ];
 end
 < "A" 255
     if "switch:0/"{

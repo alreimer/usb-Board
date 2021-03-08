@@ -1,6 +1,6 @@
 /* terminal.c:  A very simple connection programm for USB-Board
  *
- * Copyright (c) 2015 Alexander Reimer <alex_raw@rambler.ru>
+ * Copyright (c) 2015-2020 Alexander Reimer <alex_raw@rambler.ru>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <string.h>
 //#include "include/httpd_config.h"	//cfg_parse1
 #include "term_parser.h"
 #include "term_add.h"
@@ -38,8 +39,8 @@ char buf[65537];//65536 + 1
 unsigned long long buf_size = 0;
 char version[256];
 char value[16];
+char auth[5];
 
-char *ptr_n;//begin of parse_file
 
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 
@@ -110,22 +111,34 @@ void free_page_n(struct page_n *ptr){
     free(ptr);
 }
 
-struct page_n *get_last_p(struct page_n *ptr, int digi, int *i){
+struct page_n *get_last_p(struct page_n *ptr, int digi, int *i, int flag){
     struct page_n *p;
     if(ptr == NULL){
 	*i = 0;
 	return NULL;
     }
-    p = get_last_p(ptr->next, digi, i);
+    if((flag == 1) && (&(ptr->cfg) == cfg_p)){	//for flag == 1 -> relative to actual page (_referrer)
+	if(digi == 0) return ptr;
+	*i = 1;
+	return NULL;
+    }
+
+    p = get_last_p(ptr->next, digi, i, flag);
 //printf("loop: %s   %d\n",ptr->name, *i);
     if(p != NULL) return p;
     if(*i == digi) return ptr;
+/*
+    if((flag == 1) && (&(ptr->cfg) == cfg_p)){	//for flag == 1 -> relative to actual page (_referrer)
+	*i = 1;
+	return ptr;
+    }
+*/
     (*i)++;
     return NULL;
 
 }
 
-struct page_n *get_last_page(char *num){
+struct page_n *get_last_page(char *num, int flag){
     int digi = 1, i = 0;	//if digi = 1 -> get page "forlast". if digi = 0 -> get last page
 
     if(num != NULL && *num != '\0'){
@@ -137,13 +150,16 @@ struct page_n *get_last_page(char *num){
 	}
     }
 
-    return get_last_p(p_n, digi, &i);
+    return get_last_p(p_n, digi, &i, flag);
 }
 
 struct page_n *get_page(char *name){
     struct page_n *ptr = p_n;
+
     while(ptr){
-	if(ptr->name && !parsestr1(ptr->name, name))	return ptr;	//matched name with entry_name
+	if(ptr->name && parsestr1(ptr->name, name)){
+		return ptr;	//matched name with entry_name
+	 }
 	ptr = ptr->next;
     }
     return NULL;
@@ -159,11 +175,25 @@ struct page_n *get_page_cmp(char *name){
     return NULL;
 
 }
+struct page_n *get_page_cmp_next(char *name){
+    struct page_n *ptr = p_n;
+    while(ptr){
+	if(ptr->next && ptr->next->name && !strcmp(ptr->next->name, name))	return ptr;	//matched name with entry_name
+	ptr = ptr->next;
+    }
+    return NULL;
 
-char *parse_file_(char *data, int make, int loop){
+}
+
+struct file_n {
+    char		*file_name;	//name of file
+    char		*begin;	//begin of file
+};
+
+char *parse_file_(char *data, struct file_n *f_n, int make, int loop){
 	char *ptr1, *tmp, *a, ch, i;
 	unsigned long long digi, str_size;
-	struct cfg_parse1 *cfg_pointer, **cfg;
+	struct cfg_parse1 *cfg_pointer,/* *cfg_pointer1,*/ **cfg;
 	struct parsestr parser;
 	char *name, *digit, *p, *ptr2, mk;
 
@@ -186,6 +216,7 @@ char *parse_file_(char *data, int make, int loop){
 	    while(*tmp && *tmp != '\n' && *tmp != '\r'){tmp++;}
 //size=tmp-data
 //insert
+    if(make == 1){
 	i = 0;
 	digi = 0;
 	while(data[i] >= '0' && data[i] <= '9' /*&& digi*10*/){
@@ -252,8 +283,7 @@ char *parse_file_(char *data, int make, int loop){
 printf("Collected parameter: --%s--%s--%lld--%s--\n", cfg_pointer->web_name, cfg_pointer->name, cfg_pointer->size, cfg_pointer->pattern);
 //insert
 
-
-
+    }//if(make)
 	    data = tmp;
 	    continue;
 	}//else if(!strncmp)
@@ -263,6 +293,7 @@ printf("Collected parameter: --%s--%s--%lld--%s--\n", cfg_pointer->web_name, cfg
 	    while(*tmp && *tmp != '\n' && *tmp != '\r'){tmp++;}
 //size=tmp-data
 //insert
+    if(make == 1){
 	i = 0;
 	digi = 0;
 	while(data[i] >= '0' && data[i] <= '9' /*&& digi*10*/){
@@ -319,6 +350,7 @@ printf("Collected parameter: --%s--%s--%lld--%s--\n", cfg_pointer->web_name, cfg
 
 printf("Collected area: --%s--%lld--\n", cfg_pointer->web_name, cfg_pointer->size);
 //insert
+    }//if(make)
 	    data = tmp;
 	    continue;
 	}//else if(!strncmp)
@@ -327,7 +359,15 @@ printf("Collected area: --%s--%lld--\n", cfg_pointer->web_name, cfg_pointer->siz
 //	else if(!strncmp(data, "readcfg", 7)){
 //	    data += 7;
 	    data = tmp;
-	    ReadConfiguration();
+	    if(make == 1) ReadConfiguration();
+	    continue;
+	}
+/** link:to_name:from_name **/
+	else if(tmp = parsestr2(&parser, data, "link:/t/[/*/]\n")){
+	    if(make == 1){
+		link_cfg(tmp);
+	    }
+	    data = restore_str(&parser);
 	    continue;
 	}
 
@@ -341,11 +381,11 @@ printf("Collected area: --%s--%lld--\n", cfg_pointer->web_name, cfg_pointer->siz
 	    if(i > 2) break;
 	}
 	if(i != 0){
-	    if(digi > 255){ printf("char #%d is > 255\n", data-ptr_n);}
+	    if(digi > 255){ printf("char #%ld is > 255\n", data-(f_n->begin));}
 	    if(make) putc(digi % 256, fp);
 //printf("-- %d --\n", digi);
 	    data = data + i;
-	    if(*data != ' ' && *data != '\t' && *data != '\r' && *data != '\n' && *data != '\0') printf("char #%d is not correct separated!\n", data-ptr_n);
+	    if(*data != ' ' && *data != '\t' && *data != '\r' && *data != '\n' && *data != '\0') printf("char #%ld in file: %s is not correct separated!\n", data-(f_n->begin), f_n->file_name);
 	    continue;
 	}
 
@@ -464,11 +504,11 @@ printf("Collected area: --%s--%lld--\n", cfg_pointer->web_name, cfg_pointer->siz
 		}
 	    }
 	    data = restore_str(&parser);
-	    data = parse_file_(data, (make && mk), loop + 1);
+	    data = parse_file_(data, f_n, (make && mk), loop + 1);
 	    if(tmp = parsestr1(data, "else/ ")){
 		if(mk) mk = 0;
 		else mk = 1;
-		data = parse_file_(tmp, (make && mk), loop + 1);
+		data = parse_file_(tmp, f_n, (make && mk), loop + 1);
 	    }
 	    continue;
 	}else if(tmp = parsestr2(&parser, data, "ifnot/t\"/[/*/N\\N/]\"")){
@@ -479,11 +519,11 @@ printf("Collected area: --%s--%lld--\n", cfg_pointer->web_name, cfg_pointer->siz
 		}
 	    }
 	    data = restore_str(&parser);
-	    data = parse_file_(data, (make && mk), loop + 1);
+	    data = parse_file_(data, f_n, (make && mk), loop + 1);
 	    if(tmp = parsestr1(data, "else/ ")){
 		if(mk) mk = 0;
 		else mk = 1;
-		data = parse_file_(tmp, (make && mk), loop + 1);
+		data = parse_file_(tmp, f_n, (make && mk), loop + 1);
 	    }
 	    continue;
 	}else if(*data == 'f' && *(data+1) == 'i'){
@@ -507,7 +547,13 @@ printf("Collected area: --%s--%lld--\n", cfg_pointer->web_name, cfg_pointer->siz
 		//tmp = functon(data);
 		data = tmp;
 	    }else{
-		data = cgi_end(data);
+		tmp = parsestr1(data, "/{*/B\"\"/\\\"/*/N\\N\"/\\"
+					"[/{*/B\"\"/\\\"/*/N\\N\"/\\table:/*\n#end_table/\\//*/**///\\/////*\n/\\/|/E/}]"
+					"/\\//*/**///\\/////*\n/--/\\/|/E/}\nend");
+		if(tmp){data = tmp;}
+		else {printf("WARN: cgi at char: %ld in file: %s is not complet\n", data - (f_n->begin), f_n->file_name);
+		//maybe return
+		}
 	    }
 	    continue;
 	}
@@ -515,6 +561,7 @@ printf("Collected area: --%s--%lld--\n", cfg_pointer->web_name, cfg_pointer->siz
 //	    while(*a == ' ' || *a == '\t'){a++;}
 	    tmp = a;
 	    while(*tmp && *tmp != '\n' && *tmp != '\r'){tmp++;}
+	    if(make == 1){
 	    str_size = tmp - a;
 	    if(str_size != 0){
 		ptr1 = (char *)malloc(str_size + 2);
@@ -525,7 +572,8 @@ printf("Collected area: --%s--%lld--\n", cfg_pointer->web_name, cfg_pointer->siz
 		    my_shell(fp, ptr1);
 		    free(ptr1);
 		}
-	    }else{ printf("WARN: shell line, at char %d, is empty!\n", data-ptr_n);}
+	    }else{ printf("WARN: shell line of file: %s, at char %ld, is empty!\n", f_n->file_name, data-(f_n->begin));}
+	    }//if(make == 1)
 
 	    data = tmp;
 	    continue;
@@ -554,7 +602,7 @@ printf("Collected area: --%s--%lld--\n", cfg_pointer->web_name, cfg_pointer->siz
 	    continue;
 	}else if(tmp = parsestr2(&parser, data, "wr_shell:/t/[/*/]\n")){
 	    if(make == 1){
-		wr_shell(tmp, 0);	//write to shell
+		wr_shell(tmp, 0);	//write to shell  "from_par:to_par:cmd"
 	    }
 	    data = restore_str(&parser);
 	    continue;
@@ -599,6 +647,7 @@ int parse_file(char *file_name, char flag){
 	unsigned long long str_size;
 	struct stat stbuf;
 	struct page_n **p1;
+	struct file_n f_n;
 
 
 //limit size of file to 64kb
@@ -617,7 +666,8 @@ int parse_file(char *file_name, char flag){
 	ptr[stbuf.st_size] = '\0';
 	fclose(f);
 
-	ptr_n = ptr;//set the begin of file
+	f_n.file_name = file_name;
+	f_n.begin = ptr;//set the begin of file
 	A1_BTN = 0;//for test here
 
 
@@ -685,7 +735,7 @@ flag == 2 - call include(CGI)
 	}
     }
 
-	parse_file_(ptr, 1, 0);
+	parse_file_(ptr, &f_n, 1, 0);
 	free(ptr);
 	return 0;	//all ok
 }
@@ -709,7 +759,16 @@ void sig_handler(int signo){
     case SIGALRM:
     /* got an alarm, exit & recycle */
 	printf("Alarm!!\n");
-	break;
+	if((auth[0] < '0' || auth[0] >= '4') && auth[1] == '\0'){
+	    auth[0] = '1';
+	    auth[1] = '\0';
+	    char text[128];
+	    strncpy(text, "12 > \"DL\" > \"AL\" 0 1 > \"ZC\" 120 10 \"Now you can enter|password again\" 0", 127);//127);
+	    print(fp, text);
+	    fflush(fp);
+	}
+	return;
+	//break;
     default: printf("SIgnal %d\n", signo);
 //#endif
     }
@@ -743,7 +802,7 @@ int read_buf__(char *buff){
     int n = 0;
     char size = 0;
     unsigned long long buf_s = 0;
-    int i = 0, k;
+    int i = 0, k, time;
     char brk[] = "\n\n\rbreAk\r\rbReaK ";
 
     while(1){
@@ -847,10 +906,17 @@ int read_buf__(char *buff){
 		    get_cgi(0, 7, "version");		//< "version" -will be started
 	}//switch
 	n = 0; i = 0;		//clear search parameters
+	fflush(fp);
+	if(auth[0] == '4' && auth[1] == '\0'){
+	    time = alarm(0);
+	    if(time) alarm(time);
+	    else alarm(20);
+	}
     }
 
     buff[i] = getc(fp);
-//printf("%c %d\n", buf[i], i);
+//let it here for check of inputs, see bugfix for details
+//printf("%c i=%d, n=%d\n", buff[i], i, n);
 
     if(line[n] != NULL){
 	if(buff[i] == line[n][i]){
@@ -867,6 +933,14 @@ int read_buf__(char *buff){
 		}
 	    k++;
 	    }
+//bugfix
+	    if(line[n] == NULL){
+//printf("---------i=%d, n=%d\n", i, n);
+		buff[0] = buff[i];
+		i = 1; n = 0;
+		continue;
+	    }
+//end of bugfix
 	    if(k == i+1){		//after loop in n is matched line
 		i++;
 		continue;
@@ -875,7 +949,7 @@ int read_buf__(char *buff){
     }
 
 /* begin of not-recognized, just print out! */
-    k = 0;
+/*    k = 0;
     do{
 	switch(buff[k]){
 	    case 27:	printf("ESC ");
@@ -884,13 +958,15 @@ int read_buf__(char *buff){
 	}
 	k++;
     }while(k <= i);
+*/
 //    if(i >= 255) i = 0;
+printf("!!!never happens!!!\n");
 i = 0; n = 0;
     }
 }
 
 int main(int argc, char *argv[]){
-
+    FILE *filep;
     char *dev;
 
     if (argc == 1) {
@@ -918,6 +994,14 @@ int main(int argc, char *argv[]){
 
     etc_save[0] = '0';		//set etc_save=0
     etc_save[1] = '\0';
+
+    if((filep=fopen("/tmp/termlock","r")) != NULL){
+	auth[0] = '4';
+	alarm(20);
+	fclose(filep);
+    } else auth[0] = '1';
+
+    auth[1] = '\0';
     buf_size = 0;
 
     chdir( ROOT_PATH );

@@ -10,8 +10,6 @@
 //#define HTTPD_MAX_ACCEPT
 //#define USB		//enable cgi scripts for USB support
 
-#define RAWD		//enable only one client to use server at the same time
-
 /* Methods */
 #define M_GET		1
 #define M_POST		2
@@ -26,14 +24,6 @@
 //    const char *name;	 /* The name of WEB field */
 //    char *value;
 //} WEB_VAR;
-
-//data: a pointer to the encoded form data
-//out: a file pointer used for output
-typedef void cgi_handler(FILE *out);
-typedef struct{
-    const char *name;	   /* The name of the script as given in the URL */
-    cgi_handler *handler;  /* The function which should be called */
-} CGI_ENTRY;
 
 typedef int file_handler(FILE *out, char *name, char *type);
 typedef struct {
@@ -65,5 +55,6 @@ extern char value[];
 
 extern char hdused[];
 extern char uptime[];
-extern char *arg;
+//extern char *arg;
 extern char *file;
+extern FILE *fdcr;//file discriptor of web socket

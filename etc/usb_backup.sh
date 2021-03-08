@@ -5,7 +5,7 @@ FROM=/mnt/home/Share
 
 if [ -n "$BACKUP_PATH" ]; then
     TO=$BACKUP_PATH
-elif
+else
     TO=/mnt/home/usb_backup
 fi
 
@@ -25,6 +25,7 @@ if [ $MODE == 1 ]; then
 	for i in $NAME; do
 		for j in `cat /proc/mounts | grep /mnt/home/usb/$i | cut -d " " -f 2`; do
 			sub=`echo $j | sed s,/mnt/home/usb/,,g`
+			[ -d $TO/$sub ] && sub=$sub"_`date +%Y%m%d%H%M%S`"
 			mkdir -p $TO/$sub
 			cp -ar $j/* $TO/$sub/
 			sync; sync

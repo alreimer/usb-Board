@@ -1,0 +1,31 @@
+//in: value
+//out: set->"retinput" 0; back->"retinput_back" 0
+//get value-link from page before
+link:val:value%1
+
+< "scripEnd" 0
+    print [ 
+> "AT" 146 97 178 125 14 0 "C*" 0 
+> "AT" 110 65 142 93 12 0 "C\>" 0 
+> "AT" 205 33 237 61 13 0 "C<" 0 ];
+end
+
+include: 123-keys.incterm
+
+< "A" 12
+    switch "/?_referrer?/";
+    boot_cgi [ "retinput" 0 ] {
+	boot_page "??_back??";
+    }
+end
+< "A" 13
+    switch "/?_referrer?/";
+    boot_cgi [ "retinput_back" 0 ] {
+	boot_page "??_back??";
+    }
+end
+
+< "A" 14
+    write_char "val:*";
+    boot_cgi [ "clear" 0 ];
+end

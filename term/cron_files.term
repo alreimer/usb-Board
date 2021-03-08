@@ -1,0 +1,108 @@
+//remove . from path
+
+area:2048:pool
+//area:300:info
+//wr_par: info:info-net.term
+area:5500:file_name
+area:5500:file
+
+< "show" 0
+	print [
+table: list
+#-> get_files: /etc/crontab
+#end_table
+
+12  > "DL" > "AL" 0 1
+> "AT" 2 1 201 29 4 0 "CTouch file" 0
+if "_@list+1:" > "AT" 2 33 165 61 1 0 "CFile:|" $_@list+1:19:"/L/L" 0 > "AT" 169 33 201 61 5 0 "CX" 0 fi
+if "_@list+2:" > "AT" 2 65 165 93 2 0 "CFile:|" $_@list+2:19:"/L/L" 0 > "AT" 169 65 201 93 6 0 "CX" 0 fi
+if "_@list+3:" > "AT" 2 97 165 125 3 0 "CFile:|" $_@list+3:19:"/L/L" 0 > "AT" 169 97 201 125 7 0 "CX" 0 fi
+if "_@list+4:" > "AT" 205 97 237 125 9 0 "C->" 0 fi
+    > "AT" 205 33 237 61 10 0 "C<" ifnot "_@_list:0/" "-" fi 0
+    > "AT" 205 65 237 93 11 0 "Cm" 0
+    > "AT" 205 1 237 29 13 0 "C<" 0 ];
+    free_upages;
+end
+
+//read crontab file
+< "A" 1 3
+	write_ppar "_@list:file_name:/L/L";
+	include "cron_tabfile.term";
+end
+
+//touch file
+< "A" 4
+	include "touch_file.term";	//run menu with return "file_name"
+end
+< "retouch" 0
+	write_ppar "file_name:file:/L/L";
+	write_system ":pool:touch \"/etc/crontab/??file??\" ";
+    not "pool:/" {
+	print [ 12  > "DL" > "AL" 0 1 "??pool??" > "AT" 205 97 237 125 21 0 "C<" 0 ];
+	free_upages "touch_file.term";	//with exit
+	exit_cgi;			//for shure, if touch_file.term not in memory
+    }
+	write_par "_etc_save:1";
+	boot_cgi [ "show" 0 ];
+	free_upages "touch_file.term";
+end
+< "retouch_back" 0
+	boot_cgi [ "show" 0 ];
+	free_upages "touch_file.term";
+end
+
+//remove file
+< "A" 5 7
+    if "_@list:/L/Lroot"{
+	print [ 12  > "DL" > "AL" 0 1 > "ZC" 120 8 "File:|??_@list??|cannot be deleted" 0 > "AT" 205 97 237 125 21 0 "C<" 0 ];
+	exit_cgi ;
+    }
+    copy_ppar "_@list:file_name:0";
+    print [ > "AL" 0 0 > "RL" 34 28 204 98 > "GR" 36 30 202 96
+	    > "ZC" 120 40 "Really remove?|" $file_name::"/L/L" 0
+	    > "AT" 40 60 116 92 20 0 "CYES" 0
+	    > "AT" 124 60 198 92 21 0 "CNO" 0 ];
+end
+
+//next page
+< "A" 9
+	set_tbl "list += 3";
+	boot_cgi [ "show" 0 ];
+end
+
+//page before
+< "A" 10
+    set_tbl "list == 0"{
+        boot_page "??_referrer??";
+    }
+    set_tbl "list != 0"{
+	set_tbl "list -= 3";
+	boot_cgi [ "show" 0 ];
+    }
+end
+
+< "A" 11
+    include "menu.term";
+end
+
+< "A" 13
+    boot_page "??_referrer??";
+end
+
+//YES
+< "A" 20
+    write_system  ":pool:rm \"??file_name??\"; ";
+    not "pool:/" {
+	print [ 12  > "DL" > "AL" 0 1 "??pool??" > "AT" 205 97 237 125 21 0 "C<" 0 ];
+	exit_cgi ;
+    }
+    write_par "_etc_save:1";
+    boot_cgi [ "show" 0 ];
+end
+
+//NO
+< "A" 21
+    boot_cgi [ "show" 0 ];
+end
+
+cgi: "show" 0

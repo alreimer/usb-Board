@@ -190,8 +190,7 @@ printf("Not matched --%s--\n", p->pattern);
     }
 }
 
-
-char *get_cfg_value(long long *size_ptr, char *field_name, int i){
+struct cfg_parse1 *get_cfg(char *field_name){
 
     struct cfg_parse1 *p;
     struct page_n *n;
@@ -210,7 +209,7 @@ char *get_cfg_value(long long *size_ptr, char *field_name, int i){
 	    }else if(*ptr == '%'){
 		*ptr = '\0';
 		flag = 2;
-		n = get_last_page(ptr+1);
+		n = get_last_page(ptr+1, 0);
 		if(n) p = n->cfg;
 		break;
 	    }
@@ -219,8 +218,24 @@ char *get_cfg_value(long long *size_ptr, char *field_name, int i){
 
 	while (p){		/* search the variable value  */
 	    if((p->str != NULL) && (p->size != 0) && (p->size != 1) && (p->web_name != NULL) && strcmp(p->web_name, field_name) == 0 ){
+/*p->size !=0 && !=1 -must be thinked about*/
 		if(flag == 1) *ptr = '@';
 		else if(flag == 2) *ptr = '%';
+
+		return p;
+	    }
+	    p = p->next;
+	}
+	if(flag == 1) *ptr = '@';
+	else if(flag == 2) *ptr = '%';
+    }
+    return NULL;
+}
+
+char *get_cfg_value(long long *size_ptr, char *field_name, int i){
+    struct cfg_parse1 *p = get_cfg(field_name);
+
+	if((p != NULL) && (p->str != NULL) && (p->size != 0) && (p->size != 1)){
 
 		if(size_ptr) *size_ptr = p->size;	//if pointer is given, return value
 		if(i == 0) return p->value;
@@ -229,12 +244,8 @@ char *get_cfg_value(long long *size_ptr, char *field_name, int i){
 				else return p->value;
 				}
 		else return NULL;
-	    }
-	    p = p->next;
 	}
-	if(flag == 1) *ptr = '@';
-	else if(flag == 2) *ptr = '%';
-    }
+
     if(size_ptr) *size_ptr = 0; // if given but not matched, return 0
     return NULL;
 }
@@ -255,6 +266,65 @@ int reg_par(char *name, char *value, long long size)
 	}
 	return 0;
 
+}
+
+
+//arg=to_par:from_par
+//to_par is par or area of actual page
+void link_cfg(char *arg){
+    char *tmp, *ptr, *err = "ERROR: cannot allocate memory for link\n";
+    struct cfg_parse1 *cfg_pointer = NULL, *cfg_pointer1, **cfg;
+    unsigned long str_size;//is size of to_par->web_name, if web_name not exist in page
+
+    tmp = w_strtok(&arg, ':');
+    if(tmp && *tmp && *arg){
+    /* tmp = to_par, arg = from_par */
+	cfg_pointer1 = get_cfg(arg);
+	if(cfg_pointer1 == NULL){printf("NO parameter or area with name: %s\n", arg); *(arg-1) = ':'; return;}
+
+	cfg = cfg_p;
+	while(*cfg){
+	    if(((*cfg)->web_name != NULL) && !strcmp((*cfg)->web_name, tmp)){
+		cfg_pointer = (*cfg);
+		break;
+	    }
+	    cfg = &((*cfg)->next);
+	}
+	if(cfg_pointer == NULL){
+	    cfg_pointer = (struct cfg_parse1 *)malloc(sizeof(struct cfg_parse1));
+	    if(cfg_pointer == NULL){ printf(err); *(arg-1) = ':'; return;}
+	    *cfg = cfg_pointer;
+
+	    str_size = strlen(tmp);
+	    ptr = (char*)malloc(str_size + 2);
+	    if(ptr == NULL){
+		printf(err);
+		*(arg-1) = ':';
+		free(*cfg);
+		*cfg = NULL;	//main criteria to abort moving in array.
+		return;
+	    }
+
+	    strncpy(ptr, tmp, str_size);//web_name
+	    ptr[str_size] = '\0';
+
+	    cfg_pointer->str = ptr;
+	    cfg_pointer->web_name = ptr;
+
+	}
+	cfg_pointer->type = cfg_pointer1->type;		//think about!!
+	cfg_pointer->size = cfg_pointer1->size;
+	cfg_pointer->changed = cfg_pointer1->changed;
+	cfg_pointer->position = cfg_pointer1->position;
+	cfg_pointer->saved = cfg_pointer1->saved;
+	cfg_pointer->value = cfg_pointer1->value;
+	cfg_pointer->new_value = cfg_pointer1->new_value;
+	cfg_pointer->name = cfg_pointer1->name;
+	cfg_pointer->pattern = cfg_pointer1->pattern;
+	cfg_pointer->next = NULL;
+
+	*(arg-1) = ':';
+    }
 }
 
 void write_char(char *arg){
@@ -358,7 +428,8 @@ int ReadConfiguration(void){
 //		strcpy(p->value, ptr);
 		strncpy(p->new_value, ptr, MIN(i, (p->size)-1));
 		p->new_value[(p->size)-1] = '\0';
-		printf("%s=%s %lld  %d\n", name, p->value, p->size, p->changed);
+		p->saved = 0;//new here 20180930
+		printf("readcfg:%s=%s %lld  %d\n", name, p->value, p->size, p->changed);
 		}
 	    }
 	    p = p->next;

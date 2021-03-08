@@ -1,0 +1,36 @@
+< "show" 0
+    print [ 12 > "DL" > "AL" 0 1 
+> "ZC" 120 5 "Technical Page:" 0
+> "ZC" 20 43 "FAN:" 0
+> "AT" 50 33 100 61 1 0 "CON" 0
+> "AT" 104 33 154 61 2 0 "COFF" 0
+> "AT" 205 1 237 29 8 0 "C<" 0
+];
+end
+
+cgi: "show" 0
+
+//FAN ON
+< "A" 1
+	system "nh23X_ioctl 4";
+	boot_cgi [ "show" 0 ];
+end
+
+//FAN OFF
+< "A" 2
+	system "nh23X_ioctl 5";
+	boot_cgi [ "show" 0 ];
+end
+
+< "A" 8
+    if "_referrer:/*menu.term/" {	//if last page was *menu.term
+	switch_n "2";
+	boot_cgi [ "show" 0 ] {		//if cgi not found
+	    boot_cgi [ "timeout" ] {
+		boot_page "??_back2??";
+	    }
+	}
+	exit_cgi;
+    }
+    boot_page "??_referrer??";
+end

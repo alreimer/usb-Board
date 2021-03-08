@@ -1,5 +1,5 @@
 char *parse_cgi_script(char *data);
-char *cgi_end(char *data);
+//char *cgi_end(char *data);	//remove it if it works without!
 
 
 #define GET_CGI_MAX   78

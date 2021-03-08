@@ -2,6 +2,17 @@ par:2:swap_enable:SWAP_ENABLE:[01]
 par:2:fsck_enable:FSCK_ENABLE:[01]
 readcfg
 
+
+table: help
+In this page harddisk's
+Tunes (like: swap or
+check of filesystems)
+can be enabled or
+disabled.
+#end_table
+//3456789012345678901234567890
+//       1         2         3
+
 < "show" 0
 	print [ > "DL" > "AL" 0 1
     > "AT" 104 1 201 29 1 0 "CHDD Swap" 0
@@ -63,10 +74,6 @@ end
 end
 < "A" 11
     include "menu.term";
-//    boot_page "save_config.term";
-//    write_par "_etc_save:0";
-//    system "/etc/save_config.sh";
-//    boot_cgi [ "show" 0 ];
 end
 
 cgi: "show" 0

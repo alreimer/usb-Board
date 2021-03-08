@@ -8,7 +8,10 @@ area:2048:pool
 
 
 < "scripBegin" 0
-    write_par "name:MAC: ";
+print [
+> "ZC" 120 0 "MAC:" 0
+> "ZC" 120 9 $val 0	//step down 9pix (9 -> 18)
+> "ZC" 120 18 $_%val 0 ];
 end
 //are in incterm file now!!
 //> "AT" 110 65 142 93 12 0 "C\>" 0 
@@ -29,5 +32,5 @@ include: mac-keys.incterm
     print [ 12  > "DL" > "AL" 0 1 > "ZC" 120 0 "OK" 0 > "AT" 205 97 237 125 13 0 "C<" 0 ];
 end
 < "A" 13
-    boot_page "macs.term";
+        boot_page "??_referrer??";
 end

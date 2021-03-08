@@ -1,9 +1,12 @@
-extern char *point[2];
+extern unsigned char *point[2];
+extern unsigned long number;
+extern unsigned long value_;
 
-char *parsestr1( char *a, char *b);
+unsigned char *parsestr1( unsigned char *a, unsigned char *b);
 char *parsestr1_( char *a, char *b);
 struct parsestr{
     char ch;
+    unsigned long num;
     char *zero;		//place, were ch was stored (for restoring)
     char *end;		//end of matched string
 };

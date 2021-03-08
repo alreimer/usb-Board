@@ -3,6 +3,18 @@ area:2048:pool
 area:2048:file
 //wr_shell: :ar_name:cd /mnt/packages/ 2>/dev/null; [ $? -eq 0 ] && for i in *.ipk ; do [[ -f "$i" ]] && echo "$i"; done 
 
+table: help
+In this page whole
+mtd-dev (saved etc) for
+config can be strored by
+pressing on "BackUp",
+restored by pressing on
+"restore" or removed by
+pressing on "X".
+#end_table
+//3456789012345678901234567890
+//       1         2         3
+
 < "show" 0
 	write_system ":ar_name:cd /mnt/etc-cfgs/ 2>/dev/null; [ $? -eq 0 ] && for i in mtd_*.tar.gz ; do [[ -f \"$i\" ]] && echo \"$i\"; done ";
 
@@ -18,8 +30,8 @@ if "_@list+1:" > "AT" 2 33 165 61 1 0 "Crestore|" $_@list+1:18:"/[/*/].tar.gz" 0
 if "_@list+2:" > "AT" 2 65 165 93 2 0 "Crestore|" $_@list+2:18:"/[/*/].tar.gz" 0 > "AT" 169 65 201 93 6 0 "CX" 0 fi
 if "_@list+3:" > "AT" 2 97 165 125 3 0 "Crestore|" $_@list+3:18:"/[/*/].tar.gz" 0 > "AT" 169 97 201 125 7 0 "CX" 0 fi
 if "_@list+4:" > "AT" 205 97 237 125 9 0 "C->" 0 fi
-    > "AT" 205 33 237 61 10 0 "C<-" 0
-//if "_etc_save:1" > "AT" 205 65 237 93 11 0 "CS" 0 fi
+    > "AT" 205 33 237 61 10 0 "C<" ifnot "_@_list:0/" "-" fi 0
+    > "AT" 205 65 237 93 11 0 "Cm" 0
     > "AT" 205 1 237 29 13 0 "C<" 0 ];
 end
 
@@ -90,6 +102,9 @@ end
 	set_tbl "list -= 3";
 	boot_cgi [ "show" 0 ];
     }
+end
+< "A" 11
+    include "menu.term";
 end
 < "A" 13
     boot_page "etc.term";

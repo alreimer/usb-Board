@@ -1,3 +1,70 @@
+20200319
+- in term_tbl.c added for parsing: #-> get_ofolder: path		only folername without path
+- correction of %d in terminal.c and term_cgi.c to %ld for github
+- added sha1sum for TPASSWORD parameter
+- NEW: parsestr:
+	/m-WARN: not matched!\0		- thisIsNotMatched! putout to /dev/stderr if the rest of parseing string not matched
+20191028
+- /etc/usb_storage.sh is changed
+- new: TPASSWORD in config file, tLogin.term, some changes in menu.term . that all is according to login function.
+    Prompt password if TPASSWORD exist in config file and not empty!
+- in main text of term: added parsing or not of par:, area:, readcfg, shell:  depeded of (if ""  par: area: readcfg 'shell: echo hallo' fi)
+- added login-function
+- bug in instead (removed "cgi_end") is fixed [added /////*\n[/--] because of crossing with '\nend` in parsestr1], see [a]
+20190812
+- parsestr: /?var?/ - is old, /?var/? - is new. Both in use!
+- removing of "<-" to "<" & "<-" complieted.
+- some changes in usb-* .term(s) ; begin of removing "<-" botton to > "AT" 205 33 237 61 10 0 "C<" ifnot "_@_list:0/" "-" fi 0
+- removed cgi_end function. parsestr1 is instead! [a]
+20190714
+- bug in parsestr1: \0 without point[1]
+- NEW: parsestr:
+	/* by /is>0s - if not matches return NULL */
+	/* by /iv+10v or /iv-5v or /in-45n or /in+24n or /is+1s */
+	/* by /hs   - set stack = source (hex) */
+	/* by /ss   - set stack = source */
+	/*  set number to /n10n   or stack to /n15s*/
+	/{R..../}  - Repead 1 Time or more
+	/{r..../}  - Repead 0 Time or more
+	/(Splus/:minus/)	-stack increase(plus) or decrease(minus), if stack == 0 break. if booth plus and minus are
+    not matched - return NULL.
+20190518
+- added "get_ofiles:" in table stuct for only filenames without paths
+- added "check: " after "get_folder:", "get_files:" in table struct
+- in parsestr1 added /{/}, and in /</> added /<-a-fA-F/>, !!!!plase replace!! /<- -*/> to /<- \-*/> in files!!!!
+20190402
+- in info_*.term and in technical.term: _referer2 (changed)-> _back2
+20181110
+- parsestr: added /hn or /hv for hex-source/hn
+- changed "/etc/known_usb" and "/etc/usb_storage.sh"
+20180925
+- parsestr: /iv<10v or /iv>5v or /in<45n or /in>24n
+- parsestr: added /sn (number = source) and /sv (value = source)
+- parsestr: added /Qvar?/ and /n8n and "bla\04"(bla\0 + number=4)
+20180818
+- added usb_inDir.term for getting dir or file (itis a creation)
+- in table-parse parse_file(area) added "mixed" string - for begin matches all if's to begin of while-area
+- in cron_tabfile.term: cron_input.term changed to usb_inFile.term, as well as splitting name to path and filename in SHOW-cgi.
+- added "USB" branch
+- added info-usbstor.term and info-print.term
+- in table-parse parse_file(area) added "check:/*find in block" string
+20180501
+- in tables changed to: parse_file:/ /etc/??file_name??
+	and get_folder:/ /??path??
+	and get_files:/ /??path??
+- added "cron" branch
+- added in cgi: free_upages "up_to_page.term"; or for free pages up to current use: free_upages;
+- changed "change_line" function
+- made cron branch
+- bug fixed in "get_page"
+- changed abc-keys.incterm with whole pages which use it. As well as mac-keys.incterm
+20180319
+- added ??_back??
+- some pages ".term" are chenged
+- changed to relative to actual page's back in ??_referrer??
+- if(size > 1 && (tmp = malloc(size))) added to term_cgi.c
+- made technical.term for FAN control and something like this.
+- added link functionin file ->    link: to_par:from_par\n		and link "to_par:from_par"; //in CGI
 20180214
 - made "macs_xxxx.term" branch
 - body of parse_file moved to parse_file_ for correct interpritation of if..else..fi

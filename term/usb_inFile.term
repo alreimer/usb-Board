@@ -1,0 +1,40 @@
+//used for show path and file
+
+//in: file_name
+//out: set->"retinput" 0; back->"retinput_back" 0
+
+//get value-link from page before
+link:val:value%1
+link:name:name%1
+//area:2048:pool
+
+< "scripBegin" 0
+print [
+> "ZC" 120 0 if "name:/!/" $name else "File name:" fi 0
+> "ZC" 120 9 $val:27:"/[/L/L/]" "|" $val:27:"/L/L" 0	//step down 9pix (9 -> 18)
+ ];
+end
+
+< "scripEnd" 0
+    print [> "AT" 110 65 142 93 12 0 "C\>" 0 > "AT" 205 33 237 61 13 0 "C<" 0 ];
+end
+
+//overwrite this cgi
+< "clear" 0
+    print [ > "RL" 0 9 239 27 > "ZC" 120 9 $val:27:"/[/L/L/]" "|" $val:27:"/L/L" 0 ];
+end
+
+include: abc-keys.incterm
+
+< "A" 12
+    switch "/?_referrer?/";
+    boot_cgi [ "retinput" 0 ] {
+	boot_page "??_back??";
+    }
+end
+< "A" 13
+    switch "/?_referrer?/";
+    boot_cgi [ "retinput_back" 0 ] {
+	boot_page "??_back??";
+    }
+end

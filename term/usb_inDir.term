@@ -1,0 +1,286 @@
+//in: path (for example: /mnt) and value (/mnt/cdrom...) and (dcase==file or !=file)
+//out: set->"retinput" 0; back->"retinput_back" 0
+
+link:dir_origin:path%1
+link:dir:value%1
+link:switch:dcase%1
+
+ifnot "dir:/?dir_origin?/"
+wr_par: dir:??dir_origin??
+fi
+
+
+area:2:case
+wr_par: case:0
+
+//value and name used by usb_inFile.term; "name" used also for dividing make dir from make file
+area:10000:value
+area:17:name
+//area:2:c
+wr_par: c:1
+//fdir used by separating in value /fdir/[file_name(value)] in retinput
+area:10000:fdir
+
+
+< "show_dir" 0
+	print [ 
+
+table: list
+#-> get_folder: ??dir??
+#end_table
+
+12 > "DL" > "AL" 0 1
+if "dir:/?dir_origin?//!/" > "AT" 2 1 34 29 1 0 "C.." 0 fi 
+ifnot "switch:file/" > "AT" 38 1 83 29 5 0 "CGet|Dir" 0 fi
+> "AT" 87 1 142 29 6 0 "CMake|Dir" 0
+> "AT" 146 1 201 29 21 0 "Cshow|Files" 0
+if "_@list+1:" > "AT" 2 33 201 61 2 0 "C" $_@list+1:20:"/L/L" 0 fi
+if "_@list+2:" > "AT" 2 65 201 93 3 0 "C" $_@list+2:20:"/L/L" 0 fi
+if "_@list+3:" > "AT" 2 97 201 125 4 0 "C" $_@list+3:20:"/L/L" 0 fi
+if "_@list+4:" > "AT" 205 97 237 125 9 0 "C->" 0 fi
+    > "AT" 205 33 237 61 10 0 "C<" ifnot "_@_list:0/" "-" fi 0
+    > "AT" 205 65 237 93 11 0 "Cm" 0
+    > "AT" 205 1 237 29 13 0 "C<" 0 
+    ];
+	if "case:0/"{
+	    write_par "case:1";
+	    print [ > "AL" 0 0 > "RL" 0 0 240 64 > "GR" 2 2 238 62 > "ZL" 5 4 "DIR:" 0 > "ZL" 3 14 $dir:24:"/[/L/L/]" "|" $dir:24:"/L/L" 0 
+	    >>>> "wait:" 7 0 ];
+	}
+end
+
+< "timeout"
+	if "case:1/"{
+	    boot_cgi [ "show_dir" 0 ];
+	}
+end
+
+< "A" 1
+	if "dir:/?dir_origin?//!/"{
+	not "dir:///"{
+	    write_ppar "dir:dir:/[/L/L/--/]";
+	}
+	set_tbl "list = 0";
+	write_par "case:0";
+	}
+	boot_cgi [ "show_dir" 0 ];
+end
+
+//next page
+< "A" 2 4
+	if "dir:/?dir_origin?/"{
+		write_par "dir:??_@list??";
+		set_tbl "list = 0";
+		write_par "case:0";
+	}
+	boot_cgi [ "show_dir" 0 ];
+end
+//get dir	return back
+< "A" 5
+	not "switch:file/" {
+	    switch "/?_referrer?/";
+	    boot_cgi [ "retinput" 0 ] {
+		boot_page "??_back??";
+	    }
+	    exit_cgi;
+	}
+	boot_cgi [ "show_dir" 0 ];
+end
+//make dir - run usb_inFile.term
+< "A" 6
+//	not "switch:file/" {
+	    clean_par "value";
+	    write_par "name:Dir name:";
+	    include "usb_inFile.term";
+//	}
+//	boot_cgi [ "show_dir" 0 ];
+end
+
+//page next
+< "A" 9
+	set_tbl "list += 3";
+	boot_cgi [ "show_dir" 0 ];
+end
+
+//page before
+< "A" 10
+    set_tbl "list == 0"{
+	switch "/?_referrer?/";
+	boot_cgi [ "retinput_back" 0 ] {
+	    boot_page "??_back??";
+	}
+    }
+    set_tbl "list != 0"{
+	set_tbl "list -= 3";
+	boot_cgi [ "show_dir" 0 ];
+    }
+end
+
+< "show_menu" 0
+	print [
+> "AL" 0 0
+> "RL" 30 24 208 102 > "GR" 32 26 206 100
+//	    > "ZC" 120 40 "Really save|config?" 0
+	    > "AT" 36 30 68 58 22 0 "C<" 0
+	    > "AT" 36 62 91 90 6 0 "Cmake|Dir" 0
+	if "switch:file/" > "AT" 95 62 150 90 35 0 "Cmake|File" 0 fi
+//if "info%1:" > "AT" 72 30 104 58 2 0 "Ci" 0 fi
+//if "_etc_save:1/" > "AT" 108 30 140 58 3 0 "CS" 0 fi
+//if "_@help%1:" > "AT" 144 30 176 58 4 0 "Ch" 0 fi
+];
+end
+
+< "A" 11
+	boot_cgi [ "show_menu" 0 ];
+end
+
+< "A" 13
+	switch "/?_referrer?/";
+	boot_cgi [ "retinput_back" 0 ] {
+		boot_page "??_back??";
+	}
+end
+
+//menu buttons
+< "A" 20
+	write_par "case:1";
+	boot_cgi [ "show_dir" 0 ];
+end
+//used as connection point dir-file
+< "A" 21
+//	if "switch:file/"{
+		set_tbl "files = 0";
+		write_par "case:2";
+		boot_cgi [ "show_files" 0 ];
+//		exit_cgi;
+//	}
+//	print [ 12 > "DL" > "AL" 0 1 > "ZC" 120 8 "Error:|Switch case to file|from getDir" 0 > "AT" 205 97 237 125 20 0 "C<" 0 ];
+end
+
+< "A" 22
+	if "case:2/" {
+	    boot_cgi [ "show_files" 0 ];
+	}
+	not "case:2/" {
+	    write_par "case:1";
+	    boot_cgi [ "show_dir" 0 ];
+	}
+end
+
+
+< "show_files" 0
+	print [ 
+
+table: files
+#-> get_files: ??dir??
+#end_table
+
+    12 > "DL" > "AL" 0 1 
+if "switch:file/"
+//if "dir:/?dir_origin?//!/" > "AT" 2 1 34 29 1 0 "C.." 0 fi > "AT" 38 1 93 29 5 0 "CGet|DIR" 0 // > "AT" 97 1 201 29 5 0 "CGet|DIR" 0
+    > "ZL" 5 0 "DIR:" 0 > "ZL" 3 9 $dir:25:"/[/L/L/]" "|" $dir:25:"/L/L" 0
+    if "_@files+1:" > "AT" 2 33 201 61 30 0 "C" $_@files+1:24:"/L/L" 0 fi
+    if "_@files+2:" > "AT" 2 65 201 93 31 0 "C" $_@files+2:24:"/L/L" 0 fi
+    if "_@files+3:" > "AT" 2 97 201 125 32 0 "C" $_@files+3:24:"/L/L" 0 fi
+    if "_@files+4:" > "AT" 205 97 237 125 33 0 "C->" 0 fi
+else
+    > "ZL" 5 0 "DIR:" 0 > "ZL" 3 9 $dir:25:"/[/L/L/]" "|" $dir:25:"/L/L" 0
+    > "GD" 2 27 202 27
+    if "_@files+1:" > "ZL" 2 29 $_@files+1:25:"/L/L" 0 fi
+    if "_@files+2:" > "ZL" 2 39 $_@files+2:25:"/L/L" 0 fi
+    if "_@files+3:" > "ZL" 2 49 $_@files+3:25:"/L/L" 0 fi
+    if "_@files+4:" > "ZL" 2 59 $_@files+4:25:"/L/L" 0 fi
+    if "_@files+5:" > "ZL" 2 69 $_@files+5:25:"/L/L" 0 fi
+    if "_@files+6:" > "ZL" 2 79 $_@files+6:25:"/L/L" 0 fi
+    if "_@files+7:" > "ZL" 2 89 $_@files+7:25:"/L/L" 0 fi
+    if "_@files+8:" > "ZL" 2 99 $_@files+8:25:"/L/L" 0 fi
+    if "_@files+9:" > "ZL" 2 109 $_@files+9:25:"/L/L" 0 fi
+    if "_@files+10:" > "ZL" 2 119 $_@files+10:25:"/L/L" 0 fi
+    if "_@files+11:" > "AT" 205 97 237 125 33 0 "C->" 0 fi
+fi
+    > "AT" 205 33 237 61 34 0 "C<" ifnot "_@_files:0/" "-" fi 0
+    > "AT" 205 65 237 93 11 0 "Cm" 0
+    > "AT" 205 1 237 29 20 0 "C<" 0 
+    ];
+end
+
+< "A" 30 32
+	if "switch:file/" {
+		write_par "dir:??_@files??";
+		switch "/?_referrer?/";
+		boot_cgi [ "retinput" 0 ] {
+			boot_page "??_back??";
+		}
+		exit_cgi;
+	}
+	boot_cgi [ "A" 13 ];	//back with retinput_back 0
+end
+
+//page next
+< "A" 33
+	if "switch:file/" {
+	    set_tbl "files += 3";
+	}
+	not "switch:file/" {
+	    set_tbl "files += 10";
+	}
+	boot_cgi [ "show_files" 0 ];
+end
+
+//page before
+< "A" 34
+    set_tbl "files == 0"{
+	write_par "case:1";
+	boot_cgi [ "show_dir" 0 ];
+    }
+    set_tbl "files != 0"{
+	if "switch:file/" {
+	    set_tbl "files -= 3";
+	}
+	not "switch:file/" {
+	    set_tbl "files -= 10";
+	}
+	boot_cgi [ "show_files" 0 ];
+    }
+end
+
+//make file
+< "A" 35
+	if "switch:file/" {
+	    clean_par "value:name";
+	    include "usb_inFile.term";
+	}
+	boot_cgi [ "show_files" 0 ];
+end
+
+< "retinput" 0
+	if "value:/B\0/\/*.///\//"{
+	    print [ 12  > "DL" > "AL" 0 1 > "ZC" 120 8 "Error:|value is empty|or ./ or /text" 0 > "AT" 205 97 237 125 22 0 "C<" 0 ];
+	    free_upages;
+	    exit_cgi;
+	}
+	if "switch:file/"{	//file A 35
+	    if "name:/" {
+		if "value:/l/l"{
+		    write_ppar "value:fdir:/[/L/L/]";
+		    shell "mkdir -p \"??dir??/??fdir??\" ";
+		}
+		shell "touch \"??dir??/??value??\" ";
+
+		boot_cgi [ "A" 22 ];
+		free_upages;
+		exit_cgi;
+	    }
+	}
+	if "name:Dir name:/"{	//dir A 6
+		shell "mkdir -p \"??dir??/??value??\" ";
+	}
+	boot_cgi [ "A" 22 ];
+	free_upages;
+end
+< "retinput_back" 0
+	boot_cgi [ "A" 22 ];
+	free_upages;
+end
+
+cgi: "show_dir" 0

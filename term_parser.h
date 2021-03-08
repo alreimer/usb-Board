@@ -30,7 +30,9 @@ void recover_saved(char *par);
 //int cfg_arg_strcmp(char *parm, char flag);
 int cfg_arg_changed(char *web_name);
 char *get_cfg_value(long long *size, char *field_name, int i);	//i is 0-value, 1-new_value, 2-fresh_value
+struct cfg_parse1 *get_cfg(char *field_name);
 //void fill_all_cfg(void);
 void fill_cfg(char *parm);//parm="parm1:parm2:parm3..."
 int reg_par(char *name, char *value, long long size);//registering parameter with 'name'
+void link_cfg(char *arg);
 void write_char(char *arg);

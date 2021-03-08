@@ -1,6 +1,6 @@
 /* copy_tbl.c:
  *
- * Copyright (C) 2013-2014  Alexander Reimer <alex_raw@rambler.ru>
+ * Copyright (C) 2013-2020  Alexander Reimer <alex_raw@rambler.ru>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,22 +25,6 @@
 #define DEBUG
 
 struct tbl **tbl_name = NULL;
-
-//if i = 0 or Return NULL -> not found, if i!=0 and return not NULL ->found
-char *parsestr_mass(char *str, char **massive, int *i){
-	int k = 0;
-	char *ptr;
-	while(massive[k]){
-		ptr = parsestr1(str, massive[k]);
-		if(ptr){
-			*i = (k + 1);
-			return ptr;
-		}
-		k++;
-	}
-	*i = 0;
-	return NULL;
-}
 
 void parse_tbl(char *data, char clean){
 
@@ -110,13 +94,11 @@ printf("script %s\n", (*ptr)->name);
 //#-> check_Nfolders
 //fold_name
 //#-> end
-		//tmp2 = parsestr1(tmp+3, "/ check_folders/ /");
-		char *massive[]={	"/ check_folders/ /", //flag = 1
-					"/ check_Nfolders/ /", //flag = 2
-					"/ check_files/ /", //flag = 3
-					NULL
-				};
-		if(parsestr_mass(tmp+3, massive, &flag)){
+		if(parsestr1(tmp+3,"/n0n/ check_/Bfolders/ /n1n/\\" //flag = 1
+					"Nfolders/ /n2n/\\" //flag = 2
+					"files/ /n3n/E/" //flag = 3
+					)){
+		    flag = number;
 
 		    while(tmp = w_strtok(&data, '\n')){
 			tmp2 = parsestr1(tmp, "#->/ end/ /");//thing about it!
@@ -178,24 +160,42 @@ printf("Exist folder: %d %s\n", rnd_p->rnd_entry, rnd_p->entry);
 		    continue;
 		}
 //*****************
-		char *massive1[]={	"/ get_folder:/ ", //flag = 1
-					"/ get_files:/ ", //flag = 2
-					NULL
-				};
-		tmp2 = parsestr_mass(tmp+3, massive1, &flag);	//#-> get_folder:  /mnt
+		tmp2 = parsestr1(tmp+3, "/n0n/ get_/Bfolder:/n1n/ /\\" //flag = 1
+					"files:/n2n/ /\\" //flag = 2
+					"ofiles:/n3n/ /\\" //flag = 3
+					"ofolder:/n4n/ " //flag = 4
+					);	//#-> get_folder:  /mnt
+		flag = number;
 		if(tmp2 && flag){
-		    struct dirent *dirent;
-		    if((dir = opendir(tmp2))== 0){
-    			printf("Unable to open directory %s, %d\n", tmp2, errno);
-			continue;
+//here can be added strncpy_ for /path/??par??
+		    char *tmp5, *check_ = NULL;
+		    unsigned long long size;
+		    check_ = parsestr1(data, "/ check:/[/*/]\n");
+		    if(check_){
+			data = point[1];
+			if(parsestr1(check_, "/*/{*/////}//]")){
+			    check_ = "/!";//nothing show at all!!
+			    printf("Warning: check is with /]\n");
+			}
 		    }
+
+		    size = strncpy_(NULL, tmp2, 0)+1;	//this is max. size of tmp2-string
+		    if(size > 1 && (tmp5 = malloc(size))){
+			strncpy_(tmp5, tmp2, size);
+			if((dir = opendir(tmp5))== 0){
+				printf("Unable to open directory %s, %d\n", tmp5, errno);
+				free(tmp5);
+				continue;
+			}
+		    } else continue;
 //printf("file:%d, dir:%d\n", DT_REG, DT_DIR);
 
+		    struct dirent *dirent;
 		    //get_folder(rnd_ptr, tmp2);
 		    while((dirent = readdir(dir)) != NULL){
 			tmp = dirent->d_name;
 printf("file:%s, %d\n", tmp, dirent->d_type);
-			if(flag == 1){
+			if(flag == 1 || flag == 4){
 			    if(dirent->d_type == DT_REG || dirent->d_type == 0 || !strcmp(tmp, "lost+found") 
 				|| (tmp[0] == '.' && (tmp[1] == '\0' || tmp[1] == '.')))
 				//d_type==8 is file(DT_REG), 10-link, 4-dir(DT_DIR).
@@ -204,27 +204,32 @@ printf("file:%s, %d\n", tmp, dirent->d_type);
 			    if(dirent->d_type != DT_REG && dirent->d_type != 0) continue;
 			    //i dont know, but file_type on NAS is 0
 			}
-			
+			if(check_ && (parsestr1(tmp, check_) == NULL)) continue;//if check not found -> skip parseing  //new
+
 			*rnd_ptr = (struct rnd_tbl *)malloc(sizeof(struct rnd_tbl));
 			if(*rnd_ptr == NULL){
 			    printf(err, 4);
 			    closedir(dir);
+			    free(tmp5);
 			return;
 			}
 
 			rnd_p = *rnd_ptr;
 			rnd_p->rnd_entry = num;
 //			sprintf(rnd_p->rnd_entry, "%ld", random());
-			rnd_p->entry = malloc(strlen(tmp) + strlen(tmp2)+ 4);
+			if(flag == 3 || flag == 4) rnd_p->entry = malloc(strlen(tmp) + 4);//!!!only filename or path!!! if flag = 3 || 4
+			else rnd_p->entry = malloc(strlen(tmp) + strlen(tmp5)+ 4);
 			if(rnd_p->entry == NULL){
 			    free(*rnd_ptr);
 			    *rnd_ptr = NULL;
 			    printf(err, 5);
 			    closedir(dir);
+			    free(tmp5);
 			    return;
 			}
 
-			sprintf(rnd_p->entry, "%s/%s", tmp2, tmp);
+			if(flag == 3 || flag == 4) sprintf(rnd_p->entry, "%s", tmp);//!!!only filename or path!!! if flag = 3 || 4
+			else sprintf(rnd_p->entry, "%s/%s", tmp5, tmp);
 			k = 0;
 			while(k < TAB_LEN){
 			rnd_p->entries[k] = NULL;
@@ -242,21 +247,25 @@ printf("Special: %d %s %d\n", rnd_p->rnd_entry, rnd_p->entry, dirent->d_type);
 
 		    }
 		    closedir(dir);
+		    free(tmp5);
 		    continue;
 		//    system("/bin/ls -F -w 1 /mnt | grep -v spool> /var/run/mnt_dir");
 		}
 //********************
-		char *massive2[]={	"/ parse_file:/ ",	//flag = 1	#-> parse_file:  /etc/fstab
-					"/ parse_area:/ ",	//flag = 2	#-> parse_area:  AREA-1
-					NULL
-				};
-		tmp2 = parsestr_mass(tmp+3, massive2, &flag);	//#-> get_folder:  /mnt
+		tmp2 = parsestr1(tmp+3, "/n0n/ parse_/Bfile:/n1n/ /\\"	//flag = 1	#-> parse_file:  /etc/fstab
+					"area:/n2n/ "	//flag = 2	#-> parse_area:  AREA-1
+					);	//#-> get_folder:  /mnt
+		flag = number;
 		if(tmp2 && flag){
-		    char *dat, *tmp3, *tmp4[TAB_LEN], *tmp5, *tmp6;
+		    char *dat, *tmp3, *tmp4[TAB_LEN], *tmp5, *tmp6, *check = NULL, *mixed = NULL;
 		    int i = 0;
 		    unsigned long long size;
 			tmp3 = parsestr1(data, "/ while:/[/*/]\n");
-			if(tmp3){ data = point[1];
+			if(tmp3){ 
+			    mixed = parsestr1(point[1], "/ mixed\n");
+			    //data = point[1];
+			    check = parsestr1(point[1], "/ check:/[/*/]\n");
+			    data = point[1];
 			    while(tmp5 = parsestr1(data, "/ if:/[/*/]\n")){
 				data = point[1];
 				if(i < TAB_LEN){		//upto 10 "if:" entries will be recorded
@@ -270,16 +279,25 @@ printf("Special: %d %s %d\n", rnd_p->rnd_entry, rnd_p->entry, dirent->d_type);
 		    //file open from tmp2
 
 		    if(flag == 1){
-			if(stat(tmp2, &stbuf) || /*(stbuf.st_size>1024*64) ||*/ !(f = fopen(tmp2,"r"))) {
-				printf("Unable to open file %s, %d\n", tmp2, errno);
-				continue;
-			}
+			size = strncpy_(NULL, tmp2, 0)+1;	//this is max. size of tmp2-string
+			if(size > 1 && (tmp5 = malloc(size))){
+			    strncpy_(tmp5, tmp2, size);
 
-			dat = (char *)malloc(stbuf.st_size+1);
-			if(dat == NULL){ fclose(f); continue;}
-			fread(dat, stbuf.st_size, 1, f);
-			dat[stbuf.st_size] = '\0';
-			fclose(f);
+			    if(stat(tmp5, &stbuf) || /*(stbuf.st_size>1024*64) ||*/ !(f = fopen(tmp5,"r"))) {
+				printf("Unable to open file %s, %d\n", tmp5, errno);
+				free(tmp5);
+				continue;
+			    }
+
+			    dat = (char *)malloc(stbuf.st_size+1);
+			    if(dat == NULL){ fclose(f); free(tmp5); continue;}
+			    fread(dat, stbuf.st_size, 1, f);
+			    dat[stbuf.st_size] = '\0';
+			    fclose(f);
+
+			    free(tmp5);
+			} else continue;
+
 
 		    }else{//flag ==2 or higher
 			tmp5 = get_var(&size, tmp2);
@@ -291,9 +309,10 @@ printf("Special: %d %s %d\n", rnd_p->rnd_entry, rnd_p->entry, dirent->d_type);
 
 		    tmp5 = dat;
 		    while(tmp = parsestr1(tmp5, tmp3)){
-			if(tmp5 == point[1]) break;
+			if((unsigned char *)tmp5 == point[1]) break;	//changed here 1.05.2019
 			tmp5 = point[1];
-			if(! *tmp) continue;//new
+			if(! *tmp) continue;//empty string
+			if(check && (parsestr1(tmp, check) == NULL)) continue;//if check not found -> skip parseing  //new
 			if((tmp6 = parsestr2(&prsstr, tmp, tmp4[0])) == NULL)//think about!!	//was parsestr1
 			    continue;
 
@@ -343,7 +362,8 @@ printf("Special: %d %s %d\n", rnd_p->rnd_entry, rnd_p->entry, dirent->d_type);
 		}
 		if(flag+1 < i){
 //		    tmp = point[1];
-		    tmp = restore_str(&prsstr);//new. was point[1];
+		    if(mixed == NULL) tmp = restore_str(&prsstr);
+		    else restore_str(&prsstr);
 		    tmp6 = parsestr2(&prsstr, tmp, tmp4[flag+1]);//think about!//was parsestr1
 		} else tmp6 = NULL;
 	    } else {
@@ -415,34 +435,34 @@ printf("%d %s\n", rnd_p->rnd_entry, rnd_p->entry);
 }
 
 char *get_tbl(char *par){
-    char *tmp, *tmp1, *var;
-    unsigned int part = 0, number = 0, entry;
+    char *tmp, *tmp1, *tmp2, *var, *ret = NULL;
+    unsigned int part = 0, number = 0, entry, flag = 0;
     struct page_n *n;
     struct tbl *ptr;
     struct rnd_tbl *rnd_ptr;
     if(tbl_name == NULL) return NULL;
     ptr = *tbl_name;
 
-	tmp1 = par;		//par="table_name+5#1%1"
-	while(*tmp1){		//par="table_name+5#1@parseFrase"
-	    if(*tmp1 == '@'){
-		*tmp1 = '\0';
-//		flag = 1;
-		n = get_page(tmp1+1);
+	tmp2 = par;		//par="table_name+5#1%1"
+	while(*tmp2){		//par="table_name+5#1@parseFrase"
+	    if(*tmp2 == '@'){
+		*tmp2 = '\0';
+		flag = 1;
+		n = get_page(tmp2+1);
 		if(n) ptr = n->tbl_name;
 		break;
-	    }else if(*tmp1 == '%'){
+	    }else if(*tmp2 == '%'){
 //printf("get tbl:%s\n", par);
-		*tmp1 = '\0';
-//		flag = 2;
-		n = get_last_page(tmp1+1);
-//printf("get tbl1:%s\n", tmp1+1);
+		*tmp2 = '\0';
+		flag = 2;
+		n = get_last_page(tmp2+1, 0);
+//printf("get tbl1:%s\n", tmp2+1);
 
 		if(n) ptr = n->tbl_name;
 //printf("get tbl2:%s\n", ptr->name);
 		break;
 	    }
-	    tmp1++;
+	    tmp2++;
 	}
 
 
@@ -461,11 +481,11 @@ char *get_tbl(char *par){
     }
 //printf("get:%s. number: %d. part: %d. ", var, number, part );
 
+
     while(ptr){
 	if(!strcmp(ptr->name, var)){
 //printf("NAMe: %s ", var);
-	    if(*tmp1) *(tmp1-1) = '+';	//var is in use
-	    if(*par) *(par-1) = '#';
+
 	    if(number) entry = ptr->begin + number;
 	    else {	if(A1_BTN) entry = ptr->begin + A1_BTN;
 			else entry = 1;//for now, was =0
@@ -474,8 +494,9 @@ char *get_tbl(char *par){
 		rnd_ptr = ptr->ptr;
 		while(rnd_ptr){
 		    if(rnd_ptr->rnd_entry == entry){
-			if(rnd_ptr->entry) return rnd_ptr->entry;
-			return rnd_ptr->entries[part];
+			if(rnd_ptr->entry) ret = rnd_ptr->entry;
+			else ret = rnd_ptr->entries[part];
+			break;
 		    }
 		rnd_ptr = rnd_ptr->next;
 		}
@@ -497,11 +518,16 @@ char *get_tbl(char *par){
 		rnd_ptr = rnd_ptr->next;
 		}
 	    }
-*/	return NULL;
+*/	break;
 	}
     ptr = ptr->next;
     }
-    return NULL;
+    if(*tmp1) *(tmp1-1) = '+';	//var is in use
+    if(*par) *(par-1) = '#';
+    if(flag == 1) *(tmp2) = '@';	//think about!!
+    else if(flag == 2) *(tmp2) = '%';
+
+    return ret;
 }
 
 
@@ -525,7 +551,7 @@ unsigned int *get_tbl_begin(char *name){
 //printf("tbl:%s\n", par);
 		*tmp1 = '\0';
 //		flag = 2;
-		n = get_last_page(tmp1+1);
+		n = get_last_page(tmp1+1, 0);
 //printf("tbl1:%s\n", tmp1+1);
 
 		if(n) ptr = n->tbl_name;

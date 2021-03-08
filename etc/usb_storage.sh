@@ -1,44 +1,64 @@
 #!/bin/sh
+#############################################
+# made by alex_raw
+# usage: $1 sd.. or hd..
+# $2 = 1 -mount, 0 -umount
+# $3 = index of port
+# $4 = serialnumber
 
-if [ $2 == 1 ]; then
-  j=0;
-  for i in /dev/$1*
+for i in `cat /etc/known_usb | grep -v "#" | grep $4`
     do
-      S=`cat /etc/known_usb | grep -v "#" | cut -d ":" -f 1 | grep $4 `
-      if [ $4 = $S ]
-	then
-          P=`cat /etc/known_usb | grep -v "#" | grep $4 | cut -d ":" -f 2`
-	  if [ $j = $P ]
-            then 
-              M=`cat /etc/known_usb | grep -v "#" | grep $4 | cut -d ":" -f 3`
-              C=`cat /etc/known_usb | grep -v "#" | grep $4 | cut -d ":" -f 4`
-              mount $i $M
-              $C
-            else
-              mkdir -p /mnt/home/usb/$4/part$j
-              mount $i /mnt/home/usb/$4/part$j
-              if [ $? != 0 ]; then
-                rm -rf /mnt/home/usb/$4/part$j
-              fi
-				
-          fi
-        else
-          mkdir -p /mnt/home/usb/$4/part$j
-          mount $i /mnt/home/usb/$4/part$j
-          if [ $? != 0 ]; then
-            rm -rf /mnt/home/usb/$4/part$j
-          fi
-      fi
-      j=$(($j+1))
-   done
-elif [ $2 == 0 ]; then
-	S=`cat /etc/known_usb | grep -v "#" | cut -d ":" -f 1 | grep $4 `
-	M=`cat /etc/known_usb | grep -v "#" | grep $4 | cut -d ":" -f 3`
-	umount $M
-	for i in /mnt/home/usb/$4/part*
-          do
-            umount -f $i 
-        done
-	rm -rf /mnt/home/usb/$4
-fi
-exit 0;
+	if [ -n "$4" ]; then
+	S=`echo $i | cut -d ":" -f 1`
+	    if [ "$S" == "$4" ]; then
+		P=`echo $i | cut -d ":" -f 2 `
+		M=`echo $i | cut -d ":" -f 3 `
+		if [ -z "$M" ]; then
+		    M=/mnt/home/usb/$4
+		fi
+		if [ $2 == 0 ]; then
+		    if [ "$P" == "*" ]; then
+			for k in "$M/part"*
+			do
+			    umount -f "$k"
+			    [ $? == 0 ] && rm -rf "$k"
+			done
+			[ ! -e "$M/"* ] && rm -rf "$M"
+		    else
+#			if [ -e /dev/$1$P ]; then
+			umount -f "$M"
+			[ $? == 0 ] && rm -rf "$M"
+#			else
+#			echo "device /dev/$1$P not found"
+#			fi
+		    fi
+		elif [ $2 == 1 ]; then
+		    C=`echo $i | cut -d ":" -f 4 `
+		    sleep 1
+		    if [ "$P" == "*" ]; then
+			j=0
+			for k in /dev/$1*
+			do
+			    #not use /dev/sdb, use only /dev/sdb1...
+			    if [ $j != 0 ]; then
+				mkdir -p "$M/part$j"
+				mount $k "$M/part$j"
+				[ $? != 0 ] && rm -rf "$M/part$j"
+			    fi
+			j=$(($j+1))
+			done
+			$C
+		    else
+			if [ -e /dev/$1$P ]; then
+			mkdir -p "$M"
+			mount /dev/$1$P "$M"
+			[ $? != 0 ] && rm -rf "$M"
+			$C
+			else
+			echo "device /dev/$1$P not found"
+			fi
+		    fi
+		fi
+	    fi
+	fi
+done

@@ -7,8 +7,6 @@ char *get_tbl(char *var);
 unsigned int *get_tbl_begin(char *name);//name of table
 void change_tbl_stat(char *data);	//data="flag:name:frase(forParsing)"
 
-char *parsestr_mass(char *parsestr, char **massive, int *i);
-
 #define TAB_LEN 10
 
 struct rnd_tbl {

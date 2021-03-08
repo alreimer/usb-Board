@@ -1,0 +1,67 @@
+par:128:passwd:TPASSWORD:
+readcfg
+
+ifnot "passwd:/"
+    if "_auth:/<1123/>/"
+	    //need to give a password
+//begin of login function--------
+area:18:val
+area:128:pool
+
+< "scripBegin" 0
+print [
+> "ZL" 0 0 "T: " $_auth:2 0
+> "ZC" 120 0  "Password:" 0
+//> "ZC" 120 9 $val 0	//step down 9pix (9 -> 18)
+> "ZC" 120 18 $_%val 0 
+];
+end
+
+< "scripEnd" 0
+    print [> "AT" 110 65 142 93 12 0 "C\>" 0 ];
+end
+
+< "clear" 0
+    print [ > "RL" 0 9 239 27 > "ZC" 120 18 $_%val 0 ];
+end
+
+include: abc-keys.incterm
+
+< "A" 12
+    write_system  "val:pool:echo -n $(/bin/sha1sum /dev/stdin | cut -d' ' -f1 )";
+    if "passwd:/?pool/?/"{
+	write_par "_auth:0";	//allow to see
+	boot_page "index_240x128.term";
+    }
+
+    //else not matched
+    if "_auth:1/"{
+	write_par "_auth:2";
+	boot_page "index_240x128.term";
+    }
+    if "_auth:2/"{
+	write_par "_auth:3";
+	boot_page "index_240x128.term";
+    }
+    if "_auth:3/"{
+	write_par "_auth:4";
+	boot_page "index_240x128.term";
+    }
+
+//    boot_page "network.term";
+end
+//end of login function---------
+shell: rm -f /tmp/termlock 2>/dev/null
+
+    else
+	if "_auth:0/"
+	    include: index_.term
+	else
+	    //_auth != 0 and more than 3
+	    shell: echo > /tmp/termlock
+	    12 > "DL" > "AL" 0 1 > "ZC" 120 10 "You are not authorized" 0
+	fi
+    fi
+else		//passwd not exist or == \0
+    include: index_.term
+fi

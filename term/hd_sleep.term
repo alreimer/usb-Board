@@ -8,6 +8,12 @@ if:/[/*/]/<- 	/>
 if:
 #end_table
 
+table: help
+In this page harddisk's
+spinOFF can be changed.
+#end_table
+//3456789012345678901234567890
+//       1         2         3
 
 < "show" 0
 	print [ 12   > "DL" > "AL" 0 1
@@ -21,8 +27,8 @@ if "_@list+7:" > "AT" 2 97 100 125 7 0 "C" $_@list+7#0:10 0 fi
 if "_@list+8:" > "AT" 104 97 201 125 8 0 "C" $_@list+8#0:10 0 fi
 if "_@list+9:" > "AT" 205 97 237 125 9 0 "C->" 0 fi
 
-    > "AT" 205 33 237 61 10 0 "C<-" 0
-if "_etc_save:1" > "AT" 205 65 237 93 11 0 "CS" 0 fi
+    > "AT" 205 33 237 61 10 0 "C<" ifnot "_@_list:0/" "-" fi 0
+    > "AT" 205 65 237 93 11 0 "Cm" 0
     > "AT" 205 1 237 29 13 0 "C<" 0 ];
 end
 
@@ -53,11 +59,7 @@ end
 end
 
 < "A" 11
-    boot_page "save_config.term";
-//    write_par "_etc_save:0";
-//    system "/etc/save_config.sh";
-////    boot_page "hd_sleep.term";
-//    boot_cgi [ "show" 0 ];
+    include "menu.term";
 end
 
 cgi: "show" 0

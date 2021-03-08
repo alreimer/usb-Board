@@ -1,6 +1,6 @@
 /* term_add.c:  A very simple connection programm for USB-Board
  *
- * Copyright (c) 2015 Alexander Reimer <alex_raw@rambler.ru>
+ * Copyright (c) 2015 - 2020 Alexander Reimer <alex_raw@rambler.ru>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,13 +22,36 @@
 #include "term_parser.h"
 #include "terminal.h"
 
-char *point[2];		//0 - place where is ch_zero by /]; 1 - end of string
-char ch_zero = '\0';
+void print_pstr(FILE *out, char *tmp){
+	char ch;
+	while(*tmp){
+	    ch = *tmp;
+	    if(*tmp == '\\'){
+		tmp++;
+		switch(*tmp){
+		    case 't':	ch = '\t'; break;
+		    case 'n':	ch = '\n'; break;
+		    case '\"':
+		    case '\\': ch = *tmp; break;
+		    case '0': return;
+		}
+	    }
+	    putc(ch, out);
+	    tmp++;
+	}
+}
 
-char *parsestr1( char *d, char *c)	//try identic strings!, "xxx*NULL" combination
+unsigned char *point[2];		//0 - place where is ch_zero by /]; 1 - end of string
+unsigned char ch_zero = '\0';
+unsigned long number = 0;
+unsigned long value_ = 0;
+unsigned long stack_ = 0;
+
+unsigned char *parsestr1(unsigned char *d, unsigned char *c)	//try identic strings!, "xxx*NULL" combination
 {
-	char *tmp, *tmp2, ch;
+	unsigned char *tmp, *tmp2, *tmp3, ch;
 	unsigned int i;
+	unsigned long digi;
 
 	while (*c)
 	{
@@ -57,19 +80,211 @@ char *parsestr1( char *d, char *c)	//try identic strings!, "xxx*NULL" combinatio
 				    if(tmp2) break;
 				    while(1){
 					if(*c == '/' && *(c+1) == '/') c++; //c+=2
-					else if(*c == '/' && *(c+1) == '\\'){c = c + 2; break;} // if(/\) 
+					else if(*c == '/' && *(c+1) == 'B' && i <= 1024) {i++; c++;}
+					else if(i != 0 && *c == '/' && *(c+1) == 'E'){ i--; c++;}
+					else if(i == 0 && *c == '/' && *(c+1) == '\\'){c = c + 2; break;} // if(/\) 
 					else if((tmp && (c == tmp)) || (*c == '\0')) return NULL;	//end of compare-strings - no matches - return NULL
 					c++;
 				    }
 				}
 //printf("str:%s d=%s c=%s\n", tmp2,d,c);
-				if(tmp) {d = tmp2; /*tmp2 is not always the end of string!! check it out*/
+				if(tmp && *tmp2) {d = tmp2; /*tmp2 is not always the end of string!! check it out*/
 					c = tmp + 2; continue;}
 				else return tmp2;
+		    case '{': c++; ch = *c; c++; tmp = NULL; tmp2 = c; i = 0;
+					while(*tmp2){
+					    if(*tmp2 == '/' && *(tmp2+1) == '/') tmp2++; //tmp2+=2
+					    else if(*tmp2 == '/' && *(tmp2+1) == '{' && i <= 1024) i++; //if(/{)
+					    else if(*tmp2 == '/' && *(tmp2+1) == '}'){
+						if(i == 0){tmp = tmp2 + 2; break;}
+						else i--;
+					    }
+					    tmp2++;
+					}
+				//tmp - end of compare-string
+				//tmp2 - can be used,
+				
+				//  /t/{*/*="/*/N\\N"/t/}-->
+				//  /t/{-/*="/*/N\\N"/t/}-->
+				//	 |		 |
+				//	 c		tmp
+				if(ch == '*'){//  /{*..../}  - 0 Times or more
+					while(1){
+					    if(tmp){
+						tmp2 = parsestr1(d, tmp);
+						if(tmp2) return tmp2;
+					    }
+					    tmp2 = parsestr1(d, c);
+					    if(tmp2 == NULL) return NULL;
+					    if(*tmp2 == '\0') return tmp2;
+					    d = tmp2;
+					}
+				}
+				if(ch == '-'){//  /{-..../}  - 1 Time or more
+					while(1){
+					    tmp2 = parsestr1(d, c);
+					    if(tmp2 == NULL) return NULL;
+					    if(*tmp2 == '\0') return tmp2;
+					    d = tmp2;
+					    if(tmp){
+						tmp2 = parsestr1(d, tmp);
+						if(tmp2) return tmp2;
+					    }
+					}
+				}
+				if(ch == 'R' || ch == 'r'){//  /{R..../}  - Repead 1 Time or more
+					i = 0;			// /{r..../}  - Repead 0 Time or more
+					while(1){
+					    tmp2 = parsestr1(d, c);
+					    if(tmp2 == NULL) break;
+					    if(tmp2 == d) break;	//no progress
+					    d = tmp2; i = 1;
+					}
+					if(ch == 'R' && i == 0) return NULL;
+					c = tmp; continue;
+				}
+				if(ch == 'C'){//  /{C..../}  - Compare witch pointer is bigger
+					tmp2 = parsestr1(d, c);
+					if(tmp2 == NULL) return NULL;
+					tmp3 = parsestr1(d, tmp);
+					if(tmp3 == NULL) return NULL;
+					if(tmp3 > tmp2) return tmp3;
+					return NULL;
+				}
+				return NULL;	//default, if not '*' and not '-'
+		    case '(': c++; ch = *c; c++; tmp = c; i = 0;
+					while(1){
+					    if(*tmp == '\0') return NULL;
+					    else if(*tmp == '/' && *(tmp+1) == '/') tmp++; //tmp+=2
+					    else if(*tmp == '/' && *(tmp+1) == '(' && i <= 1024) i++; //if( /( )
+					    else if(*tmp == '/' && *(tmp+1) == ')'){	//if( /) )
+						if(i == 0){tmp = tmp + 2; break;}//think about!! this is /) before /: found
+						else i--;
+					    }
+					    else if(i == 0 && *tmp == '/' && *(tmp+1) == ':'){
+						tmp = tmp + 2;
+						break;	//if( /) )
+					    }
+					    tmp++;
+					}
+				// in c - plus, and in tmp - minus
+					if(ch == 'S'){		///(S.../:.../) - use Stack with !manual! inc- decrimintation
+					i = 0; tmp2 = d; tmp3 = d;
+					while(1){
+						tmp2 = parsestr1(d, c);
+						if(tmp2){
+						    if(tmp2 != d) d = tmp2;	//progress!!
+						    else tmp2 = NULL;
+						}
+						if(i && stack_ == 0) break;
+						if(tmp2 == NULL && tmp3 == NULL) return NULL;
 
+						tmp3 = parsestr1(d, tmp);
+						if(tmp3){
+						    if(tmp3 != d) d = tmp3;	//progress!!
+						    else tmp3 = NULL;
+						}
+						if(i && stack_ == 0) break;
+						if(tmp2 == NULL && tmp3 == NULL) return NULL;
+
+						i = 1;
+					}
+					} else return NULL;
+				// in d - end of parsed string
+					i = 0;
+					while(1){
+					    if(*tmp == '\0') return NULL;
+					    else if(*tmp == '/' && *(tmp+1) == '/') tmp++; //tmp+=2
+					    else if(*tmp == '/' && *(tmp+1) == '(' && i <= 1024) i++; //if( /( )
+					    else if(*tmp == '/' && *(tmp+1) == ')'){	//if( /) )
+						if(i == 0){c = tmp + 2; break;}
+						else i--;
+					    }
+					    tmp++;
+					}
+				continue;
 		    case '\\':
-		    case 'E': point[1] = d;//NEW 20.03.2016
+		    case 'E':
+		    case ':':
+		    case ')':
+		    case '}':	point[1] = d;
 				return d;
+	    /*  set number to /n10n   or stack to /n15s*/
+		    case 'n': c++; tmp = c;
+				while(*tmp && *tmp != 'n' && *tmp != 's') tmp++;
+				    digi = 0;
+				    i = 0;
+				    while(c[i] >= '0' && c[i] <= '9'){ digi = digi*10 + (c[i] - '0'); i++; if(i > 5) break;}
+				    c = tmp;
+				    if(*c == 'n') number = digi;	//set number to digi
+				    else if(*c == 's') stack_ = digi;
+				    if(*c) c++; //if not end - increase c.
+				    continue;
+	    /* by /sn   - set number = source */
+	    /* by /sv   - set value = source */
+	    /* by /ss   - set stack = source */
+		    case 's': c++; ch = *c; i = 0;
+				digi = 0;
+				while(*d >= '0' && *d <= '9'){
+				    if(i < 7){ digi = digi*10 + (*d - '0'); i++;}
+				    d++;
+				}
+				if(i == 0) return NULL; //in *d no digits
+				if(ch == 'n'){ c++; number = digi; continue;}
+				else if(ch == 'v'){ c++; value_ = digi; continue;}
+				else if(ch == 's'){ c++; stack_ = digi; continue;}
+				else { c = c - 2; break;} //go back to c = /sv(n) and parse it
+	    /* by /hn   - set number = source (hex) */
+	    /* by /hv   - set value = source (hex) */
+	    /* by /hs   - set stack = source (hex) */
+		    case 'h': digi = 0; ch = 0;
+				while(1){
+				    i = *d;
+				    if(i >= '0' && i <= '9') ch = '0';
+				    else if(i >= 'A' && i <= 'F') ch = 'A' - 10;
+				    else if(i >= 'a' && i <= 'f') ch = 'a' - 10;
+				    else break;
+				    digi = (digi<<4) + i - ch;
+				    d++;
+				}
+				if(ch == 0) return NULL;
+				c++;
+				if(*c == 'n'){ c++; number = digi; continue;}
+				else if(*c == 'v'){ c++; value_ = digi; continue;}
+				else if(*c == 's'){ c++; stack_ = digi; continue;}
+				else { c = c - 2; break;} //go back to c = /hv(n) and parse it
+	    /* by /iv<10v or /iv>5v or /in<45n or /in>24n or /is>0s - if not matches return NULL */
+	    /* by /iv+10v or /iv-5v or /in-45n or /in+24n or /is+1s */
+		    case 'i': c++; ch = *c; 
+				if(ch != 'v' && ch != 'n' && ch != 's'){ c = c - 2; break;}
+				c++; i = *c;
+				if(i != '<' && i != '>' && i != '+' && i != '-'){ c = c - 3; break;}
+				c++; digi = 0;
+				while(*c){
+				    if(*c >= '0' && *c <= '9'){ digi = digi*10 + (*c - '0'); c++; continue;}
+				    else if(*c == ch) break;
+				    else{ break;}
+				}
+				if(*c == ch){
+				    if(i == '+'){
+					if(ch == 'v'){ value_ += digi;}
+					else if(ch == 'n'){ number += digi;}
+					else if(ch == 's'){ stack_ += digi;}
+					c++; continue;
+				    }else if(i == '-'){
+					if(ch == 'v'){ value_ -= digi;}
+					else if(ch == 'n'){ number -= digi;}
+					else if(ch == 's'){ stack_ -= digi;}
+					c++; continue;
+				    }
+				    unsigned long val = 0;
+				    if(ch == 'v'){ val = value_;}
+				    else if(ch == 'n'){ val = number;}
+				    else if(ch == 's'){ val = stack_;}
+				    if(i == '>'){ if(val <= digi) return NULL;}
+				    else if(i == '<'){ if(val >= digi) return NULL;}
+				    c++; continue;
+				}else return NULL;
 	    /* skip zero or one character*/
 		    case '0': tmp = d; while(tmp <= d+1){tmp = parsestr1(tmp, c+1); if (tmp) return tmp; tmp++;} return NULL;
 	    /* skip one symbol in d, exept \0 */
@@ -103,12 +318,24 @@ char *parsestr1( char *d, char *c)	//try identic strings!, "xxx*NULL" combinatio
 				if(*c == '\\'){
 				    c++;
 				    switch(*c){
-				    case '\\':	ch = '\\';break;
+				    case '\\':
+				    case '-':
+				    case '\"':	ch = *c;break;
 				    case 't':	ch = '\t';break;
 				    case 'n':	ch = '\n';break;
 				    default: c--; ch = *c; break;
 				    }
-				} else ch = *c;
+				} else {
+				    ch = *c;
+				    if(*(c+1) == '-' && *(c+2)){	//if /<-a-z/> --> (ch=a <= *d <= *(c+2)=z)
+					if((ch < *(c+2)) && (*d >= ch) && (*d <= *(c+2))){
+					    do{if(*d == '\0') break; d++;}while((*d >= ch) && (*d <= *(c+2)));
+					    i = 1;
+					    if(*d){ c = tmp; continue;}
+					}
+					c = c + 3; continue;
+				    }
+				}
 				if(ch==*d){ do{d++;}while(ch==*d);
 				    c = tmp; i=1; continue;
 				}
@@ -122,14 +349,22 @@ char *parsestr1( char *d, char *c)	//try identic strings!, "xxx*NULL" combinatio
 				if(*c == '\\'){
 				    c++;
 				    switch(*c){
-				    case '\\':	ch = '\\';break;
+				    case '\\':
+				    case '-':
+				    case '\"':	ch = *c;break;
 				    case 't':	ch = '\t';break;
 				    case 'n':	ch = '\n';break;
 				    case '0':	ch = '\0';break;//check if *d == '\0'.
 							//In /* is set until zero, inclusive zero!
 				    default: c--; ch = *c; break;
 				    }
-				} else ch = *c;
+				} else {
+				    ch = *c;
+				    if(*(c+1) == '-' && *(c+2)){	//if /<1a-z/> --> (ch=a <= *d <= *(c+2)=z)
+					if((ch < *(c+2)) && (*d >= ch) && (*d <= *(c+2))) i = 1;
+					c = c + 3; continue;
+				    }
+				}
 				if(ch == *d) i = 1; c++;}
 				if(*(tmp)=='1' && i==0) return NULL;
 				if(*(tmp)=='N' && i==1) return NULL;
@@ -161,30 +396,68 @@ char *parsestr1( char *d, char *c)	//try identic strings!, "xxx*NULL" combinatio
 			    tmp = parsestr1(d, c+1);
 			    if(tmp)	return NULL;
 			    else { point[1] = d; return d;}
-		    case '?':		// /?variable?/
-		    c++;
-		    tmp = c;
-		    tmp2 = NULL;
-		    while(*tmp){
-			if(*tmp == '?' && *(tmp+1) == '/'){
-			    *tmp = '\0';
-			    tmp2 = get_var(NULL, c);		//get_var and get_variable
-			    *tmp = '?';
-			    c=tmp+2;
-			    break;
+		    case '?':		// /?variable?/	- nicht eingebetet(simple)
+		    case 'Q':		// /Qvar?/	- eingebetet
+			ch = *c;	//in ch: Q or ?
+			c++;
+			char *m;
+			tmp = c;
+			tmp2 = NULL;
+			while(*tmp){	//   /?var?/ - is old, /?var/? - is new
+			    if((*tmp == '?' && *(tmp+1) == '/') || (*tmp == '/' && *(tmp+1) == '?')){
+				i = tmp - c + 1;
+				if((i > 1) && (i < 33)){
+				m = malloc(i);
+				if(m){
+				    strmycpy(m, c, i);
+				    tmp2 = get_var(NULL, m);		//get_var and get_variable
+				    free(m);
+				}
+				}
+				c=tmp+2;
+				break;
+			    }
+			    tmp++;
 			}
-			tmp++;
-		    }
-		    
-		    if(tmp2 && *tmp2){
-			i = strlen(tmp2);
-			if(i && strncmp(d, tmp2, i)) return NULL;
-			d = d + i;
-		    }
-		    else return NULL;//new here!!!!
 
-		    continue;		//it's or c++ or c=tmp+2
+			if(tmp2 && *tmp2){
+			    if(ch == '?'){
+				i = strlen(tmp2);
+				if(i && strncmp(d, tmp2, i)) return NULL;
+				d = d + i;
+			    }else{
+				static int time = 0;
+				time++;
+				if(time < 10){
+				    unsigned long long size = strncpy_(NULL, tmp2, 0)+1;	//this is max. size of tmp2-string
+				    if(size > 1 && (m = malloc(size))){
+				    strncpy_(m, tmp2, size);
+				    tmp = parsestr1(d, m);
+				    free(m);
+				    if(!tmp){time--; return NULL;}
+				    d = tmp;
+				    //if(*d != '\0') d++;		//????????
+				    }
+				}else printf("parsestr: max. counter\n");
+				time--;
+			    }
+			}
+			else return NULL;
 
+			continue;		//it's or c++ or c=tmp+2
+
+		    case '-': if(*(c+1) == '-') { d=d-1; c=c+2;} //  /--   -means d-1
+			continue;
+
+		    case 'm': c++; ch = *c; c++; tmp2 = c;// /m-WARN: not matched!\0thisIsNotMatched!
+			while(*tmp2){
+			    if(*tmp2 == '\\' && *(tmp2+1) == '\\') tmp2++;	//tmp2 = tmp2 + 2
+			    else if(*tmp2 == '\\' && *(tmp2+1) == '0'){ tmp2 = tmp2 + 2; break;}	//string must have \\0 at the end
+			    tmp2++;						//and don't have /\\ or /}, /), /E, /:
+			}
+			tmp = parsestr1(d, tmp2);
+			if(ch == '-' && tmp == NULL) print_pstr(stderr, c);
+			return tmp;
 		    default: c--;
 		}
 	    } else if(*c == '\\'){
@@ -196,8 +469,13 @@ char *parsestr1( char *d, char *c)	//try identic strings!, "xxx*NULL" combinatio
 		    case 'r': if(*d != '\r') return NULL; c++; d++; continue;
 	    /* \" string is to match */
 		    case '\"': if(*d != '\"') return NULL; c++; d++; continue;	//need to change it
-	    /* \0 the same as "bla/" */
-		    case '0': if(*d != '\0') return NULL; return d;
+	    /* \0 the same as "bla/"; if after is "bla\02" -> "bla\0" + number=2 */
+		    case '0': if(*d != '\0') return NULL;
+				    c++; int digi = 0; i = 0;
+				    while(c[i] >= '0' && c[i] <= '9'){ digi = digi*10 + (c[i] - '0'); i++; if(i > 5) break;}
+				    if(i) number = digi;	//set number to digi
+				point[1] = d;//new 14.07.2019
+				return d;
 		    case '\\': break;
 		    default: c--;
 		}
@@ -232,9 +510,11 @@ char *parsestr1_( char *d, char *c){		//push and pop the pointers
 char *parsestr2( struct parsestr *ptr, char *d, char *c){		//use the pointers in struct
     char *tmp;
 
+    number = 0;
     point[0] = NULL;
     if(tmp = parsestr1(d, c) /*&& (ptr != NULL)*/){
 	ptr->ch = ch_zero;
+	ptr->num = number;
 	ptr->zero = point[0];	//if NULL -> restore_str is not made
 	ptr->end = point[1];
     }
@@ -619,8 +899,18 @@ char *get_var(unsigned long long *size_ptr, char *var_index){
 	    return get_cfg_value(size_ptr, var_index, 2);
 	}else if(*var_index == '@'){	//??_@variable?? - show variable from rnd table
 	    var_index++;
-	    ptr = get_tbl(var_index);
-	    if(ptr != NULL) size = strlen(ptr) + 1;		//for limit by show str.
+	    if(*var_index == '_'){	//??_@_variable?? - show begin variable from table
+		var_index++;
+		unsigned int *i;
+		i = get_tbl_begin(var_index);
+		if(i){
+		    snprintf(value, 15, "%d", *i);
+		    ptr = value;
+		}
+	    } else {
+		ptr = get_tbl(var_index);
+		if(ptr != NULL) size = strlen(ptr) + 1;		//for limit by show str.
+	    }
 	}else if(*var_index == '?'){	//??_?file|expression?? -> in file this expression
 	    var_index++;
 
@@ -646,7 +936,14 @@ char *get_var(unsigned long long *size_ptr, char *var_index){
 	return ptr;
 	} else if(!strncmp(var_index,"referrer", 8)){	//last .term file
 	    struct page_n *p;
-	    p = get_last_page(var_index+8);
+	    p = get_last_page(var_index+8, 1);
+	    if(p){
+		ptr = p->name;
+		size = p->size;
+	    }
+	} else if(!strncmp(var_index,"back", 4)){	//last .term file
+	    struct page_n *p;
+	    p = get_last_page(var_index+4, 0);
 	    if(p){
 		ptr = p->name;
 		size = p->size;
@@ -676,6 +973,11 @@ char *get_var(unsigned long long *size_ptr, char *var_index){
 	}else if(!strcmp(var_index,"version")){
 	    ptr = version;
 	    size = 256;
+	}else if(!strcmp(var_index,"auth")){
+//	    snprintf(value, 15, "%d", auth);
+//	    ptr = value;
+	    ptr = auth;
+	    size = 5;
 	}else if(!strcmp(var_index,"buf")){	//whole buffer
 	    ptr = buf;
 	    size = 65537;

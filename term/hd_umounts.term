@@ -13,12 +13,20 @@ if:/ /[//dev//sd/<1abcdefg/>/<1123456789/>/]/<- 	/>on/t
 if:/[/*/]/<- 	/>type
 #end_table
 
+table: help
+In this page devices
+witch are mounted, can 
+be unmounted.
+#end_table
+//3456789012345678901234567890
+//       1         2         3
+
 < "show" 0
 	print [ 12 > "DL" > "AL" 0 1
-if "_@list+1:" > "AT" 2 1 201 29 1 0 "C" $_@list+1#0:5:"/L/L" ": " $_@list+1#1:18 0 fi
-if "_@list+2:" > "AT" 2 33 201 61 2 0 "C" $_@list+2#0:5:"/L/L" ": " $_@list+2#1:18 0 fi
-if "_@list+3:" > "AT" 2 65 201 93 3 0 "C" $_@list+3#0:5:"/L/L" ": " $_@list+3#1:18 0 fi
-if "_@list+4:" > "AT" 2 97 201 125 4 0 "C" $_@list+4#0:5:"/L/L" ": " $_@list+4#1:18 0 fi
+if "_@list+1:" > "AT" 2 1 201 29 1 0 "C" $_@list+1#0:5:"/L/L" ": " $_@list+1#1:18:"/[/L/L/]" "|" $_@list+1#1:25:"/L/L" 0 fi
+if "_@list+2:" > "AT" 2 33 201 61 2 0 "C" $_@list+2#0:5:"/L/L" ": " $_@list+2#1:18:"/[/L/L/]" "|" $_@list+2#1:25:"/L/L" 0 fi
+if "_@list+3:" > "AT" 2 65 201 93 3 0 "C" $_@list+3#0:5:"/L/L" ": " $_@list+3#1:18:"/[/L/L/]" "|" $_@list+3#1:25:"/L/L" 0 fi
+if "_@list+4:" > "AT" 2 97 201 125 4 0 "C" $_@list+4#0:5:"/L/L" ": " $_@list+4#1:18:"/[/L/L/]" "|" $_@list+4#1:25:"/L/L" 0 fi
 if "_@list+5:" > "AT" 205 97 237 125 7 0 "C->" 0 fi
 /*
 if "_@list+1:" > "AT" 2 1 100 29 1 0 "C" $_@list+1:11 0 fi
@@ -31,14 +39,14 @@ if "_@list+7:" > "AT" 2 97 100 125 7 0 "C" $_@list+7:11 0 fi
 if "_@list+8:" > "AT" 104 97 201 125 8 0 "C" $_@list+8:11 0 fi
 if "_@list+9:" > "AT" 205 97 237 125 9 0 "C->" 0 fi
 */
-    > "AT" 205 33 237 61 10 0 "C<-" 0
+    > "AT" 205 33 237 61 10 0 "C<" ifnot "_@_list:0/" "-" fi 0
     > "AT" 205 65 237 93 11 0 "Cm" 0
     > "AT" 205 1 237 29 13 0 "C<" 0 ];
 end
 
 < "A" 1 4
-//    boot_page "??_@list??";
-    copy_ppar "_@list:mntpoint:0";
+//    boot_page "??_@list#1??";
+    copy_ppar "_@list#1:mntpoint:0";
     print [ > "AL" 0 0 > "RL" 34 28 204 98 > "GR" 36 30 202 96
 	    > "ZC" 120 40 "Really unmount?|" $mntpoint::"/L/L" 0
 	    > "AT" 40 60 116 92 20 0 "CYES" 0

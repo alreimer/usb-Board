@@ -33,7 +33,7 @@ if:
 if "_@list+1:" > "ZL" 0 1  ">" $_@list+1#0 "  " $_@list+1#3 "|LocalAddr:| " $_@list+1#1:23 "|ForeignAddr:| " $_@list+1#2:23 0 fi
 if "_@list+2:" > "ZL" 0 65 ">" $_@list+2#0 "  " $_@list+2#3 "|LocalAddr:| " $_@list+2#1:23 "|ForeignAddr:| " $_@list+2#2:23 0 fi
 if "_@list+3:" > "AT" 205 97 237 125 7 0 "C->" 0 fi
-    > "AT" 205 33 237 61 10 0 "C<-" 0
+    > "AT" 205 33 237 61 10 0 "C<" ifnot "_@_list:0/" "-" fi 0
     > "AT" 205 1 237 29 13 0 "C<" 0
     >>>> "wait:" 20 0 ];
 end
@@ -43,7 +43,7 @@ end
 	switch_n "2";
 	boot_cgi [ "show" 0 ] {		//if cgi not found
 	    boot_cgi [ "timeout" ] {
-		boot_page "??_referrer2??";
+		boot_page "??_back2??";
 	    }
 	}
 	exit_cgi;
@@ -64,7 +64,7 @@ end
 	switch_n "2";
 	boot_cgi [ "show" 0 ] {		//if cgi not found
 	    boot_cgi [ "timeout" ] {
-		boot_page "??_referrer2??";
+		boot_page "??_back2??";
 	    }
 	}
 	exit_cgi;
@@ -81,7 +81,7 @@ end
 	switch_n "2";
 	boot_cgi [ "show" 0 ] {		//if cgi not found
 	    boot_cgi [ "timeout" ] {
-		boot_page "??_referrer2??";
+		boot_page "??_back2??";
 	    }
 	}
 	exit_cgi;

@@ -1,3 +1,4 @@
+area:2048:pool
 area:64000:ar_name
 wr_shell: :ar_name:cd /mnt/packages/ 2>/dev/null; [ $? -eq 0 ] && for i in *.ipk ; do [[ -f "$i" ]] && echo "$i"; done 
 
@@ -14,7 +15,7 @@ if "_@list+2:" > "AT" 2 33 201 61 2 0 "C" $_@list+2:24:"/[/*/].ipk" 0 fi
 if "_@list+3:" > "AT" 2 65 201 93 3 0 "C" $_@list+3:24:"/[/*/].ipk" 0 fi
 if "_@list+4:" > "AT" 2 97 201 125 4 0 "C" $_@list+4:24:"/[/*/].ipk" 0 fi
     > "AT" 205 1 237 29 13 0 "C<" 0
-    > "AT" 205 33 237 61 8 0 "C<-" 0
+    > "AT" 205 33 237 61 8 0 "C<" ifnot "_@_list:0/" "-" fi 0
     > "AT" 205 65 237 93 9 0 "CRm" 0
 if "_@list+5:" > "AT" 205 97 237 125 7 0 "C->" 0 fi ];
 end
@@ -22,7 +23,13 @@ end
 < "A" 1 4
     print [ > "AL" 0 0 > "RL" 34 28 204 98
 > "GR" 36 30 202 96 > "ZC" 120 60 "Please Wait" 0 ];
-    shell "ipkg-cl install \"/mnt/packages/??_@list??\"";
+//    shell "ipkg-cl install \"/mnt/packages/??_@list??\"";
+    write_system  ":pool:ipkg-cl install \"/mnt/packages/??_@list??\"";
+    not "pool:/" {
+	print [ "??pool??" > "AT" 205 97 237 125 13 0 "C<" 0 ];
+	exit_cgi;
+    }
+
     boot_page "pkgs-install.term";
 end
 

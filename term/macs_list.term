@@ -3,6 +3,9 @@ area:20:mac
 area:20:h_name_raw
 area:250:mac_raw
 area:2048:pool
+area:300:info
+wr_par: info:info-net.term
+
 
 table: help
 "Save" - shows actual
@@ -49,7 +52,7 @@ if "_@list+1:" > "AT" 2 33 165 61 1 0 "CSet:|" $_@list+1#0:17 "|" $_@list+1#1:20
 if "_@list+2:" > "AT" 2 65 165 93 2 0 "CSet:|" $_@list+2#0:17 "|" $_@list+2#1:20 0 > "AT" 169 65 201 93 6 0 "CX" 0 fi
 if "_@list+3:" > "AT" 2 97 165 125 3 0 "CSet:|" $_@list+3#0:17 "|" $_@list+3#1:20 0 > "AT" 169 97 201 125 7 0 "CX" 0 fi
 if "_@list+4:" > "AT" 205 97 237 125 9 0 "C->" 0 fi
-    > "AT" 205 33 237 61 10 0 "C<-" 0
+    > "AT" 205 33 237 61 10 0 "C<" ifnot "_@_list:0/" "-" fi 0
     > "AT" 205 65 237 93 11 0 "Cm" 0
     > "AT" 205 1 237 29 13 0 "C<" 0 ];
 end
@@ -96,7 +99,7 @@ end
 //page before
 < "A" 10
     set_tbl "list == 0"{
-	boot_page "??_referrer??";
+        boot_page "??_referrer??";
     }
     set_tbl "list != 0"{
 	set_tbl "list -= 3";

@@ -4,9 +4,19 @@
 //> "AT" 2 67 98 125 3 0 "CSleep HDD" 0
 //> "AT" 106 67 201 125 4 0 "CHDD Tunes" 0
 > "AT" 205 1 237 29 5 0 "C<" 0
-//> "AT" 205 97 237 125 6 0 "C>" 0
+> "AT" 205 65 237 93 6 0 "Cm" 0
+//> "AT" 205 97 237 125 7 0 "C>" 0
 
 area:200:pool
+
+table: help
+In this page smartcard
+content can be uploaded.
+And downloaded in Images
+back. Look at manual.
+#end_table
+//3456789012345678901234567890
+//       1         2         3
 
 
 < "A" 1
@@ -23,6 +33,9 @@ end
 end*/
 < "A" 5
     boot_page "index-main_2.term";
+end
+< "A" 6
+    include "menu.term";
 end
 
 < "setBuffer"

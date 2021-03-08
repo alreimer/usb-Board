@@ -1,0 +1,42 @@
+par:17:hostname:HOSTNAME:
+readcfg
+
+/*
+ifnot "dhcp_client:1/"
+    static
+fi
+*/
+
+12 > "DL" > "AL" 0 1
+
+if "_etc_save:0/"
+> "AT" 9 9 229 117 1 0 "CWelcome to HOST:||" $hostname "|||display version:|" $_version:27 0
+>>>> "wait:" 6 0	//"0"-terminating
+fi
+
+if "_etc_save:1/"
+> "AT" 9 9 229 90 1 0 "CWelcome to HOST:||" $hostname "|||display version:|" $_version:27 0
+> "AT" 9 94 229 117 2 0 "CSave /etc folder" 0
+>>>> "wait:" 12 0
+
+
+< "A" 2
+    write_par "_etc_save:0";
+    system "/etc/save_config.sh";
+    boot_page "index_240x128.term";//because of "include:" line in index_240x128.term
+end
+fi
+
+< "button"
+    boot_page "index-main.term";
+end
+
+< "timeout"
+    boot_page "index-main.term";
+end
+
+< "A" 1
+//    print [> "DL" > "ZL" 10 10 "helpikus" 0 ];
+    boot_page "index-main.term";
+end
+

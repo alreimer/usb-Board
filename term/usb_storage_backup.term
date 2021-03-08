@@ -1,0 +1,73 @@
+par:256:backup_path:BACKUP_PATH:
+readcfg
+
+area:2048:value
+area:2048:path
+area:20:dcase
+
+area:2048:pool
+
+< "show" 0
+	print [ 12  > "DL" > "AL" 0 1
+> "ZC" 101 0 "USB BackUp path:" 0
+> "ZC" 5 10 $_&backup_path:24:"/[/L/L/]" "|" $_&backup_path:24:"/L/L" 0
+
+
+> "AT" 2 33 100 61 3 0 "CShow Path" 0
+> "AT" 104 33 201 61 1 0 "CChange Path" 0
+> "AT" 104 65 201 93 2 0 "Crun|BackUp" 0
+
+//    > "AT" 205 33 237 61 10 0 "C<-" 0
+    > "AT" 205 65 237 93 11 0 "Cm" 0
+    > "AT" 205 1 237 29 13 0 "C<" 0 ];
+	free_upages;
+end
+
+
+< "A" 1
+    write_par "value:??_&backup_path??";
+    write_par "path:/mnt";
+    write_par "dcase:";
+    include "usb_inDir.term";
+end
+< "A" 2
+	write_system  ":pool:/etc/usb_backup.sh &";
+	not "pool:/" {
+	    print [ 12  > "DL" > "AL" 0 1 "??pool??" > "AT" 205 97 237 125 25 0 "C<" 0 ];
+	    exit_cgi;
+	}
+//	boot_cgi [ "show" 0 ];
+	print [ 12  > "DL" > "AL" 0 1 > "ZC" 101 0 "OK" 0 > "AT" 205 97 237 125 25 0 "C<" 0 ];
+end
+< "A" 3
+//Show this Path
+    write_par "_buf:??_&backup_path??";
+    include "_show_path.term";
+end
+
+< "retinput" 0
+	write_par "_%backup_path:??value??";
+	fill_cfg "backup_path";
+	savecfg;
+
+	readcfg;
+	boot_cgi [ "show" 0 ];
+//	free_upages;
+//	boot_page "usb_storage_backup.term";
+end
+< "retinput_back" 0
+	boot_cgi [ "show" 0 ];
+//	free_upages;
+end
+< "A" 11
+    include "menu.term";
+end
+< "A" 13
+    boot_page "??_referrer??";
+end
+< "A" 25
+	boot_cgi [ "show" 0 ];
+end
+
+cgi: "show" 0
+

@@ -5,6 +5,11 @@
 1.2 put out to display information:
 > "AL" 0 1
 > "AT" 9 9 114 58 1 0 "CNetwork" 0
+or:
+> "AT" 9 9 114 58 1 0 "CNet" $supername:19 0	//putout 19 chars
+or
+> "AT" 9 9 114 58 1 0 "CNet" $supername:19:"/L/L" 0	//parse to pattern and output 19 chars
+
 
 1.3 registring CGI:
 < "A" 1
@@ -74,6 +79,8 @@ fi
 
 3.Tables entries:
 (if:'s can be TAB_LEN times)
+first "if:" have double function: 1- parse the pattern, 2- skip to next while-area if not matches
+each if begins at the end of if-bevor.
 
 table: list
 #-> parse_area: buffer
@@ -101,9 +108,31 @@ while:/[/*/]\n
 if:
 
 or:
+#-> parse_file: /etc/??file_par??
+while:/[/*/]\n
+if:
+
+or:
 #-> parse_area: _#AREA-1
 while:/[/*/]\n
 if:
+
+or:
+#-> parse_area: _#AREA-1
+while:/[/*/]\n
+check: 			<- check in while-area(here it is string) and if not matched - skip to next while-area
+if:			<- first "if:" have double function: 1- parse the pattern, 2- skip to next while-area if not matches
+if:
+if:
+
+or:
+#-> parse_area: _#AREA-1
+while:/[/*/]\n
+mixed			<- this means that all if's started at the beginning of while-area (string) and not from end if-bevor
+if:
+if:
+if:
+
 
 or:
 #-> begin: _par
@@ -132,12 +161,14 @@ or for existing files:
 5. Parameters:
 
 ??__variable?? - show environment variable
-??_%variable?? - show new_variable
+??_%variable?? - show new_variable						!=(":%@)
 ??_&variable?? - show fresh_variable
-??_@variable?? - show variable from rnd table (size = strlen(ofVariable) + 1)
+??_@variable?? - show variable from rnd table (size = strlen(ofVariable) + 1)	!=(":+#%@)
+??_@_variable?? - show begin-variable from table
 ??_?file|expression?? -> in file this expression
 
-??_referrer?? == ??_referrer1?? //last .term file
+??_referrer?? == ??_referrer1?? //last-relative to actual page ".term file"
+??_back?? == ??_back1??		to last page (non relative)
 ??_etc_save?? (size=2)
 ??_value?? (size=0)
 ??_version?? (size = 256)
