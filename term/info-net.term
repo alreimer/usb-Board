@@ -13,7 +13,7 @@ if:/*/[HWaddr/*/]\n
 if:/*/[inet/*/]  
 if:/*/[Bcast/*/]  
 if:/*/[Mask/*/]\n
-if:/t/[/*/]  
+if:/B/tinet6 addr:/*\n/\/E/t/[/*/]  
 if:/[MTU/*/]  
 if:/*/[RX bytes/*/]  
 if:/*/[TX bytes/*/]\n

@@ -58,8 +58,13 @@ shell: rm -f /tmp/termlock 2>/dev/null
 	    include: index_.term
 	else
 	    //_auth != 0 and more than 3
+< "timeout"
+    boot_page "index.term";
+end
 	    shell: echo > /tmp/termlock
-	    12 > "DL" > "AL" 0 1 > "ZC" 120 10 "You are not authorized" 0
+	    12 > "DL" > "AL" 0 1 > "ZC" 120 10 "You are not authorized!||Please wait,|You will be redirected|automatically" 0
+	    >>>> "wait:" 100 0
+	    //100 - is wait for 30 seconds
 	fi
     fi
 else		//passwd not exist or == \0

@@ -759,14 +759,8 @@ void sig_handler(int signo){
     case SIGALRM:
     /* got an alarm, exit & recycle */
 	printf("Alarm!!\n");
-	if((auth[0] < '0' || auth[0] >= '4') && auth[1] == '\0'){
-	    auth[0] = '1';
-	    auth[1] = '\0';
-	    char text[128];
-	    strncpy(text, "12 > \"DL\" > \"AL\" 0 1 > \"ZC\" 120 10 \"Now you can enter|password again\" 0", 127);//127);
-	    print(fp, text);
-	    fflush(fp);
-	}
+	auth[0] = '1';
+	auth[1] = '\0';
 	return;
 	//break;
     default: printf("SIgnal %d\n", signo);
@@ -818,11 +812,32 @@ int read_buf__(char *buff){
 	    case 1: //fprintf(fp, "07121035142015");//%m%d%H%M%S20%Y
 		    my_system(fp, "date \"+%m%d%H%M%S%Y\"");
 		    break;
+	    case 12:
+		    size = getc(fp);
+		    memset(version, 0, 256);
+		    if(size == 0){ printf("size zero!!\n"); break;}
+		    i = 0;
+		    do{
+			version[i] = getc(fp);
+			i++;
+			size--;
+		    }while(size);
+		    printf("version: %s\n", version);
+		    get_cgi(0, 7, "version");		//< "version" -will be started
+		    break;
+	}
+
+	if(auth[0] >= '0' && auth[0] < '4' && auth[1] == '\0')
+	switch(n){
+
 	    case 2:
 		    //time set %m%d%H%M%S20%Y -> 'date %m%d%H%M20%Y.%S`
 		    k = 0;	//14 chars length -is parameter +1char='\n'
 		    while(k < 15){
 			buff[k] = getc(fp);
+			if((buff[k] < '0' || buff[k] > '9') && (k != 14 || buff[k] != '\n')){
+			    printf("set time - not in range: 0-9\n");// k = 0; continue;
+			}
 			k++;
 		    }
 		    sprintf(buff, "date %c%c%c%c%c%c%c%c%c%c%c%c.%c%c", buff[0], buff[1], buff[2], buff[3], buff[4], buff[5],
@@ -892,25 +907,13 @@ int read_buf__(char *buff){
 		    printf("button: %d\n", buff[k]);
 		    get_cgi(buff[k-2], buff[k-1], buff+k);		//char, num, buf: ('A', 1, buf+1)
 		    break;
-	    case 12:
-		    size = getc(fp);
-		    memset(version, 0, 256);
-		    if(size == 0){ printf("size zero!!\n"); break;}
-		    i = 0;
-		    do{
-			version[i] = getc(fp);
-			i++;
-			size--;
-		    }while(size);
-		    printf("version: %s\n", version);
-		    get_cgi(0, 7, "version");		//< "version" -will be started
 	}//switch
-	n = 0; i = 0;		//clear search parameters
+	n = 0; i = 0;	//clear search parameters
 	fflush(fp);
 	if(auth[0] == '4' && auth[1] == '\0'){
 	    time = alarm(0);
 	    if(time) alarm(time);
-	    else alarm(20);
+	    else alarm(30);
 	}
     }
 
@@ -936,8 +939,8 @@ int read_buf__(char *buff){
 //bugfix
 	    if(line[n] == NULL){
 //printf("---------i=%d, n=%d\n", i, n);
-		buff[0] = buff[i];
-		i = 1; n = 0;
+		i = 1;
+		n = 0;
 		continue;
 	    }
 //end of bugfix
