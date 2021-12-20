@@ -1,12 +1,19 @@
+par:256:backup_path:BACKUP_PATH:
+readcfg
+
 //in this file is ./etc
 area:600:file
-wr_par: file:./etc/known_usb
+wr_par: file:/etc/known_usb
 
 area:2048:serialNum
 area:20:case
 
+area:2048:value
+area:2048:path
+area:20:dcase
+
 < "give" 0
-    write_par "serialNum:";
+    clean_par "serialNum";
     write_par "case:1";
     include "info-usbstore.term";
 end
@@ -28,9 +35,10 @@ if:/*/[//mnt///!/B/!/*/]/<1:\0/>/\/*.///\/*/<1;"/>
 12  > "DL" > "AL" 0 1
 //> "AT" 2 1 201 29 4 0 "CTouch file" 0
 if "_@list+1:" 	> "ZC" 101 0 "MountPath:|" $_@list+1#2:25:"/[/L/L/]" "|" $_@list+1#2:25:"/L/L" 0
-		> "ZC" 0 35 "Partition: " $_@list+1#1 0
-		> "AT" 2 65 201 93 2 0  "Save!" 0 
-		> "AT" 2 97 201 125 3 0 "CShow Path" 0
+		> "ZC" 0 35 "Partition: " $_@list+1#1 if "_@list+1#1:*/" " (all)" fi 0
+		> "AT" 2 65 100 93 3 0 "CShow|MountPath" 0 
+		> "AT" 104 65 201 93 2 0 "CSave!|MountPath->|->BackUpPath" 0 
+		> "AT" 2 97 201 125 4 0 "LShow BackUpPath:|" $_&backup_path:25:"/[/L/L/]" "|" $_&backup_path:25:"/L/L" 0
 else
 > "ZC" 101 0 "no entry for USB storage|" $serialNum:25 0
 > "AT" 2 33 201 61 1 0 "CCreate entry" 0
@@ -58,15 +66,18 @@ back
 end
 < "A" 1
 //create entry SERIALNR:PARTITIONSNR(0-all parts):MOUNTPOINT PATH:AUTOSTART(optional)
-    change_line "??file??:/?serialNum?//|0/|//mnt//home//usb///?serialNum?/:??serialNum??:0:/mnt/home/usb/??serialNum??:\n"{
-	shell "echo -e \"??serialNum??:0:/mnt/home/usb/??serialNum??:\" >> ??file??";
+    change_line "??file??:/?serialNum/?\:*\://mnt//home//usb///?serialNum/?:??serialNum??:*:/mnt/home/usb/??serialNum??:\n"{
+	shell "echo -e \"??serialNum??:*:/mnt/home/usb/??serialNum??:\" >> ??file??";
     }
     write_par "_etc_save:1";
     boot_cgi [ "show" 0 ];
 end
 < "A" 2
 //Save 
-    boot_cgi [ "show" 0 ];
+    shell "/etc/usb_storage_copy.sh ??_@list+1#0?? ??_@list+1#1?? &";
+    print [ 12  > "DL" > "AL" 0 1
+    > "ZC" 101 0 "Please wait.||BackUp led blinked" 0
+    > "AT" 205 97 237 125 14 0 "C<" 0 ];
 end
 
 < "A" 3
@@ -81,6 +92,28 @@ end
     free_upages;
 //    }
 end
+
+< "A" 4
+    write_par "value:??_&backup_path??";
+    write_par "path:/mnt";
+    write_par "dcase:";
+    include "usb_inDir.term";
+end
+< "retinput" 0
+	write_par "_%backup_path:??value??";
+	fill_cfg "backup_path";
+	savecfg;
+
+	readcfg;
+	boot_cgi [ "show" 0 ];
+	free_upages;
+//	boot_page "usb_storage_save.term";
+end
+< "retinput_back" 0
+	boot_cgi [ "show" 0 ];
+	free_upages;
+end
+
 
 //next page
 < "A" 9
@@ -100,6 +133,9 @@ end
 end
 < "A" 13
     boot_page "??_referrer??";
+end
+< "A" 14
+    boot_cgi [ "show" 0 ];
 end
 cgi: "give" 0
 

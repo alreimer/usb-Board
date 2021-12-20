@@ -1,0 +1,141 @@
+area:20:case
+area:3000:value
+area:3000:path
+area:20:dcase
+
+area:2048:pool
+
+area:3000:target
+//target is file or path witch must be deleted
+wr_par: target:/mnt
+area:3000:path_
+wr_par: path_:/mnt
+area:20:dcase_
+wr_par: dcase_:dir
+
+< "show" 0
+	print [ 
+12 > "DL" > "AL" 0 1
+//if "dir:/?dir_origin?//!/" > "AT" 2 1 34 29 1 0 "C.." 0 fi 
+//ifnot "switch:file/" > "AT" 38 1 83 29 5 0 "CGet|Dir" 0 fi
+//> "AT" 87 1 142 29 6 0 "CMake|Dir" 0
+//> "AT" 146 1 201 29 21 0 "Cshow|Files" 0
+> "AT" 2 1 201 29 2 0 "Lfrom: " if "dcase_:file/" "file" else "dir" fi "| " $target:25:"/[/L/L/]" "| " $target:25:"/L/L" 0
+> "AT" 2 33 100 61 3 0 "Cshow 'from'|dir" 0
+> "AT" 2 65 201 93 1 0 "Lto: dir| " $path_:25:"/[/L/L/]" "| " $path_:25:"/L/L" 0
+> "AT" 2 97 100 125 5 0 "Cshow 'to'|dir" 0
+> "AT" 104 97 201 125 4 0 "Cmove" 0
+//if "_@list+4:" > "AT" 205 97 237 125 9 0 "C->" 0 fi
+//    > "AT" 205 33 237 61 10 0 "C<" ifnot "_@_list:0/" "-" fi 0
+//    > "AT" 205 65 237 93 11 0 "Cm" 0
+    > "AT" 205 1 237 29 13 0 "C<" 0 
+    ];
+	free_upages;
+end
+
+< "A" 1
+    write_par "case:1";
+    write_par "path:/mnt";
+    write_par "dcase:dir";
+    write_par "value:??path_??";
+    include "usb_inDir.term";
+end
+< "A" 2
+    write_par "case:2";
+    write_par "path:/mnt";
+    write_par "dcase:file";
+    write_par "value:??target??";
+    include "usb_inDir.term";
+end
+
+//show from dir
+< "A" 3
+//Show this Path
+    if "dcase_:file" {
+	write_ppar "target:_buf:/[/L/L/]";
+    }
+    if "dcase_:dir" {
+	write_par "_buf:??target??";
+    }
+    write_par "case:showPath";
+    include "_show_path.term";	//think about (return from this page) it!!
+end
+
+//show to dir
+< "A" 5
+//Show this Path
+	write_par "_buf:??path_??";
+    write_par "case:showPath";
+    include "_show_path.term";	//think about (return from this page) it!!
+end
+
+//action
+< "A" 4
+    print [ > "AL" 0 0 > "RL" 34 28 204 98 > "GR" 36 30 202 96
+	    > "ZC" 120 40 "Really move?" 0
+	    > "AT" 40 60 116 92 20 0 "CYES" 0
+	    > "AT" 124 60 198 92 21 0 "CNO" 0 ];
+end
+
+//YES
+< "A" 20
+	print [ 12 > "DL" > "AL" 0 1 
+    > "RL" 205 1 239 61
+    > "GR" 206 2 237 60
+    > "ZC" 222 15 "W|a|i|t" 0
+];
+	write_system  ":pool:mv \"??target??\" \"??path_??\" ";
+	print [ 12 > "DL" > "AL" 0 1 ];
+	not "pool:/" {
+	    print [ "??pool??" > "AT" 205 97 237 125 21 0 "C<" 0 ];
+	    exit_cgi;
+	}
+	print [ > "AT" 205 1 237 29 13 0 "C<" 0 > "ZC" 100 25 "moved:|" $target:25:"/[/L/L/]" "|" $target:25:"/L/L" "||to||" $path_:25:"/[/L/L/]" "|" $path_:25:"/L/L" 0 ];
+	exit_cgi;
+end
+//NO
+< "A" 21
+    boot_cgi [ "show" 0 ];
+end
+
+< "A" 13
+	boot_page "??_referrer??";
+end
+< "retinput" 0
+	if "case:1/"{
+	if "value://mnt/,/,/!/B/*.///\/*/<1;:\"/>"{
+		write_par "path_:??value??";
+		boot_cgi [ "show" 0 ];
+//		free_upages;
+		exit_cgi;
+	}
+	print [ 12  > "DL" > "AL" 0 1 > "ZC" 120 8 "Error:|??value??|is not in path: /mnt/" 0 > "AT" 205 97 237 125 21 0 "C<" 0 ];
+	free_upages;
+	exit_cgi;
+	}
+	if "case:2/"{
+	if "value://mnt/,/,/!/B/*.///\/*/<1;:\"/>"{
+	    write_par "target:??value??";
+	    write_par "dcase_:??dcase??";
+	    boot_cgi [ "show" 0 ];
+	    exit_cgi;
+	}
+	print [ 12  > "DL" > "AL" 0 1 > "ZC" 120 8 "Error:|??value??|is not in path: /mnt/" 0 > "AT" 205 97 237 125 21 0 "C<" 0 ];
+	free_upages;
+	exit_cgi;
+	}
+end
+< "retinput_back" 0
+//	boot_page "??_referrer??";
+	boot_cgi [ "show" 0 ];
+//	free_upages;
+end
+
+< "return" 0
+//    if "case:showPath/" {
+    boot_cgi [ "show" 0 ];
+//    free_upages;
+//    }
+end
+
+cgi: "show" 0

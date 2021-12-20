@@ -48,13 +48,15 @@ extern char port[];
 extern char dns_name[];
 extern char etc_save[];
 extern char buf[];		//buffer for writting some information
+//extern char buffer_[];
 extern unsigned long long buf_size;
 /*version used in terminal*/
 extern char version[];
-extern char value[];
+//extern char value[];
 
-extern char hdused[];
-extern char uptime[];
+//extern char hdused[];
+//extern char uptime[];
 //extern char *arg;
 extern char *file;
+extern char *file_path;
 extern FILE *fdcr;//file discriptor of web socket

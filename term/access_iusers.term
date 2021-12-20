@@ -1,0 +1,111 @@
+//in: value
+//out: set->"retinput" 0; back->"retinput_back" 0
+area:60:file
+wr_par: file:/etc/group
+area:60:passwd
+wr_par: passwd:/etc/passwd
+
+
+
+//get value-link from page before
+link:val:value%1
+
+< "show1" 0
+	print [ 12 > "AL" 0 0 > "RL" 0 0 240 64 > "GR" 2 2 238 62 > "ZC" 120 8 "Switch users in group" 0 
+	//> "ZL" 3 14 $dir:24:"/[/L/L/]" "|" $dir:24:"/L/L" 0 
+table: user
+#-> parse_file: ??passwd??
+while:/[/*/]\n
+if:/[/*/]:
+if:/[/*/]:
+if:/[/*/]:
+if:/[/*/]:
+if:/[/*/]:
+if:/[/*/]:
+if:
+#end_table
+	>>>> "wait:" 7 0 ];
+end
+
+< "timeout"
+	boot_cgi [ "show" 0 ];
+end
+
+< "show" 0
+	print [ 
+table: list
+#-> parse_file: ??file??
+while:/[/*/]\n
+check:/*:/*:/?val/?:
+if:/[/*/]:
+if:/[/*/]:
+if:/[/*/]:
+if:
+#end_table
+
+12 > "DL" > "AL" 0 1
+if "_@user+1:" > "AT" 2 1 201 29 1 0 "C" if "_@list+1#3:/B/?_@user+1#0/?/<1,\0/>/\/*,/?_@user+1#0/?,/\/*,/?_@user+1#0/?\0/E" "->|" fi $_@user+1#0:25:"/L/L" 0 fi
+if "_@user+2:" > "AT" 2 33 201 61 2 0 "C" if "_@list+1#3:/B/?_@user+2#0/?/<1,\0/>/\/*,/?_@user+2#0/?,/\/*,/?_@user+2#0/?\0/E" "->|" fi $_@user+2#0:25:"/L/L" 0 fi
+if "_@user+3:" > "AT" 2 65 201 93 3 0 "C" if "_@list+1#3:/B/?_@user+3#0/?/<1,\0/>/\/*,/?_@user+3#0/?,/\/*,/?_@user+3#0/?\0/E" "->|" fi $_@user+3#0:25:"/L/L" 0 fi
+if "_@user+4:" > "AT" 2 97 201 125 4 0 "C" if "_@list+1#3:/B/?_@user+4#0/?/<1,\0/>/\/*,/?_@user+4#0/?,/\/*,/?_@user+4#0/?\0/E" "->|" fi $_@user+4#0:25:"/L/L" 0 fi
+if "_@user+5:" > "AT" 205 97 237 125 7 0 "C->" 0 fi
+
+    > "AT" 205 33 237 61 10 0 "C<" ifnot "_@_user:0/" "-" fi 0
+//    > "AT" 205 65 237 93 11 0 "Cm" 0
+    > "AT" 205 1 237 29 13 0 "C<" 0 ];
+end
+
+< "A" 1 4
+//    write_par "val:??_@user#0??";
+
+    not "_@list+1#3:/B/?_@user#0/?/<1,\0/>/\/*,/?_@user#0/?,/\/*,/?_@user#0/?\0/E"{
+//not exist
+	change_line "??file??:/?_@list+1#0/?\:/?_@list+1#1/?\:/?_@list+1#2/?\:/ /<1\n\0/>:??_@list+1#0??:??_@list+1#1??:??_@list+1#2??:??_@user#0??\n" {
+	    change_line "??file??:/?_@list+1#0/?\:/?_@list+1#1/?\:/?_@list+1#2/?\::{?/[/*/]/<1\n\0/>?},??_@user#0??\n";
+	}
+	write_par "_etc_save:1";
+	boot_cgi [ "show" 0 ];
+	exit_cgi;
+    }
+
+    if "_@list+1#3:/B/?_@user#0/?/<1,\0/>/\/*,/?_@user#0/?,/\/*,/?_@user#0/?\0/E"{
+	change_line "??file??:/?_@list+1#0/?\:/?_@list+1#1/?\:/?_@list+1#2/?\:/?_@user#0/?/<1\n\0/>:{?/[/*:/*:/*:/]?}\n"{
+	    change_line "??file??:/?_@list+1#0/?\:/?_@list+1#1/?\:/?_@list+1#2/?\:/?_@user#0/?,:{?/[/*:/*:/*:/]/?_@user#0/?,?}{?/\?}"{
+		change_line "??file??:/?_@list+1#0/?\:/?_@list+1#1/?\:/?_@list+1#2/?\:/*,/?_@user#0/?,:{?/[/*:/*:/*:/*/],/?_@user#0/?,?},{?/\?}"{
+		    change_line "??file??:/?_@list+1#0/?\:/?_@list+1#1/?\:/?_@list+1#2/?\:/*,/?_@user#0/?/<1\n\0/>:{?/[/*:/*:/*:/*/],/?_@user#0/?/<1\n\0/>?}\n";
+		}
+	    }
+	}
+	write_par "_etc_save:1";
+    }
+	boot_cgi [ "show" 0 ];
+end
+
+//page next
+< "A" 7
+	set_tbl "user += 4";
+	boot_cgi [ "show" 0 ];
+end
+
+//page before
+< "A" 10
+    set_tbl "user == 0"{
+	switch "/?_referrer?/";
+	boot_cgi [ "retinput_back" 0 ] {
+	    boot_page "??_back??";
+	}
+    }
+    set_tbl "user != 0"{
+	set_tbl "user -= 4";
+	boot_cgi [ "show" 0 ];
+    }
+end
+
+< "A" 13
+    switch "/?_referrer?/";
+    boot_cgi [ "retinput_back" 0 ] {
+	boot_page "??_back??";
+    }
+end
+
+cgi: "show1" 0

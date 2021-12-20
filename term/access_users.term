@@ -1,0 +1,300 @@
+//remove . from parse_file
+area:60:file
+wr_par: file:/etc/passwd
+area:60:groups
+wr_par: groups:/etc/group
+area:300:AREApw
+
+area:2:switch
+wr_par: switch:1
+//area:5500:entry
+area:2048:pool
+area:2:case
+
+area:2048:value
+area:28:hname
+area:2048:path
+area:20:dcase
+
+
+< "show1" 0
+	print [
+table: list
+#-> parse_file: ??file??
+while:/[/*/]\n
+if:/[/*/]:
+if:/[/*/]:
+if:/[/*/]:
+if:/[/*/]:
+if:/[/*/]:
+if:/[/*/]:
+if:
+#end_table
+];
+	boot_cgi [ "show" 0 ];
+end
+
+/*
+user
+password
+User ID
+Group ID
+comment
+Path
+Shell
+*/
+
+< "show" 0
+    clean_par "pool";
+    if "_@list+1#5:/!/" {
+	write_system  ":pool:[ -d \"??_@list+1#5??\" ] && echo -n \"exist\" ";
+    }
+    print [ 12  > "DL" > "AL" 0 1
+//> "ZC" 101 3 "File:|" $file:25:"/L/L" 0
+> "AT" 2 1 96 29 15 0 "CCreate|User" 0
+//> "AT" 2 33 96 61 15 0 "CCreate|entry" 0
+> "AE" 13 > "AT" 100 1 165 29 14 0 "CSwitch" 0 > "AE" 1
+//> "AE" 13 > "AT" 100 33 165 61 14 0 "CSwitch" 0 > "AE" 1
+
+table: group
+#-> parse_file: ./etc/group
+while:/[/*/]\n
+check:/*:/*:/?_@list+1#3/?:
+if:/[/*/]:
+if:/[/*/]:
+if:/[/*/]:
+if:
+#end_table
+
+if "_@list+1:" 
+    if "switch:1" > "AT" 2 33 165 61 1 0 "CUser:|" $_@list+1#0:19 0 > "AT" 169 33 201 61 2 0 "CX" 0 > "AT" 2 65 140 93 3 0 "CGroup:|" $_@group+1#0:14 0 > "AT" 144 65 201 93 4 0 "CPWD|Change" 0
+      if "_@list+1#5:/!/"
+	if "pool:exist" > "AT" 2 97 201 125 5 0 "CPath:|" $_@list+1#5:24:"/[/L/L/]" "|" $_@list+1#5:24:"/L/L" 0
+	else
+	    > "AT" 2 97 165 125 5 0 "CPath:|" $_@list+1#5:19:"/[/L/L/]" "|" $_@list+1#5:19:"/L/L" 0 > "AT" 169 97 201 125 6 0 "CMK|dir" 0
+	fi
+      fi
+    else
+    > "AT" 2 33 201 61 7 0 "CShell:|" $_@list+1#6:24 0 
+    // > "AT" 2 97 201 125 8 0 "C: " $_@list+1#6:20:"/[/L/L/]" "|" $_@list+1#6:20:"/L/L" 0
+    fi
+fi
+    if "_@list+2:" > "AT" 205 97 237 125 9 0 "C->" 0 fi
+    > "AT" 205 33 237 61 10 0 "C<" ifnot "_@_list:0/" "-" fi 0
+    > "AT" 205 65 237 93 11 0 "Cm" 0
+    > "AT" 205 1 237 29 13 0 "C<" 0 ];
+    free_upages;
+end
+
+//remove line from file
+< "A" 2
+    print [ > "AL" 0 0 > "RL" 34 28 204 98 > "GR" 36 30 202 96
+	    > "ZC" 120 40 "Really remove|User?" 0
+	    > "AT" 40 60 116 92 20 0 "CYES" 0
+	    > "AT" 124 60 198 92 21 0 "CNO" 0 ];
+//here can be a problem with spaces (or tabs, from file)
+//    write_par  "entry:??_@list#0?? ??_@list#1?? ??_@list#2?? ??_@list#3?? ??_@list#4?? ??_@list#5?? ??_@list#6??";
+end
+
+
+//user
+< "A" 1
+    write_par "case:1";
+    write_par "value:??_@list+1#0??";
+    write_par "hname:Enter user name:";
+    include "access_input.term";
+end
+//group
+< "A" 3
+    write_par "case:2";
+    write_par "value:??_@list+1#3??";
+    include "access_igroups.term";
+end
+//password change
+< "A" 4
+    print [ 12   > "DL" > "TC" 0 > "AL" 0 1 
+	> "AT" 2 1 98 60 22 0 "CChange|Password" 0 
+	> "AT" 106 1 201 60 23 0 "CX" 0
+	//> "AT" 2 67 98 125 3 0 "Crename" 0
+	//> "AT" 106 67 201 125 4 0 "Cremove" 0
+	> "AT" 205 1 237 29 21 0 "C<" 0 ];
+end
+< "A" 22
+    write_par "case:3";
+    clean_par "value";
+//    write_par "value:??_@list+1#1??";
+    write_par "hname:Enter password:";
+    include "access_input.term";
+end
+< "A" 23
+	change_line "??file??:/?_@list+1#0/?\:/?_@list+1#1/?\:/?_@list+1#2/?\:/?_@list+1#3/?\:/?_@list+1#4/?\:/?_@list+1#5/?\:/?_@list+1#6/?:??_@list+1#0??:x:??_@list+1#2??:??_@list+1#3??:??_@list+1#4??:??_@list+1#5??:??_@list+1#6??\n";
+	write_par "_etc_save:1";
+	boot_cgi [ "show1" 0 ];
+end
+//path
+< "A" 5
+    write_par "case:4";
+    write_par "path:/mnt";
+    write_par "dcase:dir";
+    write_par "value:??_@list+1#5??";
+    include "usb_inDir.term";
+end
+//make path
+< "A" 6
+    shell "mkdir -p \"??_@list+1#5??\"";
+    boot_cgi [ "show" 0 ];
+end
+//shell
+< "A" 7
+    write_par "case:5";
+    clean_par "value";
+//    write_par "value:??_@list+1#6??";
+    include "access_ishell.term";
+end
+< "retinput" 0
+	if "case:1/"{//user
+	    not "value:/B/*/<1;,:\"<>`'$*?| />/\\0"{
+		change_line "??file??:/?_@list+1#0/?\:/?_@list+1#1/?\:/?_@list+1#2/?\:/?_@list+1#3/?\:/?_@list+1#4/?\:/?_@list+1#5/?\:/?_@list+1#6/?:??value??:??_@list+1#1??:??_@list+1#2??:??_@list+1#3??:??_@list+1#4??:??_@list+1#5??:??_@list+1#6??\n";
+
+		change_alines "??groups??:/*\:/*\:/*\:/?_@list+1#0/?/<1\n\0/>:{?/[/*:/*:/*:/]?}??value??\n";
+		change_alines "??groups??:/*\:/*\:/*\:/?_@list+1#0/?,:{?/[/*:/*:/*:/]/?_@list+1#0/?,?}??value??,{?/\?}";
+		change_alines "??groups??:/*\:/*\:/*\:/*,/?_@list+1#0/?,:{?/[/*:/*:/*:/*/],/?_@list+1#0/?,?},??value??,{?/\?}";
+		change_alines "??groups??:/*\:/*\:/*\:/*,/?_@list+1#0/?/<1\n\0/>:{?/[/*:/*:/*:/*/],/?_@list+1#0/?/<1\n\0/>?},??value??\n";
+
+		write_par "_etc_save:1";
+		boot_cgi [ "show1" 0 ];
+//		free_upages;
+		exit_cgi;
+	    }
+	    print [ 12  > "DL" > "AL" 0 1 > "ZC" 120 8 "Error:|??value?? has unsupported characters:|;,: \"<>`'$*?" 0 > "AT" 205 97 237 125 21 0 "C<" 0 ];
+	    free_upages;
+	    exit_cgi;
+	}
+	if "case:2/"{//group
+	    if "value:/<-1234567890/>/"{
+		change_line "??file??:/?_@list+1#0/?\:/?_@list+1#1/?\:/?_@list+1#2/?\:/?_@list+1#3/?\:/?_@list+1#4/?\:/?_@list+1#5/?\:/?_@list+1#6/?:??_@list+1#0??:??_@list+1#1??:??_@list+1#2??:??value??:??_@list+1#4??:??_@list+1#5??:??_@list+1#6??\n";
+		write_par "_etc_save:1";
+		boot_cgi [ "show1" 0 ];
+//		free_upages;
+		exit_cgi;
+	    }
+	    print [ 12  > "DL" > "AL" 0 1 > "ZC" 120 8 "Error:|??value??|is not digit" 0 > "AT" 205 97 237 125 21 0 "C<" 0 ];
+	    free_upages;
+	    exit_cgi;
+	}
+	if "case:3/"{//pwd change
+	    not "value:/"{
+		write_system ":AREApw:echo -n $(cryptpw \"??value??\" 2>/dev/null)";
+//		write_system ":AREApw:echo -n halloHALLO";
+		if "AREApw:/"{
+		    print [ 12  > "DL" > "AL" 0 1 > "ZC" 120 8 "Error:|cryptpw not exist" 0 > "AT" 205 97 237 125 21 0 "C<" 0 ];
+		    exit_cgi;
+		}
+		change_line "??file??:/?_@list+1#0/?\:/?_@list+1#1/?\:/?_@list+1#2/?\:/?_@list+1#3/?\:/?_@list+1#4/?\:/?_@list+1#5/?\:/?_@list+1#6/?:??_@list+1#0??:??AREApw??:??_@list+1#2??:??_@list+1#3??:??_@list+1#4??:??_@list+1#5??:??_@list+1#6??\n";
+		write_par "_etc_save:1";
+		boot_cgi [ "show1" 0 ];
+//		free_upages;
+		exit_cgi;
+	    }
+	    print [ 12  > "DL" > "AL" 0 1 > "ZC" 120 8 "Error:|value cannot be empty" 0 > "AT" 205 97 237 125 21 0 "C<" 0 ];
+	    free_upages;
+	    exit_cgi;
+	}
+	if "case:4/"{//path
+	    not "value:/"{
+		change_line "??file??:/?_@list+1#0/?\:/?_@list+1#1/?\:/?_@list+1#2/?\:/?_@list+1#3/?\:/?_@list+1#4/?\:/?_@list+1#5/?\:/?_@list+1#6/?:??_@list+1#0??:??_@list+1#1??:??_@list+1#2??:??_@list+1#3??:??_@list+1#4??:??value??:??_@list+1#6??\n";
+		write_par "_etc_save:1";
+		boot_cgi [ "show1" 0 ];
+//		free_upages;
+		exit_cgi;
+	    }
+	    print [ 12  > "DL" > "AL" 0 1 > "ZC" 120 8 "Error:|value cannot be empty" 0 > "AT" 205 97 237 125 21 0 "C<" 0 ];
+	    free_upages;
+	    exit_cgi;
+	}
+	if "case:5/"{//shell
+	    not "value:/"{
+		change_line "??file??:/?_@list+1#0/?\:/?_@list+1#1/?\:/?_@list+1#2/?\:/?_@list+1#3/?\:/?_@list+1#4/?\:/?_@list+1#5/?\:/?_@list+1#6/?:??_@list+1#0??:??_@list+1#1??:??_@list+1#2??:??_@list+1#3??:??_@list+1#4??:??_@list+1#5??:??value??\n";
+		write_par "_etc_save:1";
+		boot_cgi [ "show1" 0 ];
+//		free_upages;
+		exit_cgi;
+	    }
+	    print [ 12  > "DL" > "AL" 0 1 > "ZC" 120 8 "Error:|value cannot be empty" 0 > "AT" 205 97 237 125 21 0 "C<" 0 ];
+	    free_upages;
+	    exit_cgi;
+	}
+end
+
+< "retinput_back" 0
+	boot_cgi [ "show" 0 ];
+//	free_upages;
+end
+
+//next page
+< "A" 9
+	set_tbl "list += 1";
+	boot_cgi [ "show" 0 ];
+end
+
+//page before
+< "A" 10
+    set_tbl "list == 0"{
+        boot_page "??_referrer??";
+    }
+    set_tbl "list != 0"{
+	set_tbl "list -= 1";
+	boot_cgi [ "show" 0 ];
+    }
+end
+< "A" 11
+    include "menu.term";
+end
+
+< "A" 13
+    boot_page "??_referrer??";
+end
+
+//switch display
+< "A" 14
+    if "switch:1" {
+	write_par "switch:2";
+	boot_cgi [ "show" 0 ];
+	exit_cgi;
+    }
+    write_par "switch:1";
+    boot_cgi [ "show" 0 ];
+end
+
+//create user
+< "A" 15
+    boot_page "access_nuser.term";
+
+//    change_line "??file??:25 * * * * #enter #enter 1> /dev/null:25 * * * * #enter #enter 1> /dev/null\n"{
+//	shell "echo -e \"25 * * * * #enter #enter 1> /dev/null\" >> ??file??";
+//    }
+//    write_par "_etc_save:1";
+//    boot_cgi [ "show1" 0 ];
+end
+
+//YES
+< "A" 20
+//this works if only 1 del-button is on the screen
+	change_line "??file??:/?_@list+1#0/?\:/?_@list+1#1/?\:/?_@list+1#2/?\:/?_@list+1#3/?\:/?_@list+1#4/?\:/?_@list+1#5/?\:/?_@list+1#6/?:";
+//remove from /etc/group
+	change_alines "??groups??:/*\:/*\:/*\:/?_@list+1#0/?/<1\n\0/>:{?/[/*:/*:/*:/]?}\n";
+	change_alines "??groups??:/*\:/*\:/*\:/?_@list+1#0/?,:{?/[/*:/*:/*:/]/?_@list+1#0/?,?}{?/\?}";
+	change_alines "??groups??:/*\:/*\:/*\:/*,/?_@list+1#0/?,:{?/[/*:/*:/*:/*/],/?_@list+1#0/?,?},{?/\?}";
+	change_alines "??groups??:/*\:/*\:/*\:/*,/?_@list+1#0/?/<1\n\0/>:{?/[/*:/*:/*:/*/],/?_@list+1#0/?/<1\n\0/>?}\n";
+
+    write_par "_etc_save:1";
+    boot_cgi [ "show1" 0 ];
+end
+
+
+//NO
+< "A" 21
+    boot_cgi [ "show" 0 ];
+end
+
+cgi: "show1" 0

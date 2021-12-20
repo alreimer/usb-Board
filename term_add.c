@@ -1,6 +1,6 @@
 /* term_add.c:  A very simple connection programm for USB-Board
  *
- * Copyright (c) 2015 - 2020 Alexander Reimer <alex_raw@rambler.ru>
+ * Copyright (c) 2015 - 2021 Alexander Reimer <alex_raw@rambler.ru>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -13,8 +13,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/types.h>
 
 #include "include/httpd.h"
 
@@ -23,6 +23,9 @@
 #include "term_cgi.h"
 #include "term_parser.h"
 #include "terminal.h"
+
+//to use httpd descriptor in terminal (declared in parsestr1(/mW) and so on)
+#define fdcr fp
 
 void print_pstr(FILE *out, char *tmp){
 	char ch;
@@ -43,17 +46,25 @@ void print_pstr(FILE *out, char *tmp){
 	}
 }
 
-unsigned char *point[2];		//0 - place where is ch_zero by /]; 1 - end of string
+unsigned char *point[2] = {NULL, NULL};		//0 - place where is ch_zero by /]; 1 - end of string
 unsigned char ch_zero = '\0';
+
 unsigned long number = 0;
 unsigned long value_ = 0;
 unsigned long stack_ = 0;
 
+unsigned long exec_ = 0;	//if == 0 -> no /c
+//unsigned char *begin_ = NULL;
+//unsigned char *end_ = NULL;
+struct strctexec *point_exec = NULL;//if NULL -> no /e
+unsigned char *bucks = NULL;
+exec_fnctn *fn_exec = NULL;	//if NULL -> no /e or /c
+
 unsigned char *parsestr1(unsigned char *d, unsigned char *c)	//try identic strings!, "xxx*NULL" combination
 {
-	unsigned char *tmp, *tmp2, *tmp3, ch;
+	unsigned char *tmp, *tmp2, *tmp3, *tmp4, *tmp5, ch;
 	unsigned int i;
-	unsigned long digi;
+	unsigned long digi, val, stc, exc;
 
 	while (*c)
 	{
@@ -77,9 +88,14 @@ unsigned char *parsestr1(unsigned char *d, unsigned char *c)	//try identic strin
 					}
 				//tmp - end of compare-string
 				//tmp2 - can be used,
+//check				tmp3 = NULL;
 				while(1){	//not matched
+				    tmp3 = point[1];//Use only in parsestr, parsestr1_ or parsest2. it must be NULL at the beginning
 				    tmp2 = parsestr1(d, c);
+//check				    if(tmp3 != NULL && tmp3 > point[1]) point[1] = tmp3;
+				    if(tmp3 > point[1]) point[1] = tmp3;//Use only in parsestr, parsestr1_ or parsest2
 				    if(tmp2) break;
+				    i = 0;
 				    while(1){
 					if(*c == '/' && *(c+1) == '/') c++; //c+=2
 					else if(*c == '/' && *(c+1) == 'B' && i <= 1024) {i++; c++;}
@@ -88,15 +104,20 @@ unsigned char *parsestr1(unsigned char *d, unsigned char *c)	//try identic strin
 					else if((tmp && (c == tmp)) || (*c == '\0')) return NULL;	//end of compare-strings - no matches - return NULL
 					c++;
 				    }
+//check				    tmp3 = point[1];
 				}
 //printf("str:%s d=%s c=%s\n", tmp2,d,c);
-				if(tmp && *tmp2) {d = tmp2; /*tmp2 is not always the end of string!! check it out*/
+				if(tmp && *tmp2) {
+//					return parsestr1(tmp2, tmp+2);}
+//					d = tmp2; /*tmp2 is not always the end of string!! check it out*/
+					d = point[1];
+//printf("c=%.5s,d=%.5s\n", tmp, d);
 					c = tmp + 2; continue;}
 				else return tmp2;
 		    case '{': c++; ch = *c; c++; tmp = NULL; tmp2 = c; i = 0;
 					while(*tmp2){
 					    if(*tmp2 == '/' && *(tmp2+1) == '/') tmp2++; //tmp2+=2
-					    else if(*tmp2 == '/' && *(tmp2+1) == '{' && i <= 1024) i++; //if(/{)
+					    else if(*tmp2 == '/' && *(tmp2+1) == '{' && i <= 1024){ i++; tmp2++;} //if(/{)
 					    else if(*tmp2 == '/' && *(tmp2+1) == '}'){
 						if(i == 0){tmp = tmp2 + 2; break;}
 						else i--;
@@ -110,25 +131,35 @@ unsigned char *parsestr1(unsigned char *d, unsigned char *c)	//try identic strin
 				//  /t/{-/*="/*/N\\N"/t/}-->
 				//	 |		 |
 				//	 c		tmp
+
 				if(ch == '*'){//  /{*..../}  - 0 Times or more
 					while(1){
 					    if(tmp){
 						tmp2 = parsestr1(d, tmp);
 						if(tmp2) return tmp2;
 					    }
+					    tmp3 = point[1];
 					    tmp2 = parsestr1(d, c);
 					    if(tmp2 == NULL) return NULL;
+					    if(tmp3 != point[1]) tmp2 = point[1];	//new here
+					    if(tmp2 == d) return NULL;		//new here, no progress
 					    if(*tmp2 == '\0') return tmp2;
 					    d = tmp2;
 					}
 				}
 				if(ch == '-'){//  /{-..../}  - 1 Time or more
+//printf("chars: %c%c%c\n", *tmp,*(tmp+1), *(tmp+2));
 					while(1){
+					    tmp3 = point[1];
 					    tmp2 = parsestr1(d, c);
 					    if(tmp2 == NULL) return NULL;
+//printf("a\n");
+					    if(tmp3 != point[1]) tmp2 = point[1];	//new here
+					    if(tmp2 == d) return NULL;		//new here, no progress
 					    if(*tmp2 == '\0') return tmp2;
 					    d = tmp2;
 					    if(tmp){
+//printf("charsd: %c%c%c\n", *d,*(d+1), *(d+2));
 						tmp2 = parsestr1(d, tmp);
 						if(tmp2) return tmp2;
 					    }
@@ -137,8 +168,10 @@ unsigned char *parsestr1(unsigned char *d, unsigned char *c)	//try identic strin
 				if(ch == 'R' || ch == 'r'){//  /{R..../}  - Repead 1 Time or more
 					i = 0;			// /{r..../}  - Repead 0 Time or more
 					while(1){
+					    tmp3 = point[1];
 					    tmp2 = parsestr1(d, c);
 					    if(tmp2 == NULL) break;
+					    if(tmp3 != point[1]) tmp2 = point[1];	//new here
 					    if(tmp2 == d) break;	//no progress
 					    d = tmp2; i = 1;
 					}
@@ -148,42 +181,48 @@ unsigned char *parsestr1(unsigned char *d, unsigned char *c)	//try identic strin
 				if(ch == 'C'){//  /{C..../}  - Compare witch pointer is bigger
 					tmp2 = parsestr1(d, c);
 					if(tmp2 == NULL) return NULL;
+					tmp2 = point[1];
 					tmp3 = parsestr1(d, tmp);
 					if(tmp3 == NULL) return NULL;
+					tmp3 = point[1];
 					if(tmp3 > tmp2) return tmp3;
 					return NULL;
 				}
 				return NULL;	//default, if not '*' and not '-'
-		    case '(': c++; ch = *c; c++; tmp = c; i = 0;
+		    case '(': c++; ch = *c; c++; tmp = c; i = 0; tmp4 = NULL;
 					while(1){
-					    if(*tmp == '\0') return NULL;
-					    else if(*tmp == '/' && *(tmp+1) == '/') tmp++; //tmp+=2
-					    else if(*tmp == '/' && *(tmp+1) == '(' && i <= 1024) i++; //if( /( )
-					    else if(*tmp == '/' && *(tmp+1) == ')'){	//if( /) )
-						if(i == 0){tmp = tmp + 2; break;}//think about!! this is /) before /: found
+					    if(*c == '\0') return NULL;
+					    else if(*c == '/' && *(c+1) == '/') c++; //c+=2
+					    else if(*c == '/' && *(c+1) == '(' && i <= 1024) i++; //if( /( )
+					    else if(*c == '/' && *(c+1) == ')'){	//if( /) )
+						if(i == 0){c = c + 2; break;}
 						else i--;
 					    }
-					    else if(i == 0 && *tmp == '/' && *(tmp+1) == ':'){
-						tmp = tmp + 2;
-						break;	//if( /) )
+					    else if(i == 0 && *c == '/' && *(c+1) == ':'){
+						if(tmp4 == NULL) tmp4 = c + 2;
+						else return NULL;//double /(.../:.../:.../) in parse string
 					    }
-					    tmp++;
+					    c++;
 					}
-				// in c - plus, and in tmp - minus
+					if(tmp4 == NULL) return NULL;//no /: in /(.../)
+
+				// in tmp - plus, and in tmp4 - minus, in c - end of ( /)... )
 					if(ch == 'S'){		///(S.../:.../) - use Stack with !manual! inc- decrimintation
 					i = 0; tmp2 = d; tmp3 = d;
 					while(1){
-						tmp2 = parsestr1(d, c);
+						tmp2 = parsestr1(d, tmp);
 						if(tmp2){
-						    if(tmp2 != d) d = tmp2;	//progress!!
+//						    if(tmp2 != d) d = tmp2;	//progress!!
+						    if(d != point[1]) d = point[1];	//progress!!
 						    else tmp2 = NULL;
 						}
 						if(i && stack_ == 0) break;
 						if(tmp2 == NULL && tmp3 == NULL) return NULL;
 
-						tmp3 = parsestr1(d, tmp);
+						tmp3 = parsestr1(d, tmp4);
 						if(tmp3){
-						    if(tmp3 != d) d = tmp3;	//progress!!
+//						    if(tmp3 != d) d = tmp3;	//progress!!
+						    if(d != point[1]) d = point[1];	//progress!!
 						    else tmp3 = NULL;
 						}
 						if(i && stack_ == 0) break;
@@ -192,39 +231,47 @@ unsigned char *parsestr1(unsigned char *d, unsigned char *c)	//try identic strin
 						i = 1;
 					}
 					} else return NULL;
-				// in d - end of parsed string
-					i = 0;
-					while(1){
-					    if(*tmp == '\0') return NULL;
-					    else if(*tmp == '/' && *(tmp+1) == '/') tmp++; //tmp+=2
-					    else if(*tmp == '/' && *(tmp+1) == '(' && i <= 1024) i++; //if( /( )
-					    else if(*tmp == '/' && *(tmp+1) == ')'){	//if( /) )
-						if(i == 0){c = tmp + 2; break;}
-						else i--;
-					    }
-					    tmp++;
-					}
+				// in d - end of parsed string in c - str after /)...
 				continue;
 		    case '\\':
 		    case 'E':
 		    case ':':
 		    case ')':
-		    case '}':	point[1] = d;
+		    case '}':	point[1] = d;//importend !!!
 				return d;
-	    /*  set number to /n10n   or stack to /n15s*/
+		    case 'S':	c++;ch = *c;		//make var in stack
+				if(ch == 'S') digi = stack_;	//if /SS -> stack_ in stack
+				tmp = parsestr1(d, c+1);
+				if(ch == 'S') stack_ = digi;
+				return tmp;
+	    /*  set number to /n10N   or stack to /n15S or exec to /n15E or value to /n20V*/
 		    case 'n': c++; tmp = c;
-				while(*tmp && *tmp != 'n' && *tmp != 's') tmp++;
+				while(*tmp && *tmp != 'N' && *tmp != 'S' && *tmp != 'E' && *tmp != 'V' &&
+					*tmp != 'n' && *tmp != 's' && *tmp != 'e' && *tmp != 'v') tmp++;
 				    digi = 0;
 				    i = 0;
 				    while(c[i] >= '0' && c[i] <= '9'){ digi = digi*10 + (c[i] - '0'); i++; if(i > 5) break;}
-				    c = tmp;
-				    if(*c == 'n') number = digi;	//set number to digi
-				    else if(*c == 's') stack_ = digi;
-				    if(*c) c++; //if not end - increase c.
-				    continue;
-	    /* by /sn   - set number = source */
-	    /* by /sv   - set value = source */
-	    /* by /ss   - set stack = source */
+//				    c = tmp;
+				    /* forwart wave */
+				    ch = *tmp;
+				    if(ch == 'N') number = digi;	//set number to digi
+				    else if(ch == 'S') stack_ = digi;
+				    else if(ch == 'E') exec_ = digi;
+				    else if(ch == 'V') value_ = digi;
+//				    if(*c) c++; //if not end - increase c.
+//				    continue;
+				    tmp2 = parsestr1(d, tmp+1);
+				    /* back wave */
+				    if(tmp2){		//only if ok
+				    if(ch == 'n') number = digi;	//set number to digi
+				    else if(ch == 's') stack_ = digi;
+				    else if(ch == 'e') exec_ = digi;
+				    else if(ch == 'v') value_ = digi;
+				    }
+				    return tmp2;
+	    /* by /sN   - set number = source */
+	    /* by /sV   - set value = source */
+	    /* by /sS   - set stack = source */
 		    case 's': c++; ch = *c; i = 0;
 				digi = 0;
 				while(*d >= '0' && *d <= '9'){
@@ -232,13 +279,13 @@ unsigned char *parsestr1(unsigned char *d, unsigned char *c)	//try identic strin
 				    d++;
 				}
 				if(i == 0) return NULL; //in *d no digits
-				if(ch == 'n'){ c++; number = digi; continue;}
-				else if(ch == 'v'){ c++; value_ = digi; continue;}
-				else if(ch == 's'){ c++; stack_ = digi; continue;}
-				else { c = c - 2; break;} //go back to c = /sv(n) and parse it
-	    /* by /hn   - set number = source (hex) */
-	    /* by /hv   - set value = source (hex) */
-	    /* by /hs   - set stack = source (hex) */
+				if(ch == 'N'){ c++; number = digi; continue;}
+				else if(ch == 'V'){ c++; value_ = digi; continue;}
+				else if(ch == 'S'){ c++; stack_ = digi; continue;}
+				else { /*remove printf*/ printf("var: /s%c\n", ch); c = c - 2; break;} //go back to c = /sv(n) and parse it
+	    /* by /hN   - set number = source (hex) */
+	    /* by /hV   - set value = source (hex) */
+	    /* by /hS   - set stack = source (hex) */
 		    case 'h': digi = 0; ch = 0;
 				while(1){
 				    i = *d;
@@ -251,14 +298,15 @@ unsigned char *parsestr1(unsigned char *d, unsigned char *c)	//try identic strin
 				}
 				if(ch == 0) return NULL;
 				c++;
-				if(*c == 'n'){ c++; number = digi; continue;}
-				else if(*c == 'v'){ c++; value_ = digi; continue;}
-				else if(*c == 's'){ c++; stack_ = digi; continue;}
+				ch = *c;
+				if(ch == 'N'){ c++; number = digi; continue;}
+				else if(ch == 'V'){ c++; value_ = digi; continue;}
+				else if(ch == 'S'){ c++; stack_ = digi; continue;}
 				else { c = c - 2; break;} //go back to c = /hv(n) and parse it
-	    /* by /iv<10v or /iv>5v or /in<45n or /in>24n or /is>0s - if not matches return NULL */
-	    /* by /iv+10v or /iv-5v or /in-45n or /in+24n or /is+1s */
+	    /* by /iv<10v or /iv>5v or /in<45n or /in>24n or /is>0s or /ie>10e - if not matches return NULL */
+	    /* by /iv+10v or /iv-5v or /in-45n or /in+24n or /is+1s or /ie+2e */
 		    case 'i': c++; ch = *c; 
-				if(ch != 'v' && ch != 'n' && ch != 's'){ c = c - 2; break;}
+				if(ch != 'v' && ch != 'n' && ch != 's' && ch != 'e'){ c = c - 2; break;}
 				c++; i = *c;
 				if(i != '<' && i != '>' && i != '+' && i != '-'){ c = c - 3; break;}
 				c++; digi = 0;
@@ -272,17 +320,20 @@ unsigned char *parsestr1(unsigned char *d, unsigned char *c)	//try identic strin
 					if(ch == 'v'){ value_ += digi;}
 					else if(ch == 'n'){ number += digi;}
 					else if(ch == 's'){ stack_ += digi;}
+					else if(ch == 'e'){ exec_ += digi;}
 					c++; continue;
 				    }else if(i == '-'){
 					if(ch == 'v'){ value_ -= digi;}
 					else if(ch == 'n'){ number -= digi;}
 					else if(ch == 's'){ stack_ -= digi;}
+					else if(ch == 'e'){ exec_ -= digi;}
 					c++; continue;
 				    }
 				    unsigned long val = 0;
 				    if(ch == 'v'){ val = value_;}
 				    else if(ch == 'n'){ val = number;}
 				    else if(ch == 's'){ val = stack_;}
+				    else if(ch == 'e'){ val = exec_;}
 				    if(i == '>'){ if(val <= digi) return NULL;}
 				    else if(i == '<'){ if(val >= digi) return NULL;}
 				    c++; continue;
@@ -291,7 +342,8 @@ unsigned char *parsestr1(unsigned char *d, unsigned char *c)	//try identic strin
 		    case '0': tmp = d; while(tmp <= d+1){tmp = parsestr1(tmp, c+1); if (tmp) return tmp; tmp++;} return NULL;
 	    /* skip one symbol in d, exept \0 */
 		    case '|': c++; if(*d == '\0') return NULL; d++; continue;
-	    /* by /.x. skip x-symbol all at once */
+	    /* by x/.x. skip x-symbol 1 or more times */
+	    /* by /.x. skip x-symbol all at once (0 or more times)*/
 		    case '.': if(*c != *(c+2) || *(c+1)=='\0') return NULL; //error! - or make it with continue
 				    c=c+1; while(*d == *c) d++; c=c+2; continue;
 	    /* by /,x, skip x-symbol 0 or 1-time */
@@ -321,6 +373,7 @@ unsigned char *parsestr1(unsigned char *d, unsigned char *c)	//try identic strin
 				    c++;
 				    switch(*c){
 				    case '\\':
+				    case ':':	//used in change_line
 				    case '-':
 				    case '\"':	ch = *c;break;
 				    case 't':	ch = '\t';break;
@@ -336,7 +389,7 @@ unsigned char *parsestr1(unsigned char *d, unsigned char *c)	//try identic strin
 					    if(*d){ c = tmp; continue;}
 					}
 					c = c + 3; continue;
-				    }
+				    }//if /<--a/> --> (ch=- && *(c+1)=a) --> so match only d with '-' and wenn 'a'
 				}
 				if(ch==*d){ do{d++;}while(ch==*d);
 				    c = tmp; i=1; continue;
@@ -352,6 +405,7 @@ unsigned char *parsestr1(unsigned char *d, unsigned char *c)	//try identic strin
 				    c++;
 				    switch(*c){
 				    case '\\':
+				    case ':':	//used in change_line
 				    case '-':
 				    case '\"':	ch = *c;break;
 				    case 't':	ch = '\t';break;
@@ -374,9 +428,11 @@ unsigned char *parsestr1(unsigned char *d, unsigned char *c)	//try identic strin
 			    default:
 			    case '\0': c--; continue; //  rest='<\0'
 			}
+//		    case 'b': begin_ = d; c++; continue;
 		    case '[': if(parsestr1(d, c+1)){ /*point[0] = d;*/ return d;} return NULL;		//if [ in b so this pointer will be returned, and c is move forward. BEGINNofSTR
 
 		    case ']':/* printf("d:%s\n", d);*/
+//			      end_ = d;
 			      tmp = parsestr1(d, c+1);
 			      if(!tmp) return NULL;
 			      //case tmp=d (*(c+1) = '/0')[ end braces in end of string]
@@ -386,27 +442,85 @@ unsigned char *parsestr1(unsigned char *d, unsigned char *c)	//try identic strin
 			      ch_zero = *d;
 			      *d = '\0'; return tmp;//depend on continues(if /[ goes after /] - begin)
 							// make end of string hier!, check rest as (]...) and return next to end char.
+		    case 'r'://recover the end
+				if(point[0]){
+				    *(point[0]) = ch_zero;//be carefull with it!!. Use only in parsestr, parsestr1_ or parsest2
+				    point[0] = NULL;
+				}
+				c++;
+			    continue;
 	    /* second '/' charakter is to match */
 		    case '/': break;
 //		    case '\0': continue;//need to check it!!!!!!
 
 	    /* end of string is to match */
-		    case '\0': if(*d != '\0') return NULL; return d;
+		    case '\0': if(*d != '\0') return NULL; point[1] = d; return d;
 		
-		    case '!':		//Negotiation		NEW
+		    case '!':		//Negotiation
 					//  \!\*ab	-no more "ab" in rest of string
+			    tmp2 = point[1];
 			    tmp = parsestr1(d, c+1);
 			    if(tmp)	return NULL;
-			    else { point[1] = d; return d;}
-		    case '?':		// /?variable?/	- nicht eingebetet(simple)
-		    case 'Q':		// /Qvar?/	- eingebetet
+			    else { if(tmp2 == point[1]) point[1] = d; return d;}
+		    case '$'://		/$	-get variable from outside
+			if(bucks){
+				i = strlen(bucks);
+				if(i && strncmp(d, bucks, i)) return NULL;
+				d = d + i;
+			}
+				c++;
+			continue;
+		    case 'Q':		// /Q var | <?if? compare /?str/? or str ?fi? | par /q - nicht eingebetet
+		    case '?':		// /?variable?/	- nicht eingebetet(simple)	// /?$var?/	- eingebetet
 			ch = *c;	//in ch: Q or ?
 			c++;
-			char *m;
+			char *m, *t, ch1, ch2 = '\0';
+			if(*c == '$') {ch2 = *c; c++;}//in ch2: $
+			while(*c == ' ') c++;
 			tmp = c;
 			tmp2 = NULL;
-			while(*tmp){	//   /?var?/ - is old, /?var/? - is new
+
+			tmp5 = bucks;
+			tmp3 = point[0];
+			tmp4 = point[1];
+			ch1 = ch_zero;
+			digi = number;
+			val = value_;
+			stc = stack_;
+			exc = exec_;
+
+			if(ch == 'Q'){
+			i = 0;
+
+			while(*tmp){	//   /Q var q/
+				if(*tmp == '/' && *(tmp+1) == '/') tmp++; //tmp+=2
+				else if(*tmp == '/' && *(tmp+1) == 'Q' && i <= 1024) i++; //if(/Q)
+				else if(*tmp == '/' && *(tmp+1) == 'q'){	//if(/q)
+				    if(i == 0){
+					t = tmp;
+					while(*(tmp-1) == ' ' && tmp != c) tmp--;
+					i = tmp - c + 1;
+					if(i > 1){
+					m = malloc(i);
+					if(m){
+					    strmycpy(m, c, i);
+					    tmp2 = get_var(NULL, m);		//get_var and get_variable
+					    free(m);
+					}
+					}
+					c=t+2;
+					break;
+				    }
+				    else i--;
+				}
+			    tmp++;
+			}
+
+			} else {//ch is not 'Q', is ?
+			while(*tmp){	//   /?var?/ - is old, /? var /? - is new
 			    if((*tmp == '?' && *(tmp+1) == '/') || (*tmp == '/' && *(tmp+1) == '?')){
+				t = tmp;
+				while(*(tmp-1) == ' ' && tmp != c) tmp--;
 				i = tmp - c + 1;
 				if((i > 1) && (i < 33)){
 				m = malloc(i);
@@ -416,14 +530,24 @@ unsigned char *parsestr1(unsigned char *d, unsigned char *c)	//try identic strin
 				    free(m);
 				}
 				}
-				c=tmp+2;
+				c=t+2;
 				break;
 			    }
 			    tmp++;
 			}
+			}
 
-			if(tmp2 && *tmp2){
-			    if(ch == '?'){
+			exec_ = exc;
+			stack_ = stc;
+			value_ = val;
+			number = digi;
+			ch_zero = ch1;
+			point[1] = tmp4;
+			point[0] = tmp3;
+			bucks = tmp5;
+
+			if(tmp2 /*&& *tmp2*/){//this is comment for access_folders.htm
+			    if(ch2 != '$'){
 				i = strlen(tmp2);
 				if(i && strncmp(d, tmp2, i)) return NULL;
 				d = d + i;
@@ -431,13 +555,42 @@ unsigned char *parsestr1(unsigned char *d, unsigned char *c)	//try identic strin
 				static int time = 0;
 				time++;
 				if(time < 10){
-				    unsigned long long size = strncpy_(NULL, tmp2, 0)+1;	//this is max. size of tmp2-string
-				    if(size > 1 && (m = malloc(size))){
+/*				    tmp3 = point[0];
+				    tmp4 = point[1];
+				    ch1 = ch_zero;
+				    digi = number;
+				    val = value_;
+				    stc = stack_;
+				    exc = exec_;
+*/
+				    unsigned long long size = strncpy_(NULL, tmp2, 0);	//this is max. size of tmp2-string
+				    if(size && (m = malloc(size+1))){
 				    strncpy_(m, tmp2, size);
+
+				    exec_ = exc;
+				    stack_ = stc;
+				    value_ = val;
+				    number = digi;
+				    ch_zero = ch1;
+				    point[1] = tmp4;
+				    point[0] = tmp3;
+				    bucks = tmp5;
+
 				    tmp = parsestr1(d, m);
+/* maybe is needed?
+				    exec_ = exc;
+				    stack_ = stc;
+				    value_ = val;
+				    number = digi;
+				    ch_zero = ch1;
+				    point[1] = tmp4;
+				    point[0] = tmp3;
+				    bucks = tmp5;
+*/
 				    free(m);
 				    if(!tmp){time--; return NULL;}
-				    d = tmp;
+				    d = tmp;//maybe d = point[1]
+				    //c -next current part of string
 				    //if(*d != '\0') d++;		//????????
 				    }
 				}else printf("parsestr: max. counter\n");
@@ -451,15 +604,107 @@ unsigned char *parsestr1(unsigned char *d, unsigned char *c)	//try identic strin
 		    case '-': if(*(c+1) == '-') { d=d-1; c=c+2;} //  /--   -means d-1
 			continue;
 
-		    case 'm': c++; ch = *c; c++; tmp2 = c;// /m-WARN: not matched!\0thisIsNotMatched!
+		    case 'm': c++; ch = *c; c++; tmp2 = c;// /m-WARN: not matched!\0 -thisIsNotMatched!
 			while(*tmp2){
 			    if(*tmp2 == '\\' && *(tmp2+1) == '\\') tmp2++;	//tmp2 = tmp2 + 2
 			    else if(*tmp2 == '\\' && *(tmp2+1) == '0'){ tmp2 = tmp2 + 2; break;}	//string must have \\0 at the end
 			    tmp2++;						//and don't have /\\ or /}, /), /E, /:
 			}
+			if(ch == 'w') print_pstr(fdcr, c); //putout to WEB: /mw....\0  without matching!
 			tmp = parsestr1(d, tmp2);
 			if(ch == '-' && tmp == NULL) print_pstr(stderr, c);
+			if(ch == '+' && tmp != NULL) print_pstr(stderr, c); //if matched the rest - putout to stderr: /m+...\0
+			if(ch == 'N' && tmp == NULL) print_pstr(fdcr, c); //if not mantched the rest - putout to WEB: /mN...\0
+			if(ch == 'W' && tmp != NULL) print_pstr(fdcr, c); //if matched the rest - putout to WEB: /mW....\0
 			return tmp;
+			// /mw..\0/mW..\0/?par/?	==	/mw..\0/?par/?/mW..\0
+		    case 'c':	//collect strctexec struct
+			c++; i = 0; ch = 0xff;//set to default(EV)
+			while(*c){
+			    if(*c == 'c') break;
+			    if(i > 1) return NULL;//limit parameters to 2chars
+			    if(*c == 'E') ch = ch | 1;
+			    if(*c == 'V') ch = ch | 2;
+			    if(*c == 'e') ch = ch & 0xfe;//11111110
+			    if(*c == 'v') ch = ch & 0xfd;//11111101
+			    c++; i++;
+			}
+			if(*c == '\0') c--;//shorter parameter
+			if(/*exec_ == 0 ||*/ fn_exec == NULL){c++; continue;}
+//			exec_ = 0;	//switch off  /c/c combination
+			struct strctexec **p_exec, *pexc;
+			p_exec = &(point_exec);
+			while(*p_exec){p_exec = &((*p_exec)->next);}
+			*p_exec = (struct strctexec *)malloc(sizeof(struct strctexec));
+			pexc = *p_exec;
+			if(pexc == NULL){printf("parserstr: Unable alloc memory\n"); return NULL;}
+			point[0] = NULL;
+
+					//those parameters must be befor /c
+			if(ch & 1) pexc->exec = exec_;	//   /cEc
+			    else pexc->exec = 0;//new here, for definition
+			pexc->begin = d;//begin_;
+			if(ch & 2) pexc->value = value_;	//   /cVc
+			    else pexc->value = 0;//new here, for definition
+			pexc->next = NULL;
+
+			if(tmp = parsestr1(d, c+1)){//      /e .... /n10E .. /sV.... /cEVc/*/]....
+						    //or    /e ..../sV. /{-.. /ceVc/*/].. /n1e.../}..
+						    //or    /e .../n0E .. /cc.....   - means /cEVc
+			pexc->end = point[0];		//those parameters must be after /c
+			pexc->ch = ch_zero;
+			if(!(ch & 1)) pexc->exec = exec_;	//   /cec
+			if(!(ch & 2)) pexc->value = value_;	//   /cvc
+//			begin_ = NULL;
+//			point[0] = NULL;
+//			end_ = NULL;
+////////printf("exec: %ld\n", exec_);
+			}else{
+			*p_exec = (*p_exec)->next;	//cross connection
+			if(pexc) free(pexc);		//free mem for this entry
+			}
+			return tmp;
+		    case 'e':	//execute fn_exec() function
+			if(tmp = parsestr1(d, c+1)){
+			    if(point_exec){
+				if(fn_exec){
+
+				tmp5 = bucks;
+				tmp2 = point[0];
+				tmp3 = point[1];
+				ch = ch_zero;
+				digi = number;
+				val = value_;
+				stc = stack_;
+				exc = exec_;
+//				unsigned char *beg = begin_;
+//				unsigned char *en = end_;
+				struct strctexec *pexec = point_exec;
+				exec_fnctn *fnexec = fn_exec;
+
+				point_exec = NULL;//for new beginning
+				fn_exec(pexec);
+				free_strctexec();//free this new beginning
+
+				fn_exec = fnexec;
+				point_exec = pexec;
+//				end_ = en;
+//				begin_ = beg;
+				exec_ = exc;
+				stack_ = stc;
+				value_ = val;
+				number = digi;
+				ch_zero = ch;
+				point[1] = tmp3;
+				point[0] = tmp2;
+				bucks = tmp5;
+				}
+//				free_strctexec();	//and destroy it
+			    }
+			}
+			free_strctexec();	//and destroy it
+			return tmp;
+
 		    default: c--;
 		}
 	    } else if(*c == '\\'){
@@ -469,8 +714,9 @@ unsigned char *parsestr1(unsigned char *d, unsigned char *c)	//try identic strin
 		    case 'n': if(*d != '\n') return NULL; c++; d++; continue;
 		    case 't': if(*d != '\t') return NULL; c++; d++; continue;
 		    case 'r': if(*d != '\r') return NULL; c++; d++; continue;
+		    case ':':	//used in change_line
 	    /* \" string is to match */
-		    case '\"': if(*d != '\"') return NULL; c++; d++; continue;	//need to change it
+		    case '\"': if(*d != *c) return NULL; c++; d++; continue;
 	    /* \0 the same as "bla/"; if after is "bla\02" -> "bla\0" + number=2 */
 		    case '0': if(*d != '\0') return NULL;
 				    c++; int digi = 0; i = 0;
@@ -495,31 +741,82 @@ unsigned char *parsestr1(unsigned char *d, unsigned char *c)	//try identic strin
 	    return (char *) d;//ENDofSTR
 }
 
-char *parsestr1_( char *d, char *c){		//push and pop the pointers
-    char *tmp, *a, *b;
+void free_strctexec_1(struct strctexec **ptr){
+    if(!ptr || !*ptr) return;
+    free_strctexec_1(&((*ptr)->next));
+#ifdef DEBUG
+    printf("free exec:'%ld' %s  ---%c---\n", (*ptr)->exec, (*ptr)->begin, (*ptr)->ch);
+#endif
+	//at hier action
+    if((*ptr)->end && *((*ptr)->end) == '\0') *((*ptr)->end) = (*ptr)->ch;
+    free(*ptr);
+    *ptr = NULL;
+}
 
-    a = point[0];
-    b = point[1];
+void free_strctexec(void){
+    free_strctexec_1(&point_exec);
+}
+
+unsigned char *parsestr(unsigned char *d, unsigned char *c){		//push and pop the pointers
+    char *tmp;
+
+    point[0] = NULL;
+    point[1] = NULL;
 
     tmp = parsestr1(d, c);
 
-    point[0] = a;
-    point[1] = b;
 
     return tmp;
 }
 
-char *parsestr2( struct parsestr *ptr, char *d, char *c){		//use the pointers in struct
+char *parsestr1_( char *d, char *c){		//push and pop the pointers
+    char *tmp, *a, *b;
+    exec_fnctn *fn;
+
+    a = point[0];
+    b = point[1];
+    fn = fn_exec;
+
+    fn_exec = NULL;	//switch off the /e and /c functions
+    point[0] = NULL;
+    point[1] = NULL;
+
+    tmp = parsestr1(d, c);
+
+    fn_exec = fn;
+    point[0] = a;
+    point[1] = b;
+//    free_strctexec();
+
+    return tmp;
+}
+
+char *parsestr2( struct parsestr *ptr, exec_fnctn *fn, char *d, char *c){		//use the pointers in struct
     char *tmp;
+    exec_fnctn *fnct;
 
     number = 0;
     point[0] = NULL;
+    point[1] = NULL;
+
+    fnct = fn_exec;
+    fn_exec = fn;	//the /e and /c functions
+
     if(tmp = parsestr1(d, c) /*&& (ptr != NULL)*/){
 	ptr->ch = ch_zero;
 	ptr->num = number;
 	ptr->zero = point[0];	//if NULL -> restore_str is not made
-	ptr->end = point[1];
+//	ptr->end = point[1];
+    } else {
+	if(point[0]){	//new here
+	    *point[0] = ch_zero;
+	}
+	ptr->zero = NULL;
     }
+    ptr->end = point[1];
+
+    free_strctexec();
+    fn_exec = fnct;
 
     return tmp;
 }
@@ -527,6 +824,7 @@ char *parsestr2( struct parsestr *ptr, char *d, char *c){		//use the pointers in
 char *restore_str( struct parsestr *ptr){	//note: in parsestring MUST BE-> "/]"
     if(ptr->zero){
 	*(ptr->zero) = ptr->ch;
+	ptr->zero = NULL;
     }
     return ptr->end;
 }
@@ -642,7 +940,7 @@ unsigned long long strncpy_(char *tmp, char *tmp1, long long size){
 		case '?':	ch = '?';break;
 		default :	tmp1--;
 	    }
-	} else if(tmp2 = parsestr2(&strct, tmp1, "??/[/N?N/*/]??")){		//??variable??
+	} else if(tmp2 = parsestr2(&strct, NULL, tmp1, "??/[/N?N/*/]??")){		//??variable??
 		tmp2 = get_var(NULL, tmp2);		//get_var and get_variable
 		if(tmp2) s += strncpy_(tmp ? (tmp+s) : NULL, tmp2, size-s);
 		tmp1 = restore_str(&strct);
@@ -839,10 +1137,10 @@ void system_(char *cmd)
 }
 
 void write_shell(char *buf_in, long long size_in, char *buf, long long size_1, int mode, char *cmd){ //tmp- is max. 2048byte  if runned from CGI-script
-	unsigned long long size = strncpy_(NULL, cmd, 0)+1;	//this is max. size of cmd-string
+	unsigned long long size = strncpy_(NULL, cmd, 0);	//this is max. size of cmd-string
 	char *arg;
 
-	if(arg = malloc(size)){
+	if(arg = malloc(size+1)){
 	    strncpy_(arg, cmd, size);
 	    write_system(buf_in, size_in, buf, size_1, mode, arg);
 	    free(arg);
@@ -850,10 +1148,10 @@ void write_shell(char *buf_in, long long size_in, char *buf, long long size_1, i
 }
 
 void my_shell(FILE *out, char *tmp){		//tmp- is max. 2048byte  if runned from CGI-script
-	unsigned long long size = strncpy_(NULL, tmp, 0)+1;	//this is max. size of arg-string
+	unsigned long long size = strncpy_(NULL, tmp, 0);	//this is max. size of arg-string
 	char *arg;
 
-	if(arg = malloc(size)){
+	if(arg = malloc(size+1)){
 	    strncpy_(arg, tmp, size);
 	    my_system(out, arg);
 	    free(arg);
@@ -861,10 +1159,10 @@ void my_shell(FILE *out, char *tmp){		//tmp- is max. 2048byte  if runned from CG
 }
 
 void shell(char *tmp){		//tmp- is max. 2048byte  if runned from CGI-script
-	unsigned long long size = strncpy_(NULL, tmp, 0)+1;	//this is max. size of arg-string
+	unsigned long long size = strncpy_(NULL, tmp, 0);	//this is max. size of arg-string
 	char *arg;
 
-	if(arg = malloc(size)){
+	if(arg = malloc(size+1)){
 	    strncpy_(arg, tmp, size);
 	    system(arg);
 	    free(arg);
@@ -906,8 +1204,9 @@ char *get_var(unsigned long long *size_ptr, char *var_index){
 		unsigned int *i;
 		i = get_tbl_begin(var_index);
 		if(i){
-		    snprintf(value, 15, "%d", *i);
-		    ptr = value;
+		    static char bgn[128];
+		    snprintf(bgn, 15, "%d", *i);
+		    ptr = bgn;
 		}
 	    } else {
 		ptr = get_tbl(var_index);
@@ -969,9 +1268,18 @@ char *get_var(unsigned long long *size_ptr, char *var_index){
 */	}else if(!strcmp(var_index,"etc_save")){
 	    ptr = etc_save;
 	    size = 2;
+	}else if(!strcmp(var_index,"number")){
+	    static char num[130];
+	    snprintf(num, 128, "%ld", number);//unsigned long
+	    ptr = num;
 	}else if(!strcmp(var_index,"value")){
-	    snprintf(value, 15, "%d", A1_BTN);
-	    ptr = value;
+	    static char val[130];
+	    snprintf(val, 128, "%ld", value_);//unsigned long
+	    ptr = val;
+	}else if(!strcmp(var_index,"nvalue")){
+	    static char nval[128];
+	    snprintf(nval, 15, "%d", A1_BTN);
+	    ptr = nval;
 	}else if(!strcmp(var_index,"version")){
 	    ptr = version;
 	    size = 256;

@@ -2,6 +2,7 @@ extern unsigned char *point[2];
 extern unsigned long number;
 extern unsigned long value_;
 
+unsigned char *parsestr(unsigned char *a, unsigned char *b);
 unsigned char *parsestr1( unsigned char *a, unsigned char *b);
 char *parsestr1_( char *a, char *b);
 struct parsestr{
@@ -10,7 +11,19 @@ struct parsestr{
     char *zero;		//place, were ch was stored (for restoring)
     char *end;		//end of matched string
 };
-char *parsestr2(struct parsestr *ptr, char *a, char *b);
+
+struct strctexec{
+    unsigned long exec;
+    char *begin;
+    char *end;	//zero pointer (for restoring)
+    unsigned long value;
+    char ch;	//zero char
+    struct strctexec *next;
+};
+typedef void exec_fnctn(struct strctexec *ptr);
+void free_strctexec(void);
+
+char *parsestr2(struct parsestr *ptr, exec_fnctn *fn, char *a, char *b);
 char *restore_str( struct parsestr *ptr);//return the end of matched string (struct parsestr->end)
 
 char *get_var(unsigned long long *size_ptr, char *var_index);		//parse Varialbles

@@ -4,28 +4,28 @@ wr_par: _buf:/mnt
 fi
 
 table: list
-#-> get_folder: ??_buf??
+#-> get_ofolder: ??_buf??
 *************************
-#-> get_files: ??_buf??
+#-> get_ofiles: ??_buf??
 #end_table
 
 < "show" 0
 	print [
 12 > "DL" > "AL" 0 1 > "ZC" 101 0 "Path:|" $_buf:25 0
-if "_@list+1:" > "ZL" 0 18 $_@list+1:25:"/L/L" 0 
+if "_@list+1:" > "ZL" 0 18 $_@list+1:25 0 
 else
     > "ZC" 0 18 "empty" 0
 fi
-if "_@list+2:" > "ZL" 0 28 $_@list+2:25:"/L/L" 0 fi
-if "_@list+3:" > "ZL" 0 38 $_@list+3:25:"/L/L" 0 fi
-if "_@list+4:" > "ZL" 0 48 $_@list+4:25:"/L/L" 0 fi
-if "_@list+5:" > "ZL" 0 58 $_@list+5:25:"/L/L" 0 fi
-if "_@list+6:" > "ZL" 0 68 $_@list+6:25:"/L/L" 0 fi
-if "_@list+7:" > "ZL" 0 78 $_@list+7:25:"/L/L" 0 fi
-if "_@list+8:" > "ZL" 0 88 $_@list+8:25:"/L/L" 0 fi
-if "_@list+9:" > "ZL" 0 98 $_@list+9:25:"/L/L" 0 fi
-if "_@list+10:" > "ZL" 0 108 $_@list+10:25:"/L/L" 0 fi
-if "_@list+11:" > "ZL" 0 118 $_@list+11:25:"/L/L" 0 fi
+if "_@list+2:" > "ZL" 0 28 $_@list+2:25 0 fi
+if "_@list+3:" > "ZL" 0 38 $_@list+3:25 0 fi
+if "_@list+4:" > "ZL" 0 48 $_@list+4:25 0 fi
+if "_@list+5:" > "ZL" 0 58 $_@list+5:25 0 fi
+if "_@list+6:" > "ZL" 0 68 $_@list+6:25 0 fi
+if "_@list+7:" > "ZL" 0 78 $_@list+7:25 0 fi
+if "_@list+8:" > "ZL" 0 88 $_@list+8:25 0 fi
+if "_@list+9:" > "ZL" 0 98 $_@list+9:25 0 fi
+if "_@list+10:" > "ZL" 0 108 $_@list+10:25 0 fi
+if "_@list+11:" > "ZL" 0 118 $_@list+11:25 0 fi
 if "_@list+12:" > "AT" 205 97 237 125 9 0 "C->" 0 fi
     > "AT" 205 33 237 61 10 0 "C<" ifnot "_@_list:0/" "-" fi 0
     > "AT" 205 1 237 29 13 0 "C<" 0

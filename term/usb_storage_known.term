@@ -18,7 +18,7 @@ while:/[/*/]\n
 if:/[/?serialNum?//]:
 if:/[/<1*1234567890/>/]:
 if:/[/!/B/!/*/]/<1:\0/>/\/*.///\/*/<1;"/>
-if:/*:
+if:/B/*:/\
 #end_table
 
 else
@@ -30,7 +30,7 @@ check:/ /N#N
 if:/ /[/*/]:
 if:/[/<1*1234567890/>/]:
 if:/[/!/B/!/*/]/<1:\0/>/\/*.///\/*/<1;"/>
-if:/*:
+if:/B/*:/\
 #end_table
 
 fi
@@ -40,8 +40,9 @@ fi
 ifnot "serialNum:/" > "AT" 2 1 165 29 1 0 "CCreate Entry" 0
 else > "AT" 2 1 165 29 1 0 "CSearch, Create Entry" 0 fi
 if "_@list+1:" 	> "AT" 169 1 201 29 2 0 "CX" 0
-		> "AT" 2 33 201 61 3 0 "L Partition: " $_@list+1#1 if "_@list+1#1:*/" " !!change!!" fi "| SerialNbr:| " $_@list+1#0:18 0
-		> "AT" 2 65 160 93 4 0  "L MountPoint:| " $_@list+1#2:18:"/[/L/L/]" "| " $_@list+1#2:18:"/L/L" 0 > "AT" 164 65 201 93 5 0 "CShow" 0
+		> "AT" 2 33 201 61 3 0 "L Partition: " $_@list+1#1 if "_@list+1#1:*/" " (all)" fi "| SerialNbr:| " $_@list+1#0:18 0
+		if "_@list+1#2:" > "AT" 2 65 160 93 4 0  "L MountPoint:| " $_@list+1#2:18:"/[/L/L/]" "| " $_@list+1#2:18:"/L/L" 0 > "AT" 164 65 201 93 5 0 "CShow" 0 
+		else > "ZC" 99 75 "Bad MountPoint chars" 0 fi
 		if "_@list+1#3:" > "AT" 2 97 201 125 6 0 "L Script:| " $_@list+1#3:25:"/[/L/L/]" "| " $_@list+1#3:25:"/L/L" 0 fi
 else
 > "ZC" 101 45 "no entry for USB storage" 0
@@ -65,20 +66,20 @@ end
 	    exit_cgi;
 	}
 	if "case:3/"{
-	    if "value:/<11234567890/>/"{
-		change_line "??file??:/?_@list+1#0?//|/?_@list+1#1?//|/?_@list+1#2?/:??_@list+1#0??:??value??:??_@list+1#2??:??_@list+1#3??\n";
+	    if "value:/<11234567890*/>/"{
+		change_line "??file??:/?_@list+1#0/?\:/?_@list+1#1/?\:/?_@list+1#2/?:??_@list+1#0??:??value??:??_@list+1#2??:??_@list+1#3??\n";
 		write_par "_etc_save:1";
 		boot_cgi [ "show" 0 ];
 //		free_upages;
 		exit_cgi;
 	    }
-	    print [ 12  > "DL" > "AL" 0 1 > "ZC" 120 8 "Error:|??value??|is not in range: 0-9" 0 > "AT" 205 97 237 125 21 0 "C<" 0 ];
+	    print [ 12  > "DL" > "AL" 0 1 > "ZC" 120 8 "Error:|??value??|is not in range: 0-9 or *" 0 > "AT" 205 97 237 125 21 0 "C<" 0 ];
 	    free_upages;
 	    exit_cgi;
 	}
 	if "case:4/"{
 	    if "value://mnt///!/B/*.///\/*/<1;:\"/>"{
-		change_line "??file??:/?_@list+1#0?//|/?_@list+1#1?//|/?_@list+1#2?/:??_@list+1#0??:??_@list+1#1??:??value??:??_@list+1#3??\n";
+		change_line "??file??:/?_@list+1#0/?\:/?_@list+1#1/?\:/?_@list+1#2/?:??_@list+1#0??:??_@list+1#1??:??value??:??_@list+1#3??\n";
 		write_par "_etc_save:1";
 		boot_cgi [ "show" 0 ];
 //		free_upages;
@@ -90,7 +91,7 @@ end
 	}
 	if "case:6/"{
 //	    if "value:/B1/<11234567890/>/\2/<10123/>/\/<1*1234567890/>/E/"{
-		change_line "??file??:/?_@list+1#0?//|/?_@list+1#1?//|/?_@list+1#2?/:??_@list+1#0??:??_@list+1#1??:??_@list+1#2??:??value??\n";
+		change_line "??file??:/?_@list+1#0/?\:/?_@list+1#1/?\:/?_@list+1#2/?:??_@list+1#0??:??_@list+1#1??:??_@list+1#2??:??value??\n";
 		write_par "_etc_save:1";
 		boot_cgi [ "show" 0 ];
 //		free_upages;
@@ -113,13 +114,13 @@ end
 < "A" 1
 //create entry SERIALNR:PARTITIONSNR(0-all parts):MOUNTPOINT PATH:AUTOSTART(optional)
     if "serialNum:/" {
-	write_par "serialNum:";
+	clean_par "serialNum";
 	write_par "case:1";
 	include "info-usbstore.term";
     }
     not "serialNum:/" {
 //	set_tbl "list = 0";
-	change_line "??file??:/?serialNum?//|*/|//mnt//home//usb///?serialNum?/:??serialNum??:*:/mnt/home/usb/??serialNum??:\n"{
+	change_line "??file??:/?serialNum/?\:*\://mnt//home//usb///?serialNum/?:??serialNum??:*:/mnt/home/usb/??serialNum??:\n"{
 	    shell "echo -e \"??serialNum??:*:/mnt/home/usb/??serialNum??:\" >> ??file??";
 	    write_par "_etc_save:1";
 //	    write_par "serialNum:";
@@ -203,7 +204,7 @@ end
 < "A" 20
 //    change_line "??file??:/?entry?/:";
 //this works if only 1 del-button is on the screen
-    change_line "??file??:/?_@list+1#0?//|/?_@list+1#1?//|/?_@list+1#2?/:";		// /*/?_@list+1#3?/:";
+    change_line "??file??:/?_@list+1#0/?\:/?_@list+1#1/?\:/?_@list+1#2/?:";		// /*/?_@list+1#3?/:";
     write_par "_etc_save:1";
     boot_cgi [ "show" 0 ];
 end

@@ -1,6 +1,6 @@
 /* term_CGI.c:
  *
- * Copyright (C) 2015-2020  Alexander Reimer <alex_raw@rambler.ru>
+ * Copyright (C) 2015-2021  Alexander Reimer <alex_raw@rambler.ru>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -116,6 +116,10 @@ char *search[] = {"print",		//1
 			"link",		//32
 			"free_upages",	//33
 			"readcfg",	//34
+			"cat_par",	//35
+			"else",		//36  see jump code!
+			"change_alines",	//37
+//			"free_uppages",	//38
 			NULL
 			};
 
@@ -132,6 +136,10 @@ char *cgi_loop(char *data, int *i, int *k, struct cgi *ptr){
 	}
 	if(*data == ' ' || *data == '\t' || *data == '\n' || *data == '\r') {data++;continue;}
 
+	if(*data == '}'){data++; return data;}
+
+	if(!strncmp(data, "end", 3)){data+=3; break;}
+
 	j = 0;
 	while(search[j]){
 	    len = strlen(search[j]);
@@ -145,6 +153,21 @@ char *cgi_loop(char *data, int *i, int *k, struct cgi *ptr){
 	    }
 	    j++;
 	}
+	if(search[j] == NULL){
+
+	if(*data == 'd' && *(data+1) == 'o'){		// do{ }
+	    j = 2; while(*(data+j) == ' ' || *(data+j) == '\t' || *(data+j) == '\n'){ j++; }
+	    if(*(data+j) == '{') {data=data+j+1; j = *i; tmp = cgi_loop(data, i, k, ptr);
+		if(tmp) ptr->bb[*i] = j; //tmp replace via data
+//printf("bb: %d, to %d\n",*i, ptr->bb[*i]);
+		data = tmp;
+		if(*k == 0) continue; else return data;
+	    }
+	}
+	    fprintf(stderr, "Undef. command\n");
+	    return NULL;
+	}
+	while(*data == ' ' || *data == '\t' || *data == '\n' || *data == '\r') {data++;}
 
 	if(*data == '\"') {data++;
 			    tmp = data;
@@ -166,10 +189,10 @@ char *cgi_loop(char *data, int *i, int *k, struct cgi *ptr){
 			    tmp++;
 			    }
 	    data = tmp;
-	    continue;
+//	    continue;
 	}	//string
 
-	if(*data == '[') {data++;
+	else if(*data == '[') {data++;
 			    tmp = data;
 			    while(*tmp){
 				if(*tmp == '\"'){
@@ -177,7 +200,7 @@ char *cgi_loop(char *data, int *i, int *k, struct cgi *ptr){
 				    while(*tmp){if(*tmp == '\"' && *(tmp-1) != '\\'){tmp++; break;} tmp++;}
 				    continue;
 				}
-				if(tmp1 = parsestr1(tmp, "table:/*#end_table")){//table entry
+				if(tmp1 = parsestr(tmp, "table:/*#end_table")){//table entry
 				    tmp = tmp1;
 				    continue;
 				}
@@ -198,34 +221,24 @@ char *cgi_loop(char *data, int *i, int *k, struct cgi *ptr){
 			    tmp++;
 			    }
 	    data = tmp;
-	    continue;
+//	    continue;
 	}	//string []
+	while(*data == ' ' || *data == '\t' || *data == '\n' || *data == '\r') {data++;}
+
 	if(*data == ';') {data++; (*i)++;if(*i >= GET_CGI_MAX) return NULL; ptr->cmd[*i] = 0; continue;}
 
-	if(*data == 'd' && *(data+1) == 'o'){		// do{ }
-	    j = 2; while(*(data+j) == ' ' || *(data+j) == '\t' || *(data+j) == '\n'){ j++; }
-	    if(*(data+j) == '{') {data=data+j+1; j = *i; tmp = cgi_loop(data, i, k, ptr);
-		if(tmp) ptr->bb[*i] = j; //tmp replace via data
-//printf("bb: %d, to %d\n",*i, ptr->bb[*i]);
-		data = tmp;
-		if(*k == 0) continue; else return data;
-	    }
-	}
-	
 	if(*data == '{') {data++; j = *i; (*i)++; if(*i >= GET_CGI_MAX) return NULL; tmp = cgi_loop(data, i, k, ptr); //return NULL- is a problem!!
 	    if(tmp) ptr->bb[j] = *i; //tmp replace via data
 //printf("bb: %d, to %d\n",j, ptr->bb[j]);
 	    data = tmp;
 	    if(*k == 0) continue; else return data;
 	}
-	if(*data == '}'){data++; return data;
-	}
 	
-	if(!strncmp(data, "end", 3)){data+=3; break;}
 #ifdef DEBUG
 putchar(*data);
 #endif
-	data++;
+//	data++;
+	return NULL;
     }
 *k = 1;
 return data;
@@ -276,6 +289,7 @@ size = parse_cgi_name(data, &end, NULL);
 
 	i = 0;
 	if((tmp = cgi_loop(end, &i, &k, *ptr)) == NULL){	//if something wrong - erase entry of this cgi-script
+	    fprintf(stderr, "ERR: script %s\n", (*ptr)->name);
 	    i = 0;
 	    while(i < GET_CGI_MAX){		//clear all cgi_lines
 		if((*ptr)->arg[i] != NULL){ free((*ptr)->arg[i]); /*(*ptr)->arg[i] = NULL;*/}
@@ -298,7 +312,7 @@ char *cgi_end(char *data){
 		data++;
 	    }
 	} //else
-	else if(tmp = parsestr1(data, "table:/*#end_table")){data = tmp; continue;}
+	else if(tmp = parsestr(data, "table:/*#end_table")){data = tmp; continue;}
 	else if(!strncmp(data, "end", 3)){data+=3; return data;}
 
 	data++;
@@ -415,8 +429,8 @@ char *print_(FILE *out, char *data, int make, int loop){
 			    if(str_size != 0) str_size = MIN(digi, str_size-1);
 //printf("Name: %s, sizeLimit: %lld, value: %s\n", name, str_size, a);
 			    i = 0;
-			    if((ptr2 = parsestr1(ptr1, "\"/[/*/N\\N/]\"/")) != NULL){
-				a = parsestr2(&strct, a, ptr2);
+			    if((ptr2 = parsestr(ptr1, "\"/[/*/N\\N/]\"/")) != NULL){
+				a = parsestr2(&strct, NULL, a, ptr2);
 				if(a != NULL) i = 1;//used for restoring of string after
 			    }
 
@@ -463,7 +477,7 @@ char *print_(FILE *out, char *data, int make, int loop){
 	    data = tmp;
 	    continue;
 /*** big IF configuration ***/
-	}else if(tmp = parsestr2(&strct, data, "if/t\"/[/*/N\\N/]\"")){
+	}else if(tmp = parsestr2(&strct, NULL, data, "if/t\"/[/*/N\\N/]\"")){
 	    mk = 1;
 	    if(make){
 		if(cfg_arg_strcmp(tmp, 0)){//par -not exist or not match
@@ -472,13 +486,13 @@ char *print_(FILE *out, char *data, int make, int loop){
 	    }
 	    data = restore_str(&strct);
 	    data = print_(out, data, (make && mk), loop + 1);
-	    if(tmp = parsestr1(data, "else/ ")){
+	    if(tmp = parsestr(data, "else/ ")){
 		if(mk) mk = 0;
 		else mk = 1;
 		data = print_(out, tmp, (make && mk), loop + 1);
 	    }
 	    continue;
-	}else if(tmp = parsestr2(&strct, data, "ifnot/t\"/[/*/N\\N/]\"")){
+	}else if(tmp = parsestr2(&strct, NULL, data, "ifnot/t\"/[/*/N\\N/]\"")){
 	    mk = 1;
 	    if(make){
 		if(cfg_arg_strcmp(tmp, 1)){//par -not exist or match
@@ -487,7 +501,7 @@ char *print_(FILE *out, char *data, int make, int loop){
 	    }
 	    data = restore_str(&strct);
 	    data = print_(out, data, (make && mk), loop + 1);
-	    if(tmp = parsestr1(data, "else/ ")){
+	    if(tmp = parsestr(data, "else/ ")){
 		if(mk) mk = 0;
 		else mk = 1;
 		data = print_(out, tmp, (make && mk), loop + 1);
@@ -502,7 +516,7 @@ char *print_(FILE *out, char *data, int make, int loop){
 	    }
 //	    make = 1;
 //	    continue;
-	} else if(tmp = parsestr1(data, "else")){	//return for inversing make.
+	} else if(tmp = parsestr(data, "else")){	//return for inversing make.
 	    if(loop) return data;
 	    else {
 		printf("else without if\n");
@@ -510,7 +524,7 @@ char *print_(FILE *out, char *data, int make, int loop){
 		continue;
 	    }
 /*** end of IF configuration ***/
-	}else if(tmp = parsestr2(&strct, data, "table:/t/[/*\\n/]#end_table\\n")){
+	}else if(tmp = parsestr2(&strct, NULL, data, "table:/t/[/*\\n/]#end_table\\n")){
 	    if(make == 1){
 		parse_tbl(tmp, 1);//with clean
 	    }
@@ -532,6 +546,8 @@ char *print_(FILE *out, char *data, int make, int loop){
 int print_str(FILE *out, char *tmp){
     char ch, *tmp2;//tmp2 can be replaced via tmp1!!
     struct parsestr strct;
+    struct cgi *ptr;
+    ptr = cgi_used;
     static int loop_print_1 = 0;	// used if loops exissted
     if(loop_print_1 > 10){
 	fprintf(out, "max loop counter reached\n");
@@ -554,13 +570,13 @@ int print_str(FILE *out, char *tmp){
 			default :	tmp--;
 		    }
 		} else
-		if(tmp2 = parsestr2(&strct, tmp, "??/[/N?N/*/]??")){		//??variable??
+		if(tmp2 = parsestr2(&strct, NULL, tmp, "??/[/N?N/*/]??")){		//??variable??
 			tmp2 = get_var(NULL, tmp2);		//get_var and get_variable
 			if(tmp2) print_str(out, tmp2); /*fprintf(out, "%s", tmp3);*/
 			tmp = restore_str(&strct);
 			continue;		//it's or tmp=tmp+2 or tmp=tmp2+2
 		} else
-		if(tmp2 = parsestr2(&strct, tmp, "?@/[/N@N/*/]@?")){		//?@variable@?
+		if(tmp2 = parsestr2(&strct, NULL, tmp, "?@/[/N@N/*/]@?")){		//?@variable@?
 			if(*tmp2 == '0'){		//?@0variable@?	-	fill with \0 the rest of variable
 				long long size, s;
 				tmp2 = get_var(&size, tmp2+1);
@@ -573,6 +589,18 @@ int print_str(FILE *out, char *tmp){
 					s++;
 				    }
 				}
+			}
+			tmp = restore_str(&strct);
+			continue;		//it's or tmp=tmp+2 or tmp=tmp2+2
+		} else
+		if(tmp2 = parsestr2(&strct, NULL, tmp, "{?/[/N?N/*/]?}")){	//{?condition?}	-switched on if running from cgi-script
+//needed more thinking about
+			if(ptr && ptr->data_ptr){
+				tmp2 = parsestr(ptr->data_ptr, tmp2);		//parse tmp in data-buffer
+				if(tmp2){
+				    fprintf(out, "%s", tmp2);
+				    ptr->data_ptr = point[1];
+				}//else ptr->data_ptr = NULL;		//be carefull- this mean that no more parses 
 			}
 			tmp = restore_str(&strct);
 			continue;		//it's or tmp=tmp+2 or tmp=tmp2+2
@@ -604,7 +632,8 @@ void rename_(char *old_name, char *new_name){
 }
 
 //return 0 -exec in braces, 1 - jump
-int change_line(char *line){ //line="/etc/file??name??:/ nameserver: nameserver ??var??" or line="/etc/file:/*/?var?/: nameserver ??_%var??"
+//if flg == 0 - match one time (change_line), == 1 - match all times (change_all_lines)
+int change_line(char *line, char flg){ //line="/etc/file??name??:/ nameserver: nameserver ??var??" or line="/etc/file:/*/?var?/: nameserver ??_%var??"
     char *file_name, *cmpstr, LineBuf[256], *tmp;
     unsigned long long size;
     char *file ="/var/temp1234";
@@ -612,13 +641,23 @@ int change_line(char *line){ //line="/etc/file??name??:/ nameserver: nameserver 
 
     FILE *fp, *fop;
     int flag = 0;//exec in braces
-        file_name = w_strtok(&line, ':');
-        if(!file_name || !(*file_name)){ printf("change_line: file name is empty\n");return 1;}//jump the braces
-        cmpstr = w_strtok(&line, ':');
-        if(!cmpstr || !(*cmpstr)){ printf("change_line: compare_string is empty\n");return 1;}
+	file_name = w_strtok(&line, ':');
+	if(!file_name || !(*file_name)){ printf("change_line: file name is empty\n");return 1;}//jump the braces
+	cmpstr = line;
+	while(1){
+	    if(!(*line)) { printf("change_line: no cmpstr:print\n");return 1;}
+	    else if(*line == '\\' && *(line+1) == '\\') line++; //line=+2
+	    else if(*line == '\\' && *(line+1) == ':') line++; //line=+2
+	    else if(*line == '/' && *(line+1) == '/') line++; //line=+2		//this is for /(/:/)
+	    else if(*line == '/' && *(line+1) == '\\') line++; //line=+2
+	    else if(*line == '/' && *(line+1) == ':') line++; //line=+2
+	    else if(*line == ':') {*line = '\0'; line++; break;}
+	    line++;
+	}
+	if(!(*cmpstr)){ printf("change_line: compare_string is empty (double file::print)\n");return 1;}
 
-    size = strncpy_(NULL, file_name, 0)+1;	//this is max. size of arg-string
-    if(size > 1 && (tmp = malloc(size))){
+    size = strncpy_(NULL, file_name, 0);	//this is max. size of arg-string
+    if(size && (tmp = malloc(size+1))){
 	strncpy_(tmp, file_name, size);
 
 	if((fp = fopen(tmp,"r")) != NULL){
@@ -626,7 +665,7 @@ int change_line(char *line){ //line="/etc/file??name??:/ nameserver: nameserver 
 	    while(fgets(LineBuf,255,fp) != NULL){
 
 		cgi_used->data_ptr = LineBuf;
-		if(parsestr1(LineBuf, cmpstr)){
+		if((flg || !flag) && parsestr(LineBuf, cmpstr)){
 		    if(print_str(fop, line)){
 //printf("%s   :: %sline: %s\n", cmpstr, LineBuf, line);
 		    flag = 1;//jump braces
@@ -650,7 +689,6 @@ int change_line(char *line){ //line="/etc/file??name??:/ nameserver: nameserver 
 	free(tmp);
     }
 	return flag;
-
 }
 
 // tmp1 = "from_par:to_par:cmd"
@@ -745,7 +783,7 @@ extern FILE *fp;
 //2	-go out now!
 int get_cgi_body(struct cgi *ptr){
 
-    int i = 0, j = 0, jump = 0, allocated, ret;
+    int i = 0, j = 0, jump = 0, allocated, before = 0, ret, rret = 1;
     unsigned long long size, size1, size2;//size2 - for copy_ppar
     char *tmp, *tmp1, *tmp2, *arg = NULL, ch = 0;
     struct page_n *p;
@@ -778,8 +816,8 @@ int get_cgi_body(struct cgi *ptr){
 			    break;
 		    case 2:
 		    /* after parse_file - quit now !!! */
-			    size = strncpy_(NULL, arg, 0)+1;	//this is max. size of arg-string
-			    if(size > 1 && (tmp = malloc(size))){
+			    size = strncpy_(NULL, arg, 0);	//this is max. size of arg-string
+			    if(size && (tmp = malloc(size+1))){
 				strncpy_(tmp, arg, size);
 //printf("parse_file:%s %ld\n", tmp, size);
 				if(*tmp != '\0') parse_file(tmp, 0);//return from this function now!!
@@ -805,33 +843,43 @@ int get_cgi_body(struct cgi *ptr){
 			    write_char(arg);
 			    break;
 		    case 8:				//change_line
-			    jump = change_line(arg);
+			    jump = change_line(arg, 0);
 			    break;
 		    case 9:	// write_par  par:value
+		    case 35:	// cat_par par:value
 			    tmp1 = arg;
 			    tmp2 = w_strtok(&tmp1, ':');
 			    if(tmp2 && *tmp2 && *tmp1){
 			    	tmp = get_var(&size, tmp2);
 				if(tmp && size){
+				if(ptr->cmd[i] == 35){
+				    size1 = strlen(tmp);
+				    if(size > (size1 + 1)){
+					strncpy_(tmp + size1, tmp1, size-1-size1);
+//					tmp[size-1] = '\0';
+				    }
+				}else {
 				    strncpy_(tmp, tmp1, size-1);
-//				    tmp[size-1] = '\0';
+//					tmp[size-1] = '\0';
+				}
 				}
 //				if(tmp2 != tmp1) *(tmp1-1) = ':';
 			    }
 			    break;
+
 		    case 10:				//if_changed
 //printf("if_changed: %s; i=%d; bb=%d\n", ptr->arg[i], i, ptr->bb[i]);
-			    if(!cfg_arg_changed(arg)){ jump = 1;}
+			    if(!cfg_arg_changed(arg)){ jump = 2;}
 			    break;
 		    case 11:				//not_changed or not found
-			    if(cfg_arg_changed(arg)) { jump = 1;}
+			    if(cfg_arg_changed(arg)) { jump = 2;}
 			    break;
 		    case 12:				//if
 //printf("if: %s; i=%d; bb=%d\n", ptr->arg[i], i, ptr->bb[i]);
-			    if(cfg_arg_strcmp(arg, 0)) { jump = 1;}
+			    if(cfg_arg_strcmp(arg, 0)) { jump = 2;}
 			    break;
 		    case 13:				//not
-			    if(cfg_arg_strcmp(arg, 1)) { jump = 1;}
+			    if(cfg_arg_strcmp(arg, 1)) { jump = 2;}
 			    break;
 		    case 14:shell(arg);		//shell
 			    break;
@@ -874,7 +922,7 @@ int get_cgi_body(struct cgi *ptr){
 			    break;
 		    case 21: //exit_cgi
 			    if(allocated) free(arg);
-			    return 1;
+			    return rret;
 		    case 22: //copy_ppar
 			    //arg="from_par:to_par:offset"
 			    tmp = arg;//offset
@@ -911,8 +959,8 @@ int get_cgi_body(struct cgi *ptr){
 			    if(chdir(tmp)) { jump = 1;}
 			    break;
 		    case 25: //get_file
-			    size = strncpy_(NULL, arg, 0)+1;	//this is max. size of arg-string
-			    if(size > 1 && (tmp = malloc(size))){
+			    size = strncpy_(NULL, arg, 0);	//this is max. size of arg-string
+			    if(size && (tmp = malloc(size+1))){
 				strncpy_(tmp, arg, size);
 //printf("get_file:%s %ld\n", tmp, size);
 				if(!copy_file(tmp, fp)) jump = 1; //exec in braces if file not found 
@@ -921,8 +969,8 @@ int get_cgi_body(struct cgi *ptr){
 			    }else jump = 1;//error allocate memory
 			    break;
 		    case 26:		//file_size_16
-			    size = strncpy_(NULL, arg, 0)+1;	//this is max. size of arg-string
-			    if(size > 1 && (tmp = malloc(size))){
+			    size = strncpy_(NULL, arg, 0);	//this is max. size of arg-string
+			    if(size && (tmp = malloc(size+1))){
 				strncpy_(tmp, arg, size);
 //printf("get_file:%s %ld\n", tmp, size);
 				if(!stat(tmp, &stbuf) && ((stbuf.st_size -1) < 1024*64)){
@@ -941,12 +989,12 @@ int get_cgi_body(struct cgi *ptr){
 			    
 			    break;
 		    case 27:			//nnot		-not exist or not matches
-			    if(!cfg_arg_strcmp(arg, 0)) { jump = 1;}
+			    if(!cfg_arg_strcmp(arg, 0)) { jump = 2;}
 			    break;
 		    case 28:			//include "file_name";
-			    size = strncpy_(NULL, arg, 0)+1;	//this is max. size of arg-string
+			    size = strncpy_(NULL, arg, 0);	//this is max. size of arg-string
 			    p = NULL;
-			    if(size > 1 && (tmp = malloc(size))){
+			    if(size && (tmp = malloc(size+1))){
 				strncpy_(tmp, arg, size);
 //printf("parse_file:%s %ld\n", tmp, size);
 				if(*tmp != '\0'){
@@ -987,30 +1035,43 @@ int get_cgi_body(struct cgi *ptr){
 			    link_cfg(arg);
 			    break;
 		    case 33:// free_upages(up to page.term) or free_upages; ->free pages up next from current
-			    if(*arg) p = get_page_cmp_next(arg);
+			    if(*arg) p = get_page_cmp_next(arg, 1);//free pages at actual page
 			    else p = get_last_page("0", 1);
 			    if(p){
 				free_page_n(p->next);
 				p->next = NULL;
-				if(allocated) free(arg);
-				return 2;	//if file already registered - return now!
+//comment at 24.01.2021
+//				if(allocated) free(arg);
+//				return 2;	//if file already registered - return now!
+				rret = 2;
 			    }
 			    break;
 		    case 34:// readcfg
 			    ReadConfiguration();
 			    break;
-
+		    case 36:	//else {} or else "if" {}
+			    if(i){	//not first command in cgi struct
+				if(*arg == '\0' || !strcmp(search[ptr->cmd[before] - 1], arg)){
+				    if(jump) jump = 0;//if arg not exist or matched
+				    else jump = 1;
+				}
+			    }
+			    break;
+		    case 37:	//change_alines
+			    change_line(arg, 1);
+			    break;
 		}//switch end
+	    before = i;		//which step was before
 	    fflush(fp);
 	    if(allocated) free(arg);
 //printf("check: [%d]: %s a=%d b=%d\n", i, ptr->arg[i], ptr->a, ptr->b);
-	    if(jump == 1){
-		jump = 0;
+	    if(jump){
 		if(i!=ptr->bb[i]) i = ptr->bb[i];
 		else i++;
+		if((ptr->cmd[i] != 36) /*else function*/ ) jump = 0;
 	    }else i++;
 	    }//while
-return 1;
+return rret;
 }
 
 int get_cgi(char ch, int num, unsigned char *buf){

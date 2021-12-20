@@ -1,7 +1,5 @@
-//in: path (for example: /mnt) and value (/mnt/cdrom...) and (dcase==file or ofile or !=file)
-//out: if get_dir -> dcase=dir else dcase=file , set->"retinput" 0; back->"retinput_back" 0
-
-//of ofile(ONLY file) - then no BUtton "Get Dir"
+//in: path (for example: /mnt) and value (/mnt/cdrom...) and (dcase==file or !=file)
+//out: set->"retinput" 0; back->"retinput_back" 0
 
 link:dir_origin:path%1
 link:dir:value%1
@@ -33,7 +31,7 @@ table: list
 
 12 > "DL" > "AL" 0 1
 if "dir:/?dir_origin?//!/" > "AT" 2 1 34 29 1 0 "C.." 0 fi 
-ifnot "switch:ofile/" > "AT" 38 1 83 29 5 0 "CGet|Dir" 0 fi
+ifnot "switch:file/" > "AT" 38 1 83 29 5 0 "CGet|Dir" 0 fi
 > "AT" 87 1 142 29 6 0 "CMake|Dir" 0
 > "AT" 146 1 201 29 21 0 "Cshow|Files" 0
 if "_@list+1:" > "AT" 2 33 201 61 2 0 "C" $_@list+1:20 0 fi
@@ -79,8 +77,7 @@ end
 end
 //get dir	return back
 < "A" 5
-	not "switch:ofile/" {
-	    write_par "switch:dir";		//if get_dir -> switch=dir, else switch=file or ofile-ONLY file
+	not "switch:file/" {
 	    switch "/?_referrer?/";
 	    boot_cgi [ "retinput" 0 ] {
 		boot_page "??_back??";
@@ -126,7 +123,7 @@ end
 //	    > "ZC" 120 40 "Really save|config?" 0
 	    > "AT" 36 30 68 58 22 0 "C<" 0
 	    > "AT" 36 62 91 90 6 0 "Cmake|Dir" 0
-	if "switch:/,o,file/" > "AT" 95 62 150 90 35 0 "Cmake|File" 0 fi
+	if "switch:file/" > "AT" 95 62 150 90 35 0 "Cmake|File" 0 fi
 //if "info%1:" > "AT" 72 30 104 58 2 0 "Ci" 0 fi
 //if "_etc_save:1/" > "AT" 108 30 140 58 3 0 "CS" 0 fi
 //if "_@help%1:" > "AT" 144 30 176 58 4 0 "Ch" 0 fi
@@ -151,7 +148,7 @@ end
 end
 //used as connection point dir-file
 < "A" 21
-//	if "switch:/,o,file/"{
+//	if "switch:file/"{
 		set_tbl "files = 0";
 		write_par "case:2";
 		boot_cgi [ "show_files" 0 ];
@@ -179,7 +176,7 @@ table: files
 #end_table
 
     12 > "DL" > "AL" 0 1 
-if "switch:/,o,file/"
+if "switch:file/"
 //if "dir:/?dir_origin?//!/" > "AT" 2 1 34 29 1 0 "C.." 0 fi > "AT" 38 1 93 29 5 0 "CGet|DIR" 0 // > "AT" 97 1 201 29 5 0 "CGet|DIR" 0
     > "ZL" 5 0 "DIR:" 0 > "ZL" 3 9 $dir:25:"/[/L/L/]" "|" $dir:25:"/L/L" 0
     if "_@files+1:" > "AT" 2 33 201 61 30 0 "C" $_@files+1:24 0 fi
@@ -208,7 +205,7 @@ fi
 end
 
 < "A" 30 32
-	if "switch:/,o,file/" {
+	if "switch:file/" {
 		cat_par "dir:/??_@files??";//here must be ??dir??/??_@files??
 		switch "/?_referrer?/";
 		boot_cgi [ "retinput" 0 ] {
@@ -221,10 +218,10 @@ end
 
 //page next
 < "A" 33
-	if "switch:/,o,file/" {
+	if "switch:file/" {
 	    set_tbl "files += 3";
 	}
-	not "switch:/,o,file/" {
+	not "switch:file/" {
 	    set_tbl "files += 10";
 	}
 	boot_cgi [ "show_files" 0 ];
@@ -237,10 +234,10 @@ end
 	boot_cgi [ "show_dir" 0 ];
     }
     set_tbl "files != 0"{
-	if "switch:/,o,file/" {
+	if "switch:file/" {
 	    set_tbl "files -= 3";
 	}
-	not "switch:/,o,file/" {
+	not "switch:file/" {
 	    set_tbl "files -= 10";
 	}
 	boot_cgi [ "show_files" 0 ];
@@ -249,7 +246,7 @@ end
 
 //make file
 < "A" 35
-	if "switch:/,o,file/" {
+	if "switch:file/" {
 	    clean_par "value:name";
 	    include "usb_inFile.term";
 	}
@@ -262,7 +259,7 @@ end
 	    free_upages;
 	    exit_cgi;
 	}
-	if "switch:/,o,file/"{	//file A 35
+	if "switch:file/"{	//file A 35
 	    if "name:/" {
 		if "value:/l/l"{
 		    write_ppar "value:fdir:/[/L/L/]";

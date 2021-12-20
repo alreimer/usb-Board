@@ -1,3 +1,49 @@
+20211021
+- bugfix in strncpy_ use (size = strncpy_()+1 - not correct), it must be malloc(size+1)
+20210827
+20210804
+- in parsestr1(): /Q../? is changed to /?$..../?	and		/q.../q was changed to /Q../q		see [b]
+20210622
+- in persetsr1() new /qvar | <?if?cmprestr/?var1/?text?fi? | var2/q the same as /?var/? -but used for avoid collisions [b]
+- new /etc/usb_storage_copy.sh
+- in usb_storage_known.term some changes, as well as in usb_storage_save.term
+- in parsestr1() new: /m+...\0
+- in term_tbl.c in parse_tbl() simple check replaced by "/ check:/[/!/B/!/*/]\n/\\/*/{*/////}//]/r"
+- moved parsestr1() links -> parsestr(). recursivity is still in parsestr1()
+- in parsestr1() - added /r for end (point[0]) recovery
+- improvments in terminal.c (##getTime) availible without password
+- changes in terminal.c removed putout of string "now you can enter password again" to usb-board 
+- changes in index_240x128.term according to `wait: 100 (30 seconds)' (automatic redirection after 3 fail times in 30 seconds)
+- added "bucks var" - /$ in parsestr1
+- changes in tLogin.term
+- new access braunch
+- free_upages fixed and improoved
+- added access brunch
+- bug fixes in change_line, print_str
+20201225
+- changes in parsestr1(): added /n10V or /n1v
+- changes in change_line() and adding of change_alines ""; in term_cgi.c
+20200930
+- some changes and improofments in parsestr1
+- some fixes in parsestr2 depend on point[0] and point[1]
+- no double entries in tables with parse_area and parse_file.
+- in parsestr1() now new parameter: /SS		-> means: stack the stack_
+- changes in parse_file_() [parsing consoladetions]
+- changes in terminal.c: read value in (par:/t/sV: and area:/t/sV:)
+- changed parsestr1 and parsestr2 according to copy.c of httpd functions:
+{
+- parsestr1: /!.../!.. point[1] now used fully in this combination.
+- at now: /c -> /cc this is default to /cEVc      can be /cevc /ceVc /cEvc or /cEVc  (big char means forward wave)
+	(small char means back wave)
+- moved /sv(ns) -> /sV(NS) and /hv(ns) -> /hV(NS)  == that all forawrd wave: "->"
+- moved /n10n(se) -> /n10N(SE) - this is forward wave: "->".  and now new /n2n(se) - this is back wave: "<-"
+}
+20200826
+- in term_CGI.c: cgi_loop() some changes for return NULL. this means: "ERR: undef command in search[] in CGI script"
+20200809
+- created mc.term branch in term files
+- changes in "else" function
+- in copy_cgi.c added functions "else", "cat_par"
 20200319
 - in term_tbl.c added for parsing: #-> get_ofolder: path		only folername without path
 - correction of %d in terminal.c and term_cgi.c to %ld for github

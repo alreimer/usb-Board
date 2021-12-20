@@ -1,6 +1,6 @@
 /* terminal.c:  A very simple connection programm for USB-Board
  *
- * Copyright (c) 2015-2020 Alexander Reimer <alex_raw@rambler.ru>
+ * Copyright (c) 2015-2021 Alexander Reimer <alex_raw@rambler.ru>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ char etc_save[2];
 char buf[65537];//65536 + 1
 unsigned long long buf_size = 0;
 char version[256];
-char value[16];
+//char value[1024];
 char auth[5];
 
 
@@ -51,6 +51,7 @@ int copy_file(char *file, FILE *out)
   FILE *fp;
   int n;
   int wrote;
+  char buf_fer[2078];
   char *err_str="[ERR] File: %s cannot open\n";
 
   if((fp=fopen(file,"r")) == NULL){
@@ -59,8 +60,8 @@ int copy_file(char *file, FILE *out)
     return 1;
   }
   else{
-    while ((n = fread(buffer,1,sizeof(buffer),fp)) != 0) {
-	wrote = fwrite(buffer,n,1,out);
+    while ((n = fread(buf_fer,1,sizeof(buf_fer),fp)) != 0) {
+	wrote = fwrite(buf_fer,n,1,out);
 	if (wrote < 1){
 	    fclose(fp);
 	    return 1;
@@ -157,7 +158,7 @@ struct page_n *get_page(char *name){
     struct page_n *ptr = p_n;
 
     while(ptr){
-	if(ptr->name && parsestr1(ptr->name, name)){
+	if(ptr->name && parsestr(ptr->name, name)){
 		return ptr;	//matched name with entry_name
 	 }
 	ptr = ptr->next;
@@ -175,10 +176,15 @@ struct page_n *get_page_cmp(char *name){
     return NULL;
 
 }
-struct page_n *get_page_cmp_next(char *name){
+struct page_n *get_page_cmp_next(char *name, int flag){
     struct page_n *ptr = p_n;
+    int next;
+    if(flag == 1) next = 0;	//if flag == 1 -> name mast be nexter as actual page
+    else next = 1;
+
     while(ptr){
-	if(ptr->next && ptr->next->name && !strcmp(ptr->next->name, name))	return ptr;	//matched name with entry_name
+	if(flag && !next && (&(ptr->cfg) == cfg_p)) next = 1;
+	if(next && ptr->next && ptr->next->name && !strcmp(ptr->next->name, name))	return ptr;	//matched name with entry_name
 	ptr = ptr->next;
     }
     return NULL;
@@ -191,7 +197,7 @@ struct file_n {
 };
 
 char *parse_file_(char *data, struct file_n *f_n, int make, int loop){
-	char *ptr1, *tmp, *a, ch, i;
+	char *ptr1, *tmp, *a, i;
 	unsigned long long digi, str_size;
 	struct cfg_parse1 *cfg_pointer,/* *cfg_pointer1,*/ **cfg;
 	struct parsestr parser;
@@ -201,34 +207,32 @@ char *parse_file_(char *data, struct file_n *f_n, int make, int loop){
 
     while((data != NULL) && *data){
 
-	ch = *data;
-	if(*data == '/'){
-	    data++;
-	    if(*data == '/') {do{ data++; if(*data == '\n'){ data+=1; break;}} while(*data); continue;}	//comment //...
-	    if(*data == '*') {do{ data++; if(*data == '*'&& *(data+1) == '/'){ data+=2; break;}} while(*data); continue;}	//comment /*...*/
-	    data--;
-	}
 	if(*data == ' ' || *data == '\t' || *data == '\n' || *data == '\r') {data++;continue;}
 
+	else if(tmp = parsestr2(&parser, NULL, data, "/n0N/ /B//*/**///\\/////*\n"
+				"/\\/sV/n22n"
+				"/\\>/n23n"
+				"/\\par:/t/sV:/[/*/]\n/n1n"
+				"/\\area:/t/sV:/[/*/]\n/n2n"
+				"/\\readcfg/n3n"
+				"/\\link:/t/[/*/]\n/n4n"
+				"/\\include:/t/[/*/]\n/n5n"
+				"/\\wr_shell:/t/[/*/]\n/n6n"
+				"/\\wr_par:/t/[/*/]\n/n7n"
+				"/\\shell:/t/[/*/]\n/n8n"
+				"/\\cgi:/t/[/*/]\n/n9n"
+				"/\\table:/t/[/*\\n/]#end_table\\n/n20n"
+				"/\\\"/[/*/N\\N/]\"/n21n")){
+	    if(make == 1){
+	    switch(parser.num){
+		case 1:
 /*** par -parameter ***/
-	else if(tmp = parsestr1(data, "par:/t")){
-	    data = tmp;
-	    while(*tmp && *tmp != '\n' && *tmp != '\r'){tmp++;}
-//size=tmp-data
-//insert
-    if(make == 1){
-	i = 0;
-	digi = 0;
-	while(data[i] >= '0' && data[i] <= '9' /*&& digi*10*/){
-	    digi = digi*10 + (data[i] - '0');
-	    i++;
-//	    if(i > 3) break;
-	}
-	if(!digi || digi > 300 || (cfg_p == NULL)) {data = tmp; continue;}	//size is in impassable range - so skip it all (whole parameter string will be skipped!)
+	digi = value_;
+	if(!digi || digi > 300 || (cfg_p == NULL)) {break;}	//size is in impassable range - so skip it all (whole parameter string will be skipped!)
 
 	cfg_pointer = (struct cfg_parse1 *)malloc(sizeof(struct cfg_parse1));
 
-	if(cfg_pointer == NULL){ data = tmp; continue;}
+	if(cfg_pointer == NULL){ break;}
 
 	cfg = cfg_p;
 	while(*cfg){
@@ -236,19 +240,19 @@ char *parse_file_(char *data, struct file_n *f_n, int make, int loop){
 	}
 	*cfg = cfg_pointer;
 
-	str_size = tmp - data - i - 1;		//   v - (2chars) is for shore
+	str_size = parser.zero - tmp;			//   v - (2chars) is for shore
 	ptr1 = (char*)malloc(str_size + 1 + 2*digi + 2);//str = "[part of string][value][new_value]"
 	if(ptr1 == NULL){
 	    printf("ERROR allocate memory\n");
 	    free(*cfg);
 	    *cfg = NULL;	//main criteria to abort moving in array.
-
-	    data = tmp;
-	    continue;
+	    break;
 	}
 
-	strncpy(ptr1, data + i + 1, str_size);//256:web_name:name:pattern
+	strncpy(ptr1, tmp, str_size);//256:web_name:name:pattern
 	ptr1[str_size] = '\0';
+
+//printf("par-->%s<--\n", ptr1);
 
 	cfg_pointer->type = CFG_PAR;
 	cfg_pointer->str = ptr1;
@@ -256,7 +260,7 @@ char *parse_file_(char *data, struct file_n *f_n, int make, int loop){
 	cfg_pointer->changed = 0;
 	cfg_pointer->position = 0;
 	cfg_pointer->saved = 0;
-	cfg_pointer->value = ptr1 + str_size+1;
+	cfg_pointer->value = ptr1 + str_size + 1;
 //	*(cfg_pointer->value) = '\0';
 	cfg_pointer->new_value = ptr1 + str_size + 1 + digi;
 //	*(cfg_pointer->new_value) = '\0';
@@ -282,30 +286,15 @@ char *parse_file_(char *data, struct file_n *f_n, int make, int loop){
 	    }
 printf("Collected parameter: --%s--%s--%lld--%s--\n", cfg_pointer->web_name, cfg_pointer->name, cfg_pointer->size, cfg_pointer->pattern);
 //insert
-
-    }//if(make)
-	    data = tmp;
-	    continue;
-	}//else if(!strncmp)
+		    break;
+		case 2:
 /** area:size:web_name **/
-	else if(tmp = parsestr1(data, "area:/t")){
-	    data = tmp;
-	    while(*tmp && *tmp != '\n' && *tmp != '\r'){tmp++;}
-//size=tmp-data
-//insert
-    if(make == 1){
-	i = 0;
-	digi = 0;
-	while(data[i] >= '0' && data[i] <= '9' /*&& digi*10*/){
-	    digi = digi*10 + (data[i] - '0');
-	    i++;
-//	    if(i > 3) break;
-	}
-	if(digi > 64*1024 || (cfg_p == NULL)) {data = tmp; continue;}	//size is in impassable range - so skip it all (whole parameter string will be skipped!)
+	digi = value_;
+	if(digi > 64*1024 || (cfg_p == NULL)) {break;}	//size is in impassable range - so skip it all (whole parameter string will be skipped!)
 
 	cfg_pointer = (struct cfg_parse1 *)malloc(sizeof(struct cfg_parse1));
 
-	if(cfg_pointer == NULL){ data = tmp; continue;}
+	if(cfg_pointer == NULL){ break;}
 
 	cfg = cfg_p;
 	while(*cfg){
@@ -313,18 +302,19 @@ printf("Collected parameter: --%s--%s--%lld--%s--\n", cfg_pointer->web_name, cfg
 	}
 	*cfg = cfg_pointer;
 
-	str_size = tmp - data - i - 1;		// v - (2chars) is for shore
+	str_size = parser.zero - tmp;			// v - (2chars) is for shore
 	ptr1 = (char*)malloc(str_size + 1 + digi + 2);//str = "[part of string][value]"
 	if(ptr1 == NULL){
 	    printf("ERROR allocate memory\n");
 	    free(*cfg);
 	    *cfg = NULL;	//main criteria to abort moving in array.
-	    data = tmp;
-	    continue;
+	    break;
 	}
 
-	strncpy(ptr1, data + i + 1, str_size);//web_name
+	strncpy(ptr1, tmp, str_size);//web_name
 	ptr1[str_size] = '\0';
+
+//printf("area-->%s<--\n", ptr1);
 
 	cfg_pointer->type = (digi != 0) ? CFG_AREA:CFG_TMP;
 	cfg_pointer->str = ptr1;
@@ -333,7 +323,7 @@ printf("Collected parameter: --%s--%s--%lld--%s--\n", cfg_pointer->web_name, cfg
 	cfg_pointer->position = 0;
 	cfg_pointer->saved = 0;
 	if(digi != 0){
-	cfg_pointer->value = ptr1 + str_size+1;
+	cfg_pointer->value = ptr1 + str_size + 1;
 //	*(cfg_pointer->value) = '\0';
 	cfg_pointer->new_value = cfg_pointer->value;
 //	cfg_pointer->new_value = ptr1 + str_size + 1 + digi;
@@ -350,63 +340,83 @@ printf("Collected parameter: --%s--%s--%lld--%s--\n", cfg_pointer->web_name, cfg
 
 printf("Collected area: --%s--%lld--\n", cfg_pointer->web_name, cfg_pointer->size);
 //insert
-    }//if(make)
-	    data = tmp;
-	    continue;
-	}//else if(!strncmp)
+		    break;
+		case 3:
+		    ReadConfiguration();
+		    break;
+		case 4:
+		    link_cfg(tmp);/** link:to_name:from_name **/
+		    break;
+		case 5:
+		    parse_file(tmp, 1);	//parse file w/o erease of other parameters
+		    break;
+		case 6:
+		    wr_shell(tmp, 0);	//write to shell  "from_par:to_par:cmd"
+		    break;
+		case 7:
+		// write_par  par:value		this is used in copy_CGI.c - the same code!
+		    ptr1 = w_strtok(&tmp, ':');//ptr1 = par, tmp = value
+		    if(ptr1 && *ptr1 && *tmp){
+			a = get_var(&str_size, ptr1);
+			if(a && str_size){
+			    strncpy_(a, tmp, str_size-1);
+//			    tmp[str_size-1] = '\0';
+			}
+			if(ptr1 != tmp) *(tmp-1) = ':';
+		    }
+		    break;
+		case 8:
+		    my_shell(fp, tmp);
+/*			str_size = parser.zero - tmp;
+			if(str_size != 0){
+			ptr1 = (char *)malloc(str_size + 2);
+			if(ptr1){
+			    strncpy(ptr1, tmp, str_size);
+			    ptr1[str_size] = '\0';
+//printf("shell--%s--\n", ptr1);
+			    my_shell(fp, ptr1);
+			    free(ptr1);
+			}
+			}else{ printf("WARN: shell line of file: %s, at char %ld, is empty!\n", f_n->file_name, data-(f_n->begin));}
+*/
+		    break;
+		case 9:
+			str_size = parse_cgi_name(tmp, &ptr1, NULL);//ptr1 - is end(\n or \0) of cgi-string
+//printf("-%s--%d->--%s--<<\n", tmp, str_size, ptr1);
+//printf("%lld\n", str_size);
+			if( str_size == 0 || str_size > MAX_SIZE_OF_NAME ){ printf("WARN:terminal: Length of cgi name: %lld\n", str_size); break;}
+			a = (char *)malloc(str_size+2);
+			if(a != NULL){
+			    parse_cgi_name(tmp, &ptr1, a);
+			    get_cgi(0, str_size, a);
+			    free(a);
+			}
+		    
+		    break;
+		case 20:
+		    parse_tbl(tmp, 0);//without clean
+		    break;
+		case 21:
+		    print_str(fp, tmp);//string:  "??variable?? \"text\""
+		    break;
+		case 22:
+		    //digits parse
+		    digi = value_;
+		    if(digi > 255){ printf("char #%ld is > 255 in file %s\n", tmp-(f_n->begin), f_n->file_name);}
+		    putc(digi % 256, fp);
+		    break;
+		case 23:
+		    putc(27, fp);	//0x1b = ESC
+		    break;
 
-	else if(tmp = parsestr1(data, "readcfg")){
-//	else if(!strncmp(data, "readcfg", 7)){
-//	    data += 7;
-	    data = tmp;
-	    if(make == 1) ReadConfiguration();
-	    continue;
-	}
-/** link:to_name:from_name **/
-	else if(tmp = parsestr2(&parser, data, "link:/t/[/*/]\n")){
-	    if(make == 1){
-		link_cfg(tmp);
-	    }
+	    }//switch(num)
+	    }//if(make)
 	    data = restore_str(&parser);
 	    continue;
-	}
+	}//if(parsestr)
 
 
-//digits parse
-	i = 0;
-	digi = 0;
-	while(data[i] >= '0' && data[i] <= '9' /*&& digi*10*/){
-	    digi = digi*10 + (data[i] - '0');
-	    i++;
-	    if(i > 2) break;
-	}
-	if(i != 0){
-	    if(digi > 255){ printf("char #%ld is > 255\n", data-(f_n->begin));}
-	    if(make) putc(digi % 256, fp);
-//printf("-- %d --\n", digi);
-	    data = data + i;
-	    if(*data != ' ' && *data != '\t' && *data != '\r' && *data != '\n' && *data != '\0') printf("char #%ld in file: %s is not correct separated!\n", data-(f_n->begin), f_n->file_name);
-	    continue;
-	}
-
-	if(*data == '>') ch = 27; //0x1b = ESC
-
-	else if(*data == '\"') {data++;		//string:  "??variable?? \"text\""
-			    tmp = data;
-			    while(*tmp){
-				if(*tmp == '\"' && *(tmp-1) != '\\'){	//not \"
-//				    tmp++;
-				    break;
-				}
-//printf("%c", *tmp);
-//			    if(make) putc(*tmp, fp);
-			    tmp++;
-			    }
-	    i = *tmp; if(i != '\0'){ if(make){*tmp = '\0'; print_str(fp, data); *tmp = i;} tmp++;}
-	    data = tmp;
-	    continue;
-
-	}else if(*data == '$'){			//insert a string parameter
+	if(*data == '$'){			//insert a string parameter
 	    data++;
 	    tmp = data;
 //	    while(*tmp && *tmp != ' ' && *tmp != '\t' && *tmp != '\n' && *tmp != '\r' && *tmp != '\"'){tmp++;}
@@ -446,8 +456,8 @@ printf("Collected area: --%s--%lld--\n", cfg_pointer->web_name, cfg_pointer->siz
 			    }
 			    if(str_size != 0) str_size = MIN(digi, str_size-1);
 			    i = 0;
-			    if((ptr2 = parsestr1(ptr1, "\"/[/*/N\\N/]\"/")) != NULL){
-				a = parsestr2(&parser, a, ptr2);
+			    if((ptr2 = parsestr(ptr1, "\"/[/*/N\\N/]\"/")) != NULL){
+				a = parsestr2(&parser, NULL, a, ptr2);
 				if(a != NULL) i = 1;//used for restoring of string after
 			    }
 
@@ -496,7 +506,7 @@ printf("Collected area: --%s--%lld--\n", cfg_pointer->web_name, cfg_pointer->siz
 	    data = tmp;
 	    continue;
 /*** big IF configuration ***/
-	}else if(tmp = parsestr2(&parser, data, "if/t\"/[/*/N\\N/]\"")){
+	}else if(tmp = parsestr2(&parser, NULL, data, "if/t\"/[/*/N\\N/]\"")){
 	    mk = 1;
 	    if(make){
 		if(cfg_arg_strcmp(tmp, 0)){//par -not exist or not match
@@ -505,13 +515,13 @@ printf("Collected area: --%s--%lld--\n", cfg_pointer->web_name, cfg_pointer->siz
 	    }
 	    data = restore_str(&parser);
 	    data = parse_file_(data, f_n, (make && mk), loop + 1);
-	    if(tmp = parsestr1(data, "else/ ")){
+	    if(tmp = parsestr(data, "else/ ")){
 		if(mk) mk = 0;
 		else mk = 1;
 		data = parse_file_(tmp, f_n, (make && mk), loop + 1);
 	    }
 	    continue;
-	}else if(tmp = parsestr2(&parser, data, "ifnot/t\"/[/*/N\\N/]\"")){
+	}else if(tmp = parsestr2(&parser, NULL, data, "ifnot/t\"/[/*/N\\N/]\"")){
 	    mk = 1;
 	    if(make){
 		if(cfg_arg_strcmp(tmp, 1)){//par -not exist or match
@@ -520,7 +530,7 @@ printf("Collected area: --%s--%lld--\n", cfg_pointer->web_name, cfg_pointer->siz
 	    }
 	    data = restore_str(&parser);
 	    data = parse_file_(data, f_n, (make && mk), loop + 1);
-	    if(tmp = parsestr1(data, "else/ ")){
+	    if(tmp = parsestr(data, "else/ ")){
 		if(mk) mk = 0;
 		else mk = 1;
 		data = parse_file_(tmp, f_n, (make && mk), loop + 1);
@@ -533,7 +543,7 @@ printf("Collected area: --%s--%lld--\n", cfg_pointer->web_name, cfg_pointer->siz
 		printf("main: \"if\" not present!\n");
 		continue;
 	    }
-	} else if(tmp = parsestr1(data, "else")){	//return for inversing make.
+	} else if(tmp = parsestr(data, "else")){	//return for inversing make.
 	    if(loop) return data;
 	    else {
 		printf("main: else without if\n");
@@ -547,7 +557,7 @@ printf("Collected area: --%s--%lld--\n", cfg_pointer->web_name, cfg_pointer->siz
 		//tmp = functon(data);
 		data = tmp;
 	    }else{
-		tmp = parsestr1(data, "/{*/B\"\"/\\\"/*/N\\N\"/\\"
+		tmp = parsestr(data, "/{*/B\"\"/\\\"/*/N\\N\"/\\"
 					"[/{*/B\"\"/\\\"/*/N\\N\"/\\table:/*\n#end_table/\\//*/**///\\/////*\n/\\/|/E/}]"
 					"/\\//*/**///\\/////*\n/--/\\/|/E/}\nend");
 		if(tmp){data = tmp;}
@@ -557,82 +567,8 @@ printf("Collected area: --%s--%lld--\n", cfg_pointer->web_name, cfg_pointer->siz
 	    }
 	    continue;
 	}
-	else if(a = parsestr1(data, "shell:/t")){
-//	    while(*a == ' ' || *a == '\t'){a++;}
-	    tmp = a;
-	    while(*tmp && *tmp != '\n' && *tmp != '\r'){tmp++;}
-	    if(make == 1){
-	    str_size = tmp - a;
-	    if(str_size != 0){
-		ptr1 = (char *)malloc(str_size + 2);
-		if(ptr1){
-		    strncpy(ptr1, a, str_size);
-		    ptr1[str_size] = '\0';
-//printf("shell--%s--\n", ptr1);
-		    my_shell(fp, ptr1);
-		    free(ptr1);
-		}
-	    }else{ printf("WARN: shell line of file: %s, at char %ld, is empty!\n", f_n->file_name, data-(f_n->begin));}
-	    }//if(make == 1)
 
-	    data = tmp;
-	    continue;
-	}
-	else if(a = parsestr1(data, "cgi:/t")){
-//	    while(*a == ' ' || *a == '\t'){a++;}
-//	    tmp = a;
-	    str_size = parse_cgi_name(a, &ptr1, NULL);//ptr1 - is end(\n) of cgi-string
-//printf("-%s--%d->--%s--<<\n", a, str_size, ptr1);
-//printf("%lld\n", str_size);
-	    if( str_size == 0 || str_size > MAX_SIZE_OF_NAME ){ printf("WARN:terminal: Length of cgi name: %lld\n", str_size); data = ptr1; continue;}
-	    tmp = (char *)malloc(str_size+2);
-	    if(tmp != NULL){
-		parse_cgi_name(a, &ptr1, tmp);
-		get_cgi(0, str_size, tmp);
-		free(tmp);
-
-	    }
-	    data = ptr1;
-	    continue;
-	}else if(tmp = parsestr2(&parser, data, "include:/t/[/*/]\n")){
-	    if(make == 1){
-		parse_file(tmp, 1);	//parse file w/o erease of other parameters
-	    }
-	    data = restore_str(&parser);
-	    continue;
-	}else if(tmp = parsestr2(&parser, data, "wr_shell:/t/[/*/]\n")){
-	    if(make == 1){
-		wr_shell(tmp, 0);	//write to shell  "from_par:to_par:cmd"
-	    }
-	    data = restore_str(&parser);
-	    continue;
-	} else if(tmp = parsestr2(&parser, data, "wr_par:/t/[/*/]\n")){	//wr_par: par:value
-
-		if(make == 1){
-		// write_par  par:value		this is used in copy_CGI.c - the same code!
-		    ptr1 = w_strtok(&tmp, ':');//ptr1 = par, tmp = value
-		    if(ptr1 && *ptr1 && *tmp){
-			a = get_var(&str_size, ptr1);
-			if(a && str_size){
-			    strncpy_(a, tmp, str_size-1);
-//			    tmp[str_size-1] = '\0';
-			}
-			if(ptr1 != tmp) *(tmp-1) = ':';
-		    }
-		}
-	    data = restore_str(&parser);
-	    continue;
-	}else if(tmp = parsestr2(&parser, data, "table:/t/[/*\\n/]#end_table\\n")){
-	    if(make == 1){
-		parse_tbl(tmp, 0);//without clean
-	    }
-	    data = restore_str(&parser);
-	    continue;
-	}
-
-
-
-	if(make) putc(ch, fp);
+	putc(*data, stderr);//check the cleaning
 	data++;
     }
 
@@ -802,6 +738,8 @@ int read_buf__(char *buff){
     while(1){
 
     if(line[n] != NULL && line[n][i] == '\0'){
+
+
 	printf("Func: %d\n", n);
 	switch(n){
 	    case 0:
@@ -919,7 +857,7 @@ int read_buf__(char *buff){
 
     buff[i] = getc(fp);
 //let it here for check of inputs, see bugfix for details
-//printf("%c i=%d, n=%d\n", buff[i], i, n);
+printf("%c i=%d, n=%d size of buff:%d\n", buff[i], i, n, sizeof(buff));
 
     if(line[n] != NULL){
 	if(buff[i] == line[n][i]){
@@ -936,15 +874,14 @@ int read_buf__(char *buff){
 		}
 	    k++;
 	    }
-//bugfix
-	    if(line[n] == NULL){
-//printf("---------i=%d, n=%d\n", i, n);
-		i = 1;
+
+	    if(line[n] == NULL){//empty (not found in line[]) - go to begining
+		i = 0; 
 		n = 0;
 		continue;
 	    }
-//end of bugfix
-	    if(k == i+1){		//after loop in n is matched line
+
+	    if(k == i+1){	//buff match to line - increase i.
 		i++;
 		continue;
 	    }
@@ -1000,7 +937,6 @@ int main(int argc, char *argv[]){
 
     if((filep=fopen("/tmp/termlock","r")) != NULL){
 	auth[0] = '4';
-	alarm(20);
 	fclose(filep);
     } else auth[0] = '1';
 

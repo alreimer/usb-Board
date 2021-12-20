@@ -1,0 +1,24 @@
+12   > "DL" > "TC" 0 > "AL" 0 1
+> "AT" 2 1 98 60 1 0 "Ccopy" 0
+> "AT" 106 1 201 60 2 0 "Cmove" 0
+> "AT" 2 67 98 125 3 0 "Crename" 0
+> "AT" 106 67 201 125 4 0 "Cremove" 0
+> "AT" 205 1 237 29 5 0 "C<" 0
+//> "AT" 205 97 237 125 6 0 "C>" 0
+
+< "A" 1
+    boot_page "mc_copy.term";
+end
+< "A" 2
+    boot_page "mc_move.term";
+end
+< "A" 3
+    boot_page "mc_rename.term";
+end
+< "A" 4
+    boot_page "mc_remove.term";
+end
+< "A" 5
+    boot_page "index-main_4.term";
+end
+

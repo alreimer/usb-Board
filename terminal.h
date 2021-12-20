@@ -2,6 +2,7 @@
 extern char etc_save[];
 extern char auth[];
 extern char buf[];		//buffer for writting some information
+extern FILE *fp;
 
 int parse_file(char *file_name, char flag); //flag == 0 ->free parsed file
 int copy_file(char *file, FILE *out);
@@ -20,5 +21,5 @@ void free_page_n(struct page_n *ptr);		//free pages up ptr
 struct page_n *get_last_page(char *num, int flag);//num="0" or "1" or ... "5"
 struct page_n *get_page(char *name);
 struct page_n *get_page_cmp(char *name);	//if return page with name == name
-struct page_n *get_page_cmp_next(char *name);	//if return page witch next name is == name
+struct page_n *get_page_cmp_next(char *name, int flag);	//if return page witch next name is == name
 

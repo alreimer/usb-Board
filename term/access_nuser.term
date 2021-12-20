@@ -1,0 +1,128 @@
+//remove . from parse_file
+area:60:file
+wr_par: file:/etc/passwd
+//area:60:groups
+//wr_par: groups:/etc/group
+
+area:2:case
+wr_par: case:0
+area:60:user
+area:300:AREApw
+area:6000:val_end
+
+
+area:2048:value
+area:28:hname
+area:2048:path
+area:20:dcase
+
+< "retinput" 0
+	free_upages;
+	if "case:0/"{//default
+	    write_par "case:1";
+	    clean_par "value:user:AREApw:val_end";
+	    write_par "hname:Enter user name:";
+	    include "access_input.term";
+	    exit_cgi;
+	}
+	if "case:1/"{//user
+	    not "value:/B/*/<1;,:\"<>`'$*?| />/\\0"{
+	    change_line "??file??:/?value/?\::{?/\?}"{
+		write_par "case:2";
+		write_par "user:??value??";
+		clean_par "value";
+		write_par "hname:Enter password:";
+		include "access_input.term";
+		exit_cgi;
+	    }
+	    write_par "case:0";
+	    print [ 12  > "DL" > "AL" 0 1 > "ZC" 120 8 "Error:|User|??value??|already exist" 0 > "AT" 205 97 237 125 21 0 "C<" 0 ];
+	    exit_cgi;
+	    }
+	    write_par "case:0";
+	    print [ 12  > "DL" > "AL" 0 1 > "ZC" 120 8 "Error:|??value?? has unsupported characters:|;,: \"<>`'$*?" 0 > "AT" 205 97 237 125 21 0 "C<" 0 ];
+	    exit_cgi;
+	}
+	if "case:2/"{//pwd change
+	    write_par "case:3";
+	    not "value:/"{
+		write_system ":AREApw:echo -n $(cryptpw \"??value??\" 2>/dev/null)";
+//		write_system ":AREApw:echo -n halloHALLO";
+		if "AREApw:/"{
+		    print [ 12  > "DL" > "AL" 0 1 > "ZC" 120 8 "Error:|cryptpw not exist" 0 > "AT" 205 97 237 125 21 0 "C<" 0 ];
+		    exit_cgi;
+		}
+
+		clean_par "value";
+		include "access_igroups.term";
+		exit_cgi;
+	    }
+	    write_par "AREApw:x";
+	    clean_par "value";
+	    include "access_igroups.term";
+
+//	    write_par "case:0";
+//	    print [ 12  > "DL" > "AL" 0 1 > "ZC" 120 8 "Error:|value cannot be empty" 0 > "AT" 205 97 237 125 21 0 "C<" 0 ];
+	    exit_cgi;
+	}
+	if "case:3/"{//group
+	    if "value:/<-1234567890/>/"{
+		write_par "case:4";
+		cat_par "val_end:??value??:";
+		clean_par "value";
+		write_par "path:/mnt";
+		write_par "dcase:dir";
+		include "usb_inDir.term";
+		exit_cgi;
+	    }
+	    write_par "case:0";
+	    print [ 12  > "DL" > "AL" 0 1 > "ZC" 120 8 "Error:|??value??|is not digit" 0 > "AT" 205 97 237 125 21 0 "C<" 0 ];
+	    exit_cgi;
+	}
+	if "case:4/"{//path
+	    not "value:/"{
+		write_par "case:5";
+		cat_par "val_end:user:??value??:";
+		clean_par "value";
+		include "access_ishell.term";
+		exit_cgi;
+	    }
+	    write_par "case:0";
+	    print [ 12  > "DL" > "AL" 0 1 > "ZC" 120 8 "Error:|value cannot be empty" 0 > "AT" 205 97 237 125 21 0 "C<" 0 ];
+	    exit_cgi;
+	}
+	if "case:5/"{//shell
+	    not "value:/n0V/"{
+		cat_par "val_end:??value??";
+//make here line
+		change_line "??file??:/<*!-9;-}/>\:/<*!-9;-}/>\:/!/B/?_value/?\:/iv+1v/\/!/*\:/*\:/*\:/*\::??user??:??AREApw??:??_value??:??val_end??\n{?/\?}"{
+		    shell "echo \"??user??:??AREApw??:??_value??:??val_end??\" >> ??file??";
+		}
+		write_par "_etc_save:1";
+		print [ 12  > "DL" > "AL" 0 1 > "ZC" 120 8 "All is done!" 0 > "AT" 205 97 237 125 22 0 "C>" 0 ];
+		exit_cgi;
+	    }
+	    write_par "case:0";
+	    print [ 12  > "DL" > "AL" 0 1 > "ZC" 120 8 "Error:|value cannot be empty" 0 > "AT" 205 97 237 125 21 0 "C<" 0 ];
+	    exit_cgi;
+	}
+end
+
+< "retinput_back" 0
+//    if "case:1/" {
+	boot_page "??_referrer??";
+//    }
+//	boot_cgi [ "retinput" 0 ];
+//?	free_upages;
+end
+//
+< "A" 21
+    write_par "case:0";
+    boot_cgi [ "retinput" 0 ];
+end
+
+< "A" 22
+    boot_page "??_referrer??";
+end
+
+cgi: "retinput" 0

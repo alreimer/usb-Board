@@ -1,6 +1,6 @@
 /* copy_tbl.c:
  *
- * Copyright (C) 2013-2020  Alexander Reimer <alex_raw@rambler.ru>
+ * Copyright (C) 2013-2021  Alexander Reimer <alex_raw@rambler.ru>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@ void parse_tbl(char *data, char clean){
 
     char *tmp, *tmp2, *err = "ERR: allocate memory %d\n";
     struct tbl **ptr;
-    struct rnd_tbl **rnd_ptr, *rnd_p;
+    struct rnd_tbl **rnd_ptr, *rnd_p, *p;
     struct parsestr prsstr;
 //    long int rnd;
     unsigned int num = 1;
@@ -94,14 +94,14 @@ printf("script %s\n", (*ptr)->name);
 //#-> check_Nfolders
 //fold_name
 //#-> end
-		if(parsestr1(tmp+3,"/n0n/ check_/Bfolders/ /n1n/\\" //flag = 1
+		if(parsestr(tmp+3,"/n0N/ check_/Bfolders/ /n1n/\\" //flag = 1
 					"Nfolders/ /n2n/\\" //flag = 2
 					"files/ /n3n/E/" //flag = 3
 					)){
 		    flag = number;
 
 		    while(tmp = w_strtok(&data, '\n')){
-			tmp2 = parsestr1(tmp, "#->/ end/ /");//thing about it!
+			tmp2 = parsestr(tmp, "#->/ end/ /");//thing about it!
 			if(tmp2){
 			    //data = tmp2;
 			    break;
@@ -160,27 +160,32 @@ printf("Exist folder: %d %s\n", rnd_p->rnd_entry, rnd_p->entry);
 		    continue;
 		}
 //*****************
-		tmp2 = parsestr1(tmp+3, "/n0n/ get_/Bfolder:/n1n/ /\\" //flag = 1
-					"files:/n2n/ /\\" //flag = 2
-					"ofiles:/n3n/ /\\" //flag = 3
-					"ofolder:/n4n/ " //flag = 4
+		tmp2 = parsestr(tmp+3, "/n0N/ get_/Bfolder:/n1n/t/\\" //flag = 1
+					"files:/n2n/t/\\" //flag = 2
+					"ofiles:/n3n/t/\\" //flag = 3
+					"ofolder:/n4n/t" //flag = 4
 					);	//#-> get_folder:  /mnt
 		flag = number;
 		if(tmp2 && flag){
 //here can be added strncpy_ for /path/??par??
 		    char *tmp5, *check_ = NULL;
 		    unsigned long long size;
-		    check_ = parsestr1(data, "/ check:/[/*/]\n");
-		    if(check_){
+		    check_ = parsestr(data, "/ check:/[/!/B/!/*/]\n/\\/*/{*/////}//]/r/m+TBL_folder_files:check has //]\\n\\0");
+		    if(point[1]){
 			data = point[1];
-			if(parsestr1(check_, "/*/{*/////}//]")){
-			    check_ = "/!";//nothing show at all!!
-			    printf("Warning: check is with /]\n");
-			}
+			if(check_ == NULL) check_ = "/!";//nothing show at all!!
 		    }
+//		    check_ = parsestr(data, "/ check:/[/*/]\n");
+//		    if(check_){
+//			data = point[1];
+//			if(parsestr(check_, "/*/{*/////}//]")){
+//			    check_ = "/!";//nothing show at all!!
+//			    printf("Warning: check is with /]\n");
+//			}
+//		    }
 
-		    size = strncpy_(NULL, tmp2, 0)+1;	//this is max. size of tmp2-string
-		    if(size > 1 && (tmp5 = malloc(size))){
+		    size = strncpy_(NULL, tmp2, 0);	//this is max. size of tmp2-string
+		    if(size && (tmp5 = malloc(size+1))){
 			strncpy_(tmp5, tmp2, size);
 			if((dir = opendir(tmp5))== 0){
 				printf("Unable to open directory %s, %d\n", tmp5, errno);
@@ -204,7 +209,7 @@ printf("file:%s, %d\n", tmp, dirent->d_type);
 			    if(dirent->d_type != DT_REG && dirent->d_type != 0) continue;
 			    //i dont know, but file_type on NAS is 0
 			}
-			if(check_ && (parsestr1(tmp, check_) == NULL)) continue;//if check not found -> skip parseing  //new
+			if(check_ && (parsestr(tmp, check_) == NULL)) continue;//if check not found -> skip parseing  //new
 
 			*rnd_ptr = (struct rnd_tbl *)malloc(sizeof(struct rnd_tbl));
 			if(*rnd_ptr == NULL){
@@ -252,21 +257,23 @@ printf("Special: %d %s %d\n", rnd_p->rnd_entry, rnd_p->entry, dirent->d_type);
 		//    system("/bin/ls -F -w 1 /mnt | grep -v spool> /var/run/mnt_dir");
 		}
 //********************
-		tmp2 = parsestr1(tmp+3, "/n0n/ parse_/Bfile:/n1n/ /\\"	//flag = 1	#-> parse_file:  /etc/fstab
-					"area:/n2n/ "	//flag = 2	#-> parse_area:  AREA-1
+		tmp2 = parsestr(tmp+3, "/n0N/ parse_/Bfile:/n1n/t/\\"	//flag = 1	#-> parse_file:  /etc/fstab
+					"area:/n2n/t"	//flag = 2	#-> parse_area:  AREA-1
 					);	//#-> get_folder:  /mnt
 		flag = number;
 		if(tmp2 && flag){
 		    char *dat, *tmp3, *tmp4[TAB_LEN], *tmp5, *tmp6, *check = NULL, *mixed = NULL;
 		    int i = 0;
 		    unsigned long long size;
-			tmp3 = parsestr1(data, "/ while:/[/*/]\n");
+			tmp3 = parsestr(data, "/ while:/[/*/]\n");
 			if(tmp3){ 
-			    mixed = parsestr1(point[1], "/ mixed\n");
-			    //data = point[1];
-			    check = parsestr1(point[1], "/ check:/[/*/]\n");
 			    data = point[1];
-			    while(tmp5 = parsestr1(data, "/ if:/[/*/]\n")){
+			    mixed = parsestr(data, "/ mixed\n");
+			    if(point[1]) data = point[1];
+			    check = parsestr(data, "/ check:/[/!/B/!/*/]\n/\\/*/{*/////}//]/r/m+TBL:check has //]\\n\\0");
+//			    check = parsestr(data, "/ check:/[/*/]\n");
+			    if(point[1]) data = point[1];
+			    while(tmp5 = parsestr(data, "/ if:/[/*/]\n")){
 				data = point[1];
 				if(i < TAB_LEN){		//upto 10 "if:" entries will be recorded
 				    tmp4[i] = tmp5;
@@ -279,8 +286,8 @@ printf("Special: %d %s %d\n", rnd_p->rnd_entry, rnd_p->entry, dirent->d_type);
 		    //file open from tmp2
 
 		    if(flag == 1){
-			size = strncpy_(NULL, tmp2, 0)+1;	//this is max. size of tmp2-string
-			if(size > 1 && (tmp5 = malloc(size))){
+			size = strncpy_(NULL, tmp2, 0);	//this is max. size of tmp2-string
+			if(size && (tmp5 = malloc(size+1))){
 			    strncpy_(tmp5, tmp2, size);
 
 			    if(stat(tmp5, &stbuf) || /*(stbuf.st_size>1024*64) ||*/ !(f = fopen(tmp5,"r"))) {
@@ -308,12 +315,12 @@ printf("Special: %d %s %d\n", rnd_p->rnd_entry, rnd_p->entry, dirent->d_type);
 		    }
 
 		    tmp5 = dat;
-		    while(tmp = parsestr1(tmp5, tmp3)){
+		    while(tmp = parsestr(tmp5, tmp3)){
 			if((unsigned char *)tmp5 == point[1]) break;	//changed here 1.05.2019
 			tmp5 = point[1];
 			if(! *tmp) continue;//empty string
-			if(check && (parsestr1(tmp, check) == NULL)) continue;//if check not found -> skip parseing  //new
-			if((tmp6 = parsestr2(&prsstr, tmp, tmp4[0])) == NULL)//think about!!	//was parsestr1
+			if(check && (parsestr(tmp, check) == NULL)) continue;//if check not found -> skip parseing  //new
+			if((tmp6 = parsestr2(&prsstr, NULL, tmp, tmp4[0])) == NULL)//think about!!	//was parsestr1
 			    continue;
 
 			*rnd_ptr = (struct rnd_tbl *)malloc(sizeof(struct rnd_tbl));
@@ -364,16 +371,17 @@ printf("Special: %d %s %d\n", rnd_p->rnd_entry, rnd_p->entry, dirent->d_type);
 //		    tmp = point[1];
 		    if(mixed == NULL) tmp = restore_str(&prsstr);
 		    else restore_str(&prsstr);
-		    tmp6 = parsestr2(&prsstr, tmp, tmp4[flag+1]);//think about!//was parsestr1
+		    tmp6 = parsestr2(&prsstr, NULL, tmp, tmp4[flag+1]);//think about!//was parsestr1
 		} else tmp6 = NULL;
 	    } else {
 		rnd_p->entries[flag] = NULL;
 		if(flag+1 < i){
-		    tmp6 = parsestr2(&prsstr, tmp, tmp4[flag+1]);
+		    if(prsstr.end) tmp = prsstr.end;
+		    tmp6 = parsestr2(&prsstr, NULL, tmp, tmp4[flag+1]);
 		}
 	    }
 	flag ++;
-	}
+	}//while(1)
 			rnd_p->p_flag = 0;
 			rnd_p->flag = 0;
 			rnd_p->next = NULL;
@@ -381,8 +389,43 @@ printf("Special: %d %s %d\n", rnd_p->rnd_entry, rnd_p->entry, dirent->d_type);
 printf("Special: %d %s\n", rnd_p->rnd_entry, rnd_p->entry);
 #endif
 
-			num++;
-			rnd_ptr = &(rnd_p->next);
+//no double entries
+			p = (*ptr)->ptr;
+			while(p){
+			    if(i == 1){
+				if(rnd_p->entry && p->entry && (rnd_p->entry != p->entry)
+						 && !strcmp(rnd_p->entry, p->entry)){
+printf("free double: %s\n", rnd_p->entry);
+				free(rnd_p->entry);
+				free(*rnd_ptr);
+				*rnd_ptr = NULL;
+				break;
+				}
+			    } else {
+				flag = 0;
+				while(flag < TAB_LEN && flag < i){
+					if(rnd_p->entries[flag] == NULL && p->entries[flag] == NULL){flag++; continue;}
+					if(rnd_p->entries[flag] == NULL || p->entries[flag] == NULL ||
+					(rnd_p->entries[flag] == p->entries[flag]) ||
+					strcmp(rnd_p->entries[flag], p->entries[flag])) break;
+				flag++;
+				}
+				if(flag == i){//matched compliete
+printf("free double i=%d entries[0]: %s\n", i, rnd_p->entries[0]);
+					flag--;
+					while(flag >= 0){
+					    if(rnd_p->entries[flag] != NULL) free(rnd_p->entries[flag]);
+					    flag--;
+					}
+					free(*rnd_ptr);
+					*rnd_ptr = NULL;
+					break;
+				}
+			    }
+			    p = p->next;
+			}
+//end of double entries
+			if(p == NULL){ rnd_ptr = &(rnd_p->next); num++;}
 
 		    }
 		    free(dat);
@@ -390,7 +433,7 @@ printf("Special: %d %s\n", rnd_p->rnd_entry, rnd_p->entry);
 		    
 		}
 //***********************
-		if(tmp2 = parsestr1(tmp+3, "/tbegin:/t")){//#->begin: _par
+		if(tmp2 = parsestr(tmp+3, "/tbegin:/t")){//#->begin: _par
 		    if(tmp2 = get_var(NULL, tmp2)){
 			(*ptr)->begin = atoi(tmp2);
 		    }
@@ -686,7 +729,7 @@ void show_tbl(char *name, FILE *out){
 
 		    if(entry){
 		      if(rnd_ptr->flag == 0){ 
-			if(tmp = parsestr2(&strct, entry, name)){//bind at 'name'
+			if(tmp = parsestr2(&strct, NULL, entry, name)){//bind at 'name'
 			    fprintf(out, "<option value=\"%s\" >", rnd_ptr->rnd_entry);
 			    //p_flag==0 -> only print, ==1 ->print with conclusions
 			    if(rnd_ptr->p_flag == 0) fprintf(out, "%s", tmp);
@@ -764,7 +807,7 @@ void show_tbl_chck(char *name, FILE *out){
 
 		  if(entry){
 		    if(rnd_ptr->flag == 0){ 
-			if(tmp = parsestr2(&strct, entry, name)){//bind at 'name'
+			if(tmp = parsestr2(&strct, NULL, entry, name)){//bind at 'name'
 			    fprintf(out, "<input type=\"checkbox\" name=\"%s_%d\" value=\"%s\">",
 				tmp1, part, rnd_ptr->rnd_entry);
 			    //p_flag==0 -> only print, ==1 ->print with conclusions
@@ -817,8 +860,8 @@ void change_tbl_stat(char *data){
 
 		    if(entry){
 			    if(rnd_ptr->p_flag == 1){
-				size = strncpy_(NULL, entry, 0)+1;	//this is max. size of cmd-string
-				if(var = malloc(size)){
+				size = strncpy_(NULL, entry, 0);	//this is max. size of cmd-string
+				if(var = malloc(size+1)){
 					strncpy_(var, entry, size);
 					entry = var;
 				}else{
