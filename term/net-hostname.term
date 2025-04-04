@@ -24,7 +24,9 @@ include: abc-keys.incterm
 	    }
 	}
     savecfg;
-	system "/etc/init.d/S20network restart";
+//	system "/etc/init.d/S20network restart";
+	shell "/bin/hostname ??_%val??";
+	shell "echo \"??_%val??\" > /etc/HOSTNAME";
     boot_page "network.term";
 end
 < "A" 13

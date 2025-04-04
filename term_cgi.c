@@ -119,6 +119,7 @@ char *search[] = {"print",		//1
 			"cat_par",	//35
 			"else",		//36  see jump code!
 			"change_alines",	//37
+			"tbl_changed",	//38
 //			"free_uppages",	//38
 			NULL
 			};
@@ -1059,6 +1060,10 @@ int get_cgi_body(struct cgi *ptr){
 			    break;
 		    case 37:	//change_alines
 			    change_line(arg, 1);
+			    break;
+		    case 38:	//tbl_changed
+			    jump = tbl_changed(arg);
+			    if(jump == 3) printf("Table: %s not found!", arg);
 			    break;
 		}//switch end
 	    before = i;		//which step was before

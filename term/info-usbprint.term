@@ -1,6 +1,6 @@
 // if serialNum exist in forepage, then  show button1("copy") and copy, return this Number
 area:60000:buffer
-wr_shell: :buffer:cat /proc/bus/usb/devices
+wr_shell: :buffer:cat /run/devices
 
 table: list
 #-> parse_area: buffer

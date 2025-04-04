@@ -3,7 +3,7 @@ readcfg
 
 //in this file is ./etc
 area:600:file
-wr_par: file:/etc/known_usb
+wr_par: file:/etc/usb/known_usb
 
 area:2048:serialNum
 area:20:case

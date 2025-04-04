@@ -1,17 +1,24 @@
+//changed for kernel 2.6
 /*with timeout*/
 area:60000:buffer
 
 < "timeout"
 	write_system ":buffer:cat /proc/net/arp";
-	print [ 12 > "DL" > "AL" 0 1 
+	print [
 table: list
 #-> parse_area: buffer
 while:/[/*/]\n
 if:/!/BIP/\/!/*/]/<- 	/>
-if:/*/<- 	/>/*/<- 	/>/*/<- 	/>/[/*/]/<- 	/>
+if:/*/<- 	/>/*/<- 	/>/[/*/]/<- 	/>
 if:/*/<- 	/>
 #end_table
-
+];
+	tbl_changed "list"{
+	    print [ >>>> "wait:" 10 0 ];
+	    exit_cgi;
+	}
+	print [
+12 > "DL" > "AL" 0 1 
 if "_@list+1:" > "ZL" 0 1  "IP Address:| " $_@list+1#0 "|HW Address:| " $_@list+1#1 "|Device: " $_@list+1#2 0 fi
 if "_@list+2:" > "ZL" 0 65  "IP Address:| " $_@list+2#0 "|HW Address:| " $_@list+2#1 "|Device: " $_@list+2#2 0 fi
 if "_@list+3:" > "AT" 205 97 237 125 7 0 "C->" 0 fi

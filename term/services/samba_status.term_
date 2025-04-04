@@ -1,0 +1,163 @@
+/*with timeout*/
+area:60000:buffer
+area:60000:buf
+area:128:upid
+area:2048:pool
+//wr_shell: :buffer:who
+area:2:case
+wr_par: case:0
+
+
+
+/*
+pid
+username
+group
+machine
+protocol
+encrypt
+singing
+*/
+
+< "timeout"
+	write_system ":buffer:smbstatus -b";
+	print [ 
+table: list
+#-> parse_area: buffer
+while:/[/*/]\n
+check:/<-123456789/>
+if:/[/<-123456789/>/]/<- 	/>
+if:/[/*/]/<- 	/>
+if:/[/*/]/<- 	/>
+if:/[/*/]/<- 	/>/B(/*)/<- 	/>/\/E
+if:/[/*/]/<- 	/>
+if:/[/*/]/<- 	/>
+if:
+#end_table
+
+12 > "DL" > "AL" 0 1
+
+if "case:0/"
+
+if "_@list+1:" > "AT" 2 1 100 29 1 0 "C" $_@list+1#1:10 0 else > "ZC" 101 0 "no USERs|use samba" 0 fi
+if "_@list+2:" > "AT" 104 1 201 29 2 0 "C" $_@list+2#1:10 0 fi
+if "_@list+3:" > "AT" 2 33 100 61 3 0 "C" $_@list+3#1:10 0 fi
+if "_@list+4:" > "AT" 104 33 201 61 4 0 "C" $_@list+4#1:10 0 fi
+if "_@list+5:" > "AT" 2 65 100 93 5 0 "C" $_@list+5#1:10 0 fi
+if "_@list+6:" > "AT" 104 65 201 93 6 0 "C" $_@list+6#1:10 0 fi
+if "_@list+7:" > "AT" 2 97 100 125 7 0 "C" $_@list+7#1:10 0 fi
+if "_@list+8:" > "AT" 104 97 201 125 8 0 "C" $_@list+8#1:10 0 fi
+if "_@list+9:" > "AT" 205 97 237 125 9 0 "C->" 0 fi
+    > "AT" 205 65 237 93 11 0 "CMo|re" 0
+
+else
+
+if "_@list+1:" > "AT" 2 1 201 61 1 0 "L>user: " $_@list+1#1:20 "|group: " $_@list+1#2:20 "|host: " $_@list+1#3:20 "|prot: " $_@list+1#4:20 "|encpt: " $_@list+1#5:20 "|sing: " $_@list+1#6:20 0 fi
+if "_@list+2:" > "AT" 2 65 201 125 2 0 "L>user: " $_@list+2#1:20 "|group: " $_@list+2#2:20 "|host: " $_@list+2#3:20 "|prot: " $_@list+2#4:20 "|encpt: " $_@list+2#5:20 "|sing: " $_@list+2#6:20 0 fi
+if "_@list+3:" > "AT" 205 97 237 125 9 0 "C->" 0 fi
+    > "AT" 205 65 237 93 11 0 "CLe|ss" 0
+
+fi
+
+    > "AT" 205 33 237 61 10 0 "C<" ifnot "_@_list:0/" "-" fi 0
+    > "AT" 205 1 237 29 13 0 "C<" 0
+    >>>> "wait:" 10 0 ];
+end
+
+< "button"
+    if "_referrer:/*menu.term/" {	//if last page was *menu.term
+	switch_n "2";
+	boot_cgi [ "show" 0 ] {		//if cgi not found
+	    boot_cgi [ "timeout" ] {
+		boot_page "??_back2??";
+	    }
+	}
+	exit_cgi;
+    }
+    boot_page "??_referrer??";
+end
+
+< "A" 1 8
+//	write_par "upid:??_@list?? ??_@list#3??";//pid and machine
+	write_system ":buf:smbstatus -S";
+	print [
+table: paths
+#-> parse_area: buf
+while:/[/*/]\n
+check:/*/<- 	/>/?_@list?//<- 	/>/?_@list#3?//<- 	/>
+if:/[/*/]/<- 	/>
+#end_table
+
+12 > "DL" > "AL" 0 1
+> "ZL" 0 1 "user: " $_@list#1:20 "|group: " $_@list#2:20 "|host: " $_@list#3:20 "|prot: " $_@list#4:20 "|encpt: " $_@list#5:20 "|sing: " $_@list#6:20 "||Services:"
+
+if "_@paths+1:" "|" $_@paths+1#1:20 fi
+if "_@paths+2:" "|" $_@paths+2#1:20 fi
+if "_@pahts+3:" "|" $_@paths+3#1:20 fi
+if "_@paths+4:" "|" $_@paths+4#1:20 fi 0
+
+    > "AT" 205 1 237 29 23 0 "C<" 0
+	];
+
+//	boot_cgi [ "show" 0 ];
+end
+< "A" 23
+	boot_cgi [ "timeout" ];
+end
+
+
+//next page
+< "A" 9
+	set_tbl "list += 2";
+	if "case:0/" {
+	    set_tbl "list += 6";	//summery it is 8
+	}
+	boot_cgi [ "timeout" ];
+end
+//toggle case
+< "A" 11
+	if "case:0/" {
+	    write_par "case:1";
+	    boot_cgi [ "timeout" ];
+	    exit_cgi;
+	}
+	write_par "case:0";
+	boot_cgi [ "timeout" ];
+end
+
+
+//page before
+< "A" 10
+    set_tbl "list == 0"{
+    if "_referrer:/*menu.term/" {	//if last page was *menu.term
+	switch_n "2";
+	boot_cgi [ "show" 0 ] {		//if cgi not found
+	    boot_cgi [ "timeout" ] {
+		boot_page "??_back2??";
+	    }
+	}
+	exit_cgi;
+    }
+	boot_page "??_referrer??";
+    }
+    set_tbl "list != 0"{
+	set_tbl "list -= 2";
+	if "case:0/" {
+	    set_tbl "list -= 6";	//summery it is 8
+	}
+	boot_cgi [ "timeout" ];
+    }
+end
+< "A" 13
+    if "_referrer:/*menu.term/" {	//if last page was *menu.term
+	switch_n "2";
+	boot_cgi [ "show" 0 ] {		//if cgi not found
+	    boot_cgi [ "timeout" ] {
+		boot_page "??_back2??";
+	    }
+	}
+	exit_cgi;
+    }
+    boot_page "??_referrer??";
+end
+cgi: "timeout"

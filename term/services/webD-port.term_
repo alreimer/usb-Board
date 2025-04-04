@@ -19,13 +19,13 @@ include: net-keys.incterm
     savecfg;
     if_changed "val" {
 /*	if "_&ftp_enable:1/" {
-	    change_line "/etc/inetd.conf:/*vsftpd:??_&val??		stream	tcp	nowait	root	/sbin/vsftpd /sbin/vsftpd\n"{
-		shell "echo \"??_&val??		stream	tcp	nowait	root	/sbin/vsftpd /sbin/vsftpd\" >> /etc/inetd.conf";
+	    change_line "./etc/inetd.conf:/*vsftpd:??_&val??		stream	tcp	nowait	root	/sbin/vsftpd /sbin/vsftpd\n"{
+		shell "echo \"??_&val??		stream	tcp	nowait	root	/sbin/vsftpd /sbin/vsftpd\" >> ./etc/inetd.conf";
 	    }
 	}
 	if "_&ftp_enable:0/" {
-	    change_line "/etc/inetd.conf:/*vsftpd:#??_&val??		stream	tcp	nowait	root	/sbin/vsftpd /sbin/vsftpd\n"{
-		shell "echo \"#??_&val??		stream	tcp	nowait	root	/sbin/vsftpd /sbin/vsftpd\" >> /etc/inetd.conf";
+	    change_line "./etc/inetd.conf:/*vsftpd:#??_&val??		stream	tcp	nowait	root	/sbin/vsftpd /sbin/vsftpd\n"{
+		shell "echo \"#??_&val??		stream	tcp	nowait	root	/sbin/vsftpd /sbin/vsftpd\" >> ./etc/inetd.conf";
 	    }
 	}
 */

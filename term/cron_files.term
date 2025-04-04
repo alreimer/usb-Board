@@ -1,5 +1,4 @@
-//remove . from path
-
+//older was /etc/crontab
 area:2048:pool
 //area:300:info
 //wr_par: info:info-net.term
@@ -9,7 +8,7 @@ area:5500:file
 < "show" 0
 	print [
 table: list
-#-> get_files: /etc/crontab
+#-> get_files: /var/spool/cron/crontabs
 #end_table
 
 12  > "DL" > "AL" 0 1
@@ -36,7 +35,7 @@ end
 end
 < "retouch" 0
 	write_ppar "file_name:file:/L/L";
-	write_system ":pool:touch \"/etc/crontab/??file??\" ";
+	write_system ":pool:touch \"/var/spool/cron/crontabs/??file??\" ";
     not "pool:/" {
 	print [ 12  > "DL" > "AL" 0 1 "??pool??" > "AT" 205 97 237 125 21 0 "C<" 0 ];
 	free_upages "touch_file.term";	//with exit

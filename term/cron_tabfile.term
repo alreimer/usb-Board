@@ -1,6 +1,6 @@
-//remove . from parse_file
+//older is used /etc/crontab
 area:6000:file
-wr_par: file:/etc/crontab/??file_name@cron_files.term??
+wr_par: file:/var/spool/cron/crontabs/??file_name@cron_files.term??
 
 area:2:switch
 wr_par: switch:1

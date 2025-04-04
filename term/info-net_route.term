@@ -1,3 +1,4 @@
+//changed for kernel 2.6
 /*with timeout*/
 area:40000:buffer
 
@@ -13,7 +14,7 @@ table: list
 #-> parse_area: buffer
 while:/[/*/]\n
 if:/!/BKernel/\Destination/\/!/*/]/<- 	/>
-if:/*/<- 	/>/[/*/]/<- 	/>
+if:/[/*/]/<- 	/>
 if:/[/*/]/<- 	/>
 if:/*/<- 	/>/*/<- 	/>/*/<- 	/>/*/<- 	/>
 #end_table

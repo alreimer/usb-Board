@@ -4,6 +4,7 @@ void show_tbl(char *var, FILE *out);
 void show_tbl_chck(char *var, FILE *out);
 unsigned long long show_tbl_str(char *var, char *buf, unsigned long long size);
 char *get_tbl(char *var);
+unsigned char tbl_changed(char *name);
 unsigned int *get_tbl_begin(char *name);//name of table
 void change_tbl_stat(char *data);	//data="flag:name:frase(forParsing)"
 
@@ -21,6 +22,7 @@ struct rnd_tbl {
 struct tbl {
     char		*name;	//name of cgi
     unsigned int	begin;	//begin of window!, scrolling throw table
+    char		changed;	//new: default is 0. set to 1 if table is changed.
     struct rnd_tbl	*ptr;
     struct tbl		*next;
 };

@@ -2,7 +2,7 @@
 area:60:file
 wr_par: file:/etc/group
 //area:60:passwd
-//wr_par: passwd:/etc/passwd
+//wr_par: passwd:./etc/passwd
 area:300:AREApw
 
 area:2:switch

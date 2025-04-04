@@ -10,7 +10,7 @@ TIME_ZONE
 */
 
 table: list
-#-> parse_file: /web/tzone.inc
+#-> parse_file: ../web/tzone.inc
 while:/[/*/]\n
 if:/t<option VALUE="/[/*/]">
 if:

@@ -2,7 +2,7 @@
 > "AT" 2 1 98 60 1 0 "Cnet|Listening" 0
 > "AT" 106 1 201 60 2 0 "CARP table" 0
 > "AT" 2 67 98 125 3 0 "CUSB" 0
-> "AT" 106 67 201 125 4 0 "C4" 0
+> "AT" 106 67 201 125 4 0 "Croute" 0
 > "AT" 205 1 237 29 5 0 "C<" 0
 //> "AT" 205 97 237 125 6 0 "C>" 0
 
@@ -15,10 +15,9 @@ end
 < "A" 3
     boot_page "info-usb.term";
 end
-/*< "A" 4
-    boot_page "info-net_list.term";
+< "A" 4
+    boot_page "info-net_route.term";
 end
-*/
 < "A" 5
     boot_page "info.term";
 end

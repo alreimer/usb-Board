@@ -3,46 +3,52 @@ readcfg
 
 12  > "DL" > "AL" 0 1
     > "AT" 104 1 201 29 1 0 "CSamba" 0
+    > "AT" 104 33 201 61 3 0 "Csmbstatus" 0
+//    > "AT" 2 33 100 61 3 0 "Csmbstatus" 0
+//    > "AT" 104 65 201 93 4 0 "Csomethingelse" 0
     > "AT" 205 1 237 29 8 0 "C<" 0
 
 < "A" 8
     boot_page "services.term";
 end
-
-if "nmb_enable:0/"
-    > "ZC" 51 13 "Enable" 0
-< "A" 1
-    write_par "_%nmb_enable:1";
-    fill_cfg "nmb_enable";
-    savecfg;
-	change_line "/etc/inetd.conf:/*netbios-ssn:netbios-ssn	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\n"{
-		shell "echo \"netbios-ssn	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\" >> /etc/inetd.conf";
-	}
-	change_line "/etc/inetd.conf:/*microsoft-ds:microsoft-ds	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\n"{
-		shell "echo \"microsoft-ds	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\" >> /etc/inetd.conf";
-	}
-
-	system "/etc/init.d/S30inetd reload";
-	system "/etc/init.d/S32netbios restart";
-    boot_page "services/samba.term";
+< "A" 3
+    boot_page "services/samba_status.term_";
 end
-fi
 
 if "nmb_enable:1/"
-    > "ZC" 51 13 "Disable" 0
+    > "ZC" 51 13 "Enabled" 0
 < "A" 1
     write_par "_%nmb_enable:0";
     fill_cfg "nmb_enable";
     savecfg;
-	change_line "/etc/inetd.conf:/*netbios-ssn:#netbios-ssn	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\n"{
-		shell "echo \"#netbios-ssn	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\" >> /etc/inetd.conf";
-	}
-	change_line "/etc/inetd.conf:/*microsoft-ds:#microsoft-ds	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\n"{
-		shell "echo \"#microsoft-ds	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\" >> /etc/inetd.conf";
-	}
+//	change_line "./etc/inetd.conf:/*netbios-ssn:#netbios-ssn	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\n"{
+//		shell "echo \"#netbios-ssn	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\" >> ./etc/inetd.conf";
+//	}
+//	change_line "./etc/inetd.conf:/*microsoft-ds:#microsoft-ds	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\n"{
+//		shell "echo \"#microsoft-ds	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\" >> ./etc/inetd.conf";
+//	}
 
-	system "/etc/init.d/S30inetd reload";
-	system "/etc/init.d/S32netbios restart";
+//	system "/etc/init.d/S30inetd reload";
+	system "/etc/rc.d/rc.samba restart &";
+    boot_page "services/samba.term";
+end
+
+else
+
+    > "ZC" 51 13 "Disabled" 0
+< "A" 1
+    write_par "_%nmb_enable:1";
+    fill_cfg "nmb_enable";
+    savecfg;
+//	change_line "./etc/inetd.conf:/*netbios-ssn:netbios-ssn	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\n"{
+//		shell "echo \"netbios-ssn	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\" >> ./etc/inetd.conf";
+//	}
+//	change_line "./etc/inetd.conf:/*microsoft-ds:microsoft-ds	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\n"{
+//		shell "echo \"microsoft-ds	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\" >> ./etc/inetd.conf";
+//	}
+
+//	system "/etc/init.d/S30inetd reload";
+	system "/etc/rc.d/rc.samba restart &";
     boot_page "services/samba.term";
 end
 fi

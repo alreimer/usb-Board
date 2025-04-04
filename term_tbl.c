@@ -30,7 +30,7 @@ void parse_tbl(char *data, char clean){
 
     char *tmp, *tmp2, *err = "ERR: allocate memory %d\n";
     struct tbl **ptr;
-    struct rnd_tbl **rnd_ptr, *rnd_p, *p;
+    struct rnd_tbl **rnd_ptr, *rnd_p, *p, **old_ptr, *old_p;
     struct parsestr prsstr;
 //    long int rnd;
     unsigned int num = 1;
@@ -73,11 +73,18 @@ void parse_tbl(char *data, char clean){
 
 	(*ptr)->name = tmp2;
 	(*ptr)->begin = 0;
+	(*ptr)->changed = 1;
 	(*ptr)->ptr = NULL;
 	(*ptr)->next = NULL;
-    } else if(clean) free_rnd_tbl(&((*ptr)->ptr));
+	old_p = NULL;
+    } else {
+//    if(clean) free_rnd_tbl(&((*ptr)->ptr));
+	old_p = (*ptr)->ptr;
+	(*ptr)->ptr = NULL;
+	(*ptr)->changed = 0;
+    }
 #ifdef DEBUG
-printf("script %s\n", (*ptr)->name);
+printf("script %s, changed: %d\n", (*ptr)->name, (*ptr)->changed);
 //    printf("%s", data);
 #endif
     rnd_ptr = &((*ptr)->ptr);
@@ -121,9 +128,30 @@ printf("script %s\n", (*ptr)->name);
 			    }
 			} else continue;//skip if not 1 or 2 or 3
 
+old_ptr = &old_p;
+p = NULL;
+while(*old_ptr){
+    if((*old_ptr)->entry && !strcmp((*old_ptr)->entry, tmp)){
+	*rnd_ptr = p = *old_ptr;
+	p->p_flag = 0;
+	p->flag = 0;
+	p->rnd_entry = num;
+	rnd_ptr = &(p->next);
+//	p = *old_ptr;
+	*old_ptr = p->next;
+	p->next = NULL;
+	num++;
+	break;
+    }
+    old_ptr = &((*old_ptr)->next);
+}
+if(p) continue;
+
 			*rnd_ptr = (struct rnd_tbl *)malloc(sizeof(struct rnd_tbl));
 			if(*rnd_ptr == NULL){
 			    printf(err, 2);
+parse_tbl_ext:
+			free_rnd_tbl(&old_p);
 			return;
 			}
 
@@ -135,7 +163,7 @@ printf("script %s\n", (*ptr)->name);
 			    free(*rnd_ptr);
 			    *rnd_ptr = NULL;
 			    printf(err, 3);
-			    return;
+			    goto parse_tbl_ext;
 			}
 
 			sprintf(rnd_p->entry, "%s", tmp);
@@ -151,7 +179,7 @@ printf("script %s\n", (*ptr)->name);
 #ifdef DEBUG
 printf("Exist folder: %d %s\n", rnd_p->rnd_entry, rnd_p->entry);
 #endif
-
+			(*ptr)->changed = 1;
 			rnd_ptr = &(rnd_p->next);
 			num++;
 
@@ -211,30 +239,53 @@ printf("file:%s, %d\n", tmp, dirent->d_type);
 			}
 			if(check_ && (parsestr(tmp, check_) == NULL)) continue;//if check not found -> skip parseing  //new
 
-			*rnd_ptr = (struct rnd_tbl *)malloc(sizeof(struct rnd_tbl));
-			if(*rnd_ptr == NULL){
-			    printf(err, 4);
-			    closedir(dir);
-			    free(tmp5);
-			return;
-			}
-
-			rnd_p = *rnd_ptr;
-			rnd_p->rnd_entry = num;
-//			sprintf(rnd_p->rnd_entry, "%ld", random());
-			if(flag == 3 || flag == 4) rnd_p->entry = malloc(strlen(tmp) + 4);//!!!only filename or path!!! if flag = 3 || 4
-			else rnd_p->entry = malloc(strlen(tmp) + strlen(tmp5)+ 4);
-			if(rnd_p->entry == NULL){
-			    free(*rnd_ptr);
-			    *rnd_ptr = NULL;
+			if(flag == 3 || flag == 4) tmp2 = malloc(strlen(tmp) + 4);//!!!only filename or path!!! if flag = 3 || 4
+			else tmp2 = malloc(strlen(tmp) + strlen(tmp5)+ 4);
+			if(tmp2 == NULL){
 			    printf(err, 5);
 			    closedir(dir);
 			    free(tmp5);
-			    return;
+			    goto parse_tbl_ext;
 			}
 
-			if(flag == 3 || flag == 4) sprintf(rnd_p->entry, "%s", tmp);//!!!only filename or path!!! if flag = 3 || 4
-			else sprintf(rnd_p->entry, "%s/%s", tmp5, tmp);
+			if(flag == 3 || flag == 4) sprintf(tmp2, "%s", tmp);//!!!only filename or path!!! if flag = 3 || 4
+			else sprintf(tmp2, "%s/%s", tmp5, tmp);
+
+old_ptr = &old_p;
+p = NULL;
+while(*old_ptr){
+    if((*old_ptr)->entry && !strcmp((*old_ptr)->entry, tmp2)){
+	*rnd_ptr = p = *old_ptr;
+	p->p_flag = 0;
+	p->flag = 0;
+	p->rnd_entry = num;
+	rnd_ptr = &(p->next);
+//	p = *old_ptr;
+	*old_ptr = p->next;
+	p->next = NULL;
+	num++;
+	free(tmp2);
+	break;
+    }
+    old_ptr = &((*old_ptr)->next);
+}
+if(p) continue;
+
+
+			*rnd_ptr = (struct rnd_tbl *)malloc(sizeof(struct rnd_tbl));
+			if(*rnd_ptr == NULL){
+			    free(tmp2);
+			    printf(err, 4);
+			    closedir(dir);
+			    free(tmp5);
+			    goto parse_tbl_ext;
+			}
+
+			rnd_p = *rnd_ptr;
+			rnd_p->entry = tmp2;
+			rnd_p->rnd_entry = num;
+//			sprintf(rnd_p->rnd_entry, "%ld", random());
+
 			k = 0;
 			while(k < TAB_LEN){
 			rnd_p->entries[k] = NULL;
@@ -246,7 +297,7 @@ printf("file:%s, %d\n", tmp, dirent->d_type);
 #ifdef DEBUG
 printf("Special: %d %s %d\n", rnd_p->rnd_entry, rnd_p->entry, dirent->d_type);
 #endif
-
+			(*ptr)->changed = 1;
 			num++;
 			rnd_ptr = &(rnd_p->next);
 
@@ -327,7 +378,7 @@ printf("Special: %d %s %d\n", rnd_p->rnd_entry, rnd_p->entry, dirent->d_type);
 			if(*rnd_ptr == NULL){
 			    printf(err, 6);
 			    free(dat);
-			return;
+			    goto parse_tbl_ext;
 			}
 
 			rnd_p = *rnd_ptr;
@@ -344,7 +395,7 @@ printf("Special: %d %s %d\n", rnd_p->rnd_entry, rnd_p->entry, dirent->d_type);
 			    *rnd_ptr = NULL;
 			    free(dat);
 			    printf(err, 7);
-			    return;
+			    goto parse_tbl_ext;
 			}
 
 			sprintf(rnd_p->entry, "%s", tmp6);
@@ -362,7 +413,7 @@ printf("Special: %d %s %d\n", rnd_p->rnd_entry, rnd_p->entry, dirent->d_type);
 			    *rnd_ptr = NULL;
 			    free(dat);
 			    printf(err, 7);
-			    return;
+			    goto parse_tbl_ext;
 			}
 
 			sprintf(rnd_p->entries[flag], "%s", tmp6);
@@ -425,9 +476,61 @@ printf("free double i=%d entries[0]: %s\n", i, rnd_p->entries[0]);
 			    p = p->next;
 			}
 //end of double entries
-			if(p == NULL){ rnd_ptr = &(rnd_p->next); num++;}
+			if(p == NULL){
+old_ptr = &old_p;
+p = NULL;
+while(*old_ptr){
+p = *old_ptr;
+			    if(i == 1){
+				if(rnd_p->entry && p->entry 
+						 && !strcmp(rnd_p->entry, p->entry)){
+printf("free  matched: %s\n", rnd_p->entry);
+				free(rnd_p->entry);
+				free(*rnd_ptr);
+				*rnd_ptr = p;
+	p->p_flag = 0;
+	p->flag = 0;
+	p->rnd_entry = num;
+	rnd_ptr = &(p->next);
+	*old_ptr = p->next;
+	p->next = NULL;
+				break;
+				}
+			    } else {
+				flag = 0;
+				while(flag < TAB_LEN && flag < i){
+					if(rnd_p->entries[flag] == NULL && p->entries[flag] == NULL){flag++; continue;}
+					if(rnd_p->entries[flag] == NULL || p->entries[flag] == NULL ||
+					strcmp(rnd_p->entries[flag], p->entries[flag])) break;
+				flag++;
+				}
+				if(flag == i){//matched compliete
+printf("free matched i=%d entries[0]: %s\n", i, rnd_p->entries[0]);
+					flag--;
+					while(flag >= 0){
+					    if(rnd_p->entries[flag] != NULL) free(rnd_p->entries[flag]);
+					    flag--;
+					}
+					free(*rnd_ptr);
+					*rnd_ptr = p;
+	p->p_flag = 0;
+	p->flag = 0;
+	p->rnd_entry = num;
+	rnd_ptr = &(p->next);
+	*old_ptr = p->next;
+	p->next = NULL;
+				break;
+				}
+			    }
+	old_ptr = &((*old_ptr)->next);
+}
+			num++;
+if(p){continue;//matched!!
+}else (*ptr)->changed = 1;
+			rnd_ptr = &(rnd_p->next);
+			}//if(p == NULL)
 
-		    }
+		    }//while(tmp = parsestr(tmp5, tmp3))
 		    free(dat);
 		    continue;
 		    
@@ -441,10 +544,30 @@ printf("free double i=%d entries[0]: %s\n", i, rnd_p->entries[0]);
 		}
 	    }
 //end of if(#->)
+
+old_ptr = &old_p;
+p = NULL;
+while(*old_ptr){
+    if((*old_ptr)->entry && !strcmp((*old_ptr)->entry, tmp)){
+	*rnd_ptr = p = *old_ptr;
+	p->p_flag = 0;
+	p->flag = 0;
+	p->rnd_entry = num;
+	rnd_ptr = &(p->next);
+//	p = *old_ptr;
+	*old_ptr = p->next;
+	p->next = NULL;
+	num++;
+	break;
+    }
+    old_ptr = &((*old_ptr)->next);
+}
+if(p) continue;
+
 	    *rnd_ptr = (struct rnd_tbl *)malloc(sizeof(struct rnd_tbl));
 	    if(*rnd_ptr == NULL){
 		printf(err, 8);
-		return;
+		goto parse_tbl_ext;
 	    }
 
 	    rnd_p = *rnd_ptr;
@@ -455,7 +578,7 @@ printf("free double i=%d entries[0]: %s\n", i, rnd_p->entries[0]);
 		free(*rnd_ptr);
 		*rnd_ptr = NULL;
 		printf(err, 9);
-		return;
+		goto parse_tbl_ext;
 	    }
 
 	    strcpy(tmp2, tmp);
@@ -472,8 +595,13 @@ printf("free double i=%d entries[0]: %s\n", i, rnd_p->entries[0]);
 printf("%d %s\n", rnd_p->rnd_entry, rnd_p->entry);
 #endif
 	    num++;
+	    (*ptr)->changed = 1;
 	    rnd_ptr = &(rnd_p->next);
-	}
+	}//if(*tmp)
+    }//while(tmp = w_strtok(&data, '\n'))
+    if(old_p != NULL){
+	(*ptr)->changed = 1;
+	free_rnd_tbl(&old_p);
     }
 }
 
@@ -573,6 +701,19 @@ char *get_tbl(char *par){
     return ret;
 }
 
+unsigned char tbl_changed(char *name){
+	struct tbl *ptr;
+	if(tbl_name){
+	ptr = *tbl_name;
+
+	while(ptr){
+		if(!strcmp(ptr->name, name))
+			return (ptr->changed);//if changed -> jump
+		ptr = ptr->next;
+	}
+	}
+	return 3;//if not exist -> 3
+}
 
 unsigned int *get_tbl_begin(char *name){
     struct tbl *ptr;
@@ -923,7 +1064,7 @@ void free_rnd_tbl(struct rnd_tbl **ptr){
     free_rnd_tbl(&((*ptr)->next));
     if((*ptr)->entry){
 #ifdef DEBUG
-//    printf("free rnd_tbl '%s'\n", (*ptr)->entry);
+    printf("free rnd_tbl '%s'\n", (*ptr)->entry);
 #endif
     free((*ptr)->entry);
     }else{
@@ -931,7 +1072,7 @@ void free_rnd_tbl(struct rnd_tbl **ptr){
 	while(i < TAB_LEN){
 	if((*ptr)->entries[i]){
 #ifdef DEBUG
-//		printf("free rnd_tbl entry %d '%s'\n", i, (*ptr)->entries[i]);
+		printf("free rnd_tbl entry %d '%s'\n", i, (*ptr)->entries[i]);
 #endif
 		free((*ptr)->entries[i]);
 	}

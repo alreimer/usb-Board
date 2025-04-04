@@ -1,6 +1,6 @@
 area:64000:ar_name
 area:6000:file_n
-wr_shell: :ar_name:cd /mnt/sc_images/ 2>/dev/null; [ $? -eq 0 ] && for i in *.bin ; do [[ -f "$i" ]] && echo "$i"; done 
+wr_shell: :ar_name:cd /term/sc_images/ 2>/dev/null; [ $? -eq 0 ] && for i in *.bin ; do [[ -f "$i" ]] && echo "$i"; done 
 
 table: list
 #-> parse_area: ar_name
@@ -87,8 +87,8 @@ end
 < "getCard"
     not "file_n:\0"{
 	print "data";
-	file_size_16 "/mnt/sc_images/??file_n??";
-	get_file "/mnt/sc_images/??file_n??";
+	file_size_16 "/term/sc_images/??file_n??";
+	get_file "/term/sc_images/??file_n??";
     }
 end
 

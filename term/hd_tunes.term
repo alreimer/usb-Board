@@ -1,5 +1,6 @@
 par:2:swap_enable:SWAP_ENABLE:[01]
 par:2:fsck_enable:FSCK_ENABLE:[01]
+par:2:smartd_enable:SMARTD_ENABLE:[01]
 readcfg
 
 
@@ -19,6 +20,8 @@ disabled.
     > "ZC" 51 13 if "_&swap_enable:1/" "Enabled" else "Disabled" fi 0
     > "AT" 104 33 201 61 2 0 "CFS ChecK" 0
     > "ZC" 51 45 if "_&fsck_enable:1/" "Enabled" else "Disabled" fi 0
+    > "AT" 104 65 201 93 3 0 "CSMARTd" 0
+    > "ZC" 51 77 if "_&smartd_enable:1/" "Enabled" else "Disabled" fi 0
 /*
 //> "AT" 2 1 100 29 1 0 "C" if "_@list+1#0:/?_&sleep_mode?/" "->" fi $_@list+1#1:10 0
 > "AT" 104 1 201 29 2 0 "C" if "_@list+2#0:/?_&sleep_mode?/" "->" fi $_@list+2#1:10 0
@@ -64,6 +67,23 @@ end
     }
 	write_par "_%fsck_enable:0";
     fill_cfg "fsck_enable";
+    savecfg;
+    recover_saved;
+    boot_cgi [ "show" 0 ];
+end
+< "A" 3
+    if "_&smartd_enable:0/" {
+	write_par "_%smartd_enable:1";
+	system "/etc/rc.d/rc.smartd restart &";
+    fill_cfg "smartd_enable";
+    savecfg;
+    recover_saved;
+    boot_cgi [ "show" 0 ];
+    exit_cgi;
+    }
+	write_par "_%smartd_enable:0";
+	system "/etc/rc.d/rc.smartd restart &";
+    fill_cfg "smartd_enable";
     savecfg;
     recover_saved;
     boot_cgi [ "show" 0 ];

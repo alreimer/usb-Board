@@ -22,6 +22,12 @@ if:/[/*/]/<- 	/>
 if:/*/<- 	/>/*/<- 	/>/[/*/]/<- 	/>
 if:
 #end_table
+];
+	tbl_changed "list"{
+	    print [ >>>> "wait:" 10 0 ];
+	    exit_cgi;
+	}
+	print [
 
 12 > "DL" > "AL" 0 1
 if "_@list+1:" > "ZL" 0 1  ">" $_@list+1#0:24 "| used: " $_@list+1#2:4 " of " $_@list+1#1:6 "|" $_@list+1#3:25 0 fi

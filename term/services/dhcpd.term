@@ -1,0 +1,32 @@
+par:2:dhcpd_enable:DHCPD_ENABLE:[01]
+readcfg
+
+12  > "DL" > "AL" 0 1
+    > "AT" 104 1 201 29 1 0 "CdhcpD" 0
+    > "AT" 205 1 237 29 8 0 "C<" 0
+
+< "A" 8
+    boot_page "services.term";
+end
+
+if "dhcpd_enable:1/"
+    > "ZC" 51 13 "Enabled" 0
+< "A" 1
+    write_par "_%dhcpd_enable:0";
+    fill_cfg "dhcpd_enable";
+    savecfg;
+	system "/etc/rc.d/rc.dhcpd restart &";
+    boot_page "services/dhcpd.term";
+end
+
+else
+
+    > "ZC" 51 13 "Disabled" 0
+< "A" 1
+    write_par "_%dhcpd_enable:1";
+    fill_cfg "dhcpd_enable";
+    savecfg;
+	system "/etc/rc.d/rc.dhcpd restart &";
+    boot_page "services/dhcpd.term";
+end
+fi

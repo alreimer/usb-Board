@@ -1,0 +1,203 @@
+/*with timeout*/
+area:60000:buffer
+area:10000:buf
+area:128:user
+area:2048:pool
+//wr_shell: :buffer:who
+
+
+
+/*
+user
+terminal
+time
+*/
+
+< "timeout"
+	write_system ":buffer:who";
+	print [ 
+table: list
+#-> parse_area: buffer
+while:/[/*/]\n
+if:/ /[/*/]/<- 	/>
+if:/[/*/]/<- 	/>
+if:
+#end_table
+];
+	tbl_changed "list"{
+	    print [ >>>> "wait:" 10 0 ];
+	    exit_cgi;
+	}
+	print [
+12 > "DL" > "AL" 0 1
+if "_@list+1:" > "AT" 2 1 201 29 1 0 "L>" $_@list+1#0:24 "| term: " $_@list+1#1:20 "| time:" $_@list+1#2:20 0 fi
+if "_@list+2:" > "AT" 2 33 201 61 2 0 "L>" $_@list+2#0:24 "| term: " $_@list+2#1:20 "| time:" $_@list+2#2:20 0 fi
+if "_@list+3:" > "AT" 2 65 201 93 3 0 "L>" $_@list+3#0:24 "| term: " $_@list+3#1:20 "| time:" $_@list+3#2:20 0 fi
+if "_@list+4:" > "AT" 2 97 201 125 4 0 "L>" $_@list+4#0:24 "| term: " $_@list+4#1:20 "| time:" $_@list+4#2:20 0 fi
+if "_@list+5:" > "AT" 205 97 237 125 7 0 "C->" 0 fi
+
+    > "AT" 205 33 237 61 10 0 "C<" ifnot "_@_list:0/" "-" fi 0
+    > "AT" 205 1 237 29 13 0 "C<" 0
+    >>>> "wait:" 10 0 ];
+end
+
+< "button"
+    if "_referrer:/*menu.term/" {	//if last page was *menu.term
+	switch_n "2";
+	boot_cgi [ "show" 0 ] {		//if cgi not found
+	    boot_cgi [ "timeout" ] {
+		boot_page "??_back2??";
+	    }
+	}
+	exit_cgi;
+    }
+    boot_page "??_referrer??";
+end
+
+< "A" 1 4
+	write_par "user:??_@list??";
+	boot_cgi [ "show" 0 ];
+end
+
+< "show" 0
+//    print [ 12 > "DL" > "AL" 0 1 ];
+    write_system  ":buf:w -h ??user??";
+/*
+USER
+TTY
+FROM
+LOGIN@
+IDLE
+JCPU
+PCPU
+WHAT
+*/
+	print [ 
+table: list1
+#-> parse_area: buf
+while:/[/*/]\n
+if:/ /[/*/]/<- 	/>
+if:/[/*/]/<- 	/>
+if:/[/*/]/<- 	/>
+if:/[/*/]/<- 	/>
+if:/[/*/]/<- 	/>
+if:/[/*/]/<- 	/>
+if:/[/*/]/<- 	/>
+if:/[/*/]/B/<- 	/>/\\0/E
+if:
+#end_table
+
+12 > "DL" > "AL" 0 1
+if "_@list1+1:" 
+    > "ZL" 6 25 "USER:" $_@list1+1#0:24 0
+    > "ZL" 6 35 "TTY: " $_@list1+1#1:24 0
+    > "ZL" 6 45 "FROM: " $_@list1+1#2:24 0
+    > "ZL" 6 55 "LOGIN: " $_@list1+1#3:8 " IDLE: " $_@list1+1#4:8 0
+    > "ZL" 6 65 "JCPU: " $_@list1+1#5:8 " RCPU: " $_@list1+1#6:8 0
+    > "ZL" 6 75 "WHAT: " $_@list1+1#7:24:"/L/L" 0
+    > "ZL" 6 85 $_@list1+1#8:24: 0
+fi
+if "_@list1+2:" > "AT" 205 97 237 125 20 0 "C->" 0 fi
+    > "AT" 2 97 100 125 23 0 "Ckill|only tty|" $_@list1+1#1:10 0 
+    if "_@list1+1#0:/!root/" > "AT" 104 97 201 125 24 0 "Ckill all|" $_@list1+1:10 0 fi
+    > "AT" 205 33 237 61 21 0 "C<" ifnot "_@_list1:0/" "-" fi 0
+    > "AT" 205 1 237 29 22 0 "C<" 0 ];
+
+
+end
+//    > "ZL" 6 75 "WHAT: " $_@list1+1#7:24:"/{*/B///[/\/|/E/}/] " 0
+
+//next page
+< "A" 20
+	set_tbl "list1 += 1";
+	boot_cgi [ "show" 0 ];
+end
+//page before
+< "A" 21
+    set_tbl "list1 == 0"{
+	boot_cgi [ "timeout" ];
+    }
+    set_tbl "list1 != 0"{
+	set_tbl "list1 -= 1";
+	boot_cgi [ "show" 0 ];
+    }
+end
+< "A" 22
+	set_tbl "list1 = 0";
+	boot_cgi [ "timeout" ];
+end
+
+//kill only tty
+< "A" 23
+    print [ 12 > "DL" > "AL" 0 1 ];
+	write_system  ":pool:pkill -KILL -u ??user?? -t ??_@list1+1#1??";
+	not "pool:/" {
+	    print [ "??pool??" > "AT" 205 97 237 125 22 0 "C<" 0 ];
+	    exit_cgi;
+	}
+
+	set_tbl "list1 = 0";
+	boot_cgi [ "timeout" ];
+end
+
+//kill all if not root
+< "A" 24
+    print [ 12 > "DL" > "AL" 0 1 ];
+	if "user:root/" {
+	    write_system  ":pool:pkill -KILL -u ??user?? -t ??_@list1+1#1??";
+//	write_system  ":pool:echo \"--- ??user?? tty: ??_@list1+1#1??\" ";
+	}
+	not "user:root/" {
+	    write_system  ":pool:pkill -KILL -u ??user??";
+//	write_system  ":pool:echo \"norm ??user??\" ";
+	}
+	not "pool:/" {
+	    print [ "??pool??" > "AT" 205 97 237 125 22 0 "C<" 0 ];
+	    exit_cgi;
+	}
+
+//    shell "echo \"??_@list#0??\"";
+//    boot_page "pkgs-install.term";
+	set_tbl "list1 = 0";
+	boot_cgi [ "timeout" ];
+end
+
+
+//next page
+< "A" 7
+	set_tbl "list += 4";
+	boot_cgi [ "timeout" ];
+end
+
+//page before
+< "A" 10
+    set_tbl "list == 0"{
+    if "_referrer:/*menu.term/" {	//if last page was *menu.term
+	switch_n "2";
+	boot_cgi [ "show" 0 ] {		//if cgi not found
+	    boot_cgi [ "timeout" ] {
+		boot_page "??_back2??";
+	    }
+	}
+	exit_cgi;
+    }
+	boot_page "??_referrer??";
+    }
+    set_tbl "list != 0"{
+	set_tbl "list -= 4";
+	boot_cgi [ "timeout" ];
+    }
+end
+< "A" 13
+    if "_referrer:/*menu.term/" {	//if last page was *menu.term
+	switch_n "2";
+	boot_cgi [ "show" 0 ] {		//if cgi not found
+	    boot_cgi [ "timeout" ] {
+		boot_page "??_back2??";
+	    }
+	}
+	exit_cgi;
+    }
+    boot_page "??_referrer??";
+end
+cgi: "timeout"

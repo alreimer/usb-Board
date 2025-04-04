@@ -1,4 +1,3 @@
-area:2048:pool
 area:64000:ar_name
 wr_shell: :ar_name:cd /mnt/packages/ 2>/dev/null; [ $? -eq 0 ] && for i in *.ipk ; do [[ -f "$i" ]] && echo "$i"; done 
 
@@ -23,13 +22,7 @@ end
 < "A" 1 4
     print [ > "AL" 0 0 > "RL" 34 28 204 98
 > "GR" 36 30 202 96 > "ZC" 120 60 "Please Wait" 0 ];
-//    shell "ipkg-cl install \"/mnt/packages/??_@list??\"";
-    write_system  ":pool:ipkg-cl install \"/mnt/packages/??_@list??\"";
-    not "pool:/" {
-	print [ "??pool??" > "AT" 205 97 237 125 13 0 "C<" 0 ];
-	exit_cgi;
-    }
-
+    shell "ipkg-cl install \"/mnt/packages/??_@list??\"";
     boot_page "pkgs-install.term";
 end
 

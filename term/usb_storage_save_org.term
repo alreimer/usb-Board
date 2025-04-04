@@ -1,0 +1,34 @@
+//in this file is ./etc
+area:2048:value
+area:2048:path
+area:20:dcase
+
+< "give" 0
+    write_par "value:";
+    write_par "path:/mnt/usb";
+    write_par "dcase:";
+    include "usb_inDir.term";
+end
+
+< "retinput" 0
+	print [ 12 > "DL" > "AL" 0 1
+$value
+    > "AT" 205 1 237 29 13 0 "C<" 0
+];
+//	boot_cgi [ "A" 13 ];
+	free_upages;
+end
+< "retinput_back" 0
+	print [ 12 > "DL" > "AL" 0 1
+back
+    > "AT" 205 1 237 29 13 0 "C<" 0
+];
+//	boot_cgi [ "show" 0 ];
+	free_upages;
+//    boot_page "??_referrer??";
+end
+< "A" 13
+    boot_page "??_referrer??";
+end
+cgi: "give" 0
+

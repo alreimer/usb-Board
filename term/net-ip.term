@@ -18,8 +18,8 @@ include: net-keys.incterm
     fill_cfg "val";
     savecfg;
     if_changed "val" {	//restart all upto network
-	change_line "/etc/hosts:/ /?val?/:??_%val?? ??_&hostname??  #httpd\n"{
-	shell "echo \"??_%val?? ??_&hostname?? #httpd\" >> /etc/hosts";
+	change_line "./etc/hosts:/ /?val?/:??_%val?? ??_&hostname??  #httpd\n"{
+	shell "echo \"??_%val?? ??_&hostname?? #httpd\" >> ./etc/hosts";
 	}
 	system "/etc/init.d/rc 3\ 2 stop; /etc/init.d/rc 2\ 3 start &";
     }

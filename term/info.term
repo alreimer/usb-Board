@@ -2,7 +2,7 @@
 > "AT" 2 1 98 60 1 0 "CHDD Info" 0
 > "AT" 106 1 201 60 2 0 "CUptime Info" 0
 > "AT" 2 67 98 125 3 0 "Cifconfig" 0
-> "AT" 106 67 201 125 4 0 "Croute" 0
+> "AT" 106 67 201 125 4 0 "Cwho" 0
 > "AT" 205 1 237 29 5 0 "C<" 0
 > "AT" 205 97 237 125 6 0 "C>" 0
 
@@ -16,7 +16,7 @@ end
     boot_page "info-net.term";
 end
 < "A" 4
-    boot_page "info-net_route.term";
+    boot_page "info-who.term";
 end
 < "A" 5
     boot_page "index-main.term";

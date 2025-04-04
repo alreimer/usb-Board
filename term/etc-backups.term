@@ -35,17 +35,18 @@ if "_@list+4:" > "AT" 205 97 237 125 9 0 "C->" 0 fi
 end
 
 < "A" 1 3
-    write_system  ":pool:mkdir -p /mnt/etc-cfgs/; chmod 700 /mnt/etc-cfgs; TEMP=/mnt/etc-cfgs/??_@list#0?? ; /bin/tar -xzf $TEMP -C / > /dev/null 2>&1 || echo \"Restore Cfg failed\" ";
-//print [ 12   > "DL" > "AL" 0 1 "IP_name: " $_@list#0 ];
+//    write_system  ":pool:mkdir -p /mnt/etc-cfgs/; chmod 700 /mnt/etc-cfgs; TEMP=/mnt/etc-cfgs/??_@list#0?? ; /bin/tar -xzf $TEMP -C / ";
+print [ 12   > "DL" > "AL" 0 1 "IP_name: " $_@list#0 ];
     not "pool:/" {
 	print [ 12  > "DL" > "AL" 0 1 "??pool??" > "AT" 205 97 237 125 21 0 "C<" 0 ];
 	exit_cgi ;
     }
     write_par "_etc_save:1";
-    boot_cgi [ "show" 0 ];
+//    boot_cgi [ "show" 0 ];
 end
 < "A" 4
-    write_system  ":pool:mkdir -p /mnt/etc-cfgs/; chmod 700 /mnt/etc-cfgs; TEMP=/mnt/etc-cfgs/cfg_`date +%Y%m%d%H%M%S`.tar ; /bin/tar -cvf $TEMP /etc/* > /dev/null 2>&1 ; /bin/gzip -9 $TEMP > /dev/null 2>&1 ; chmod 600 $TEMP.gz ";
+    write_system  ":pool:mkdir -p /mnt/etc-cfgs/; chmod 700 /mnt/etc-cfgs; TEMP=/mnt/etc-cfgs/cfg_`date +%Y%m%d%H%M%S`.tar ; /bin/tar -cvf $TEMP /httpd_nh221/term/etc/* > /dev/null 2>&1 ; /bin/gzip -9 $TEMP > /dev/null 2>&1 ; chmod 600 $TEMP.gz ";
+//    write_system  ":pool:mkdir -p /mnt/etc-cfgs/; chmod 700 /mnt/etc-cfgs; TEMP=/mnt/etc-cfgs/cfg_`date +%Y%m%d%H%M%S`.tar ; /bin/tar -cvf $TEMP /etc/* > /dev/null 2>&1 ; /bin/gzip -9 $TEMP > /dev/null 2>&1 ; chmod 600 $TEMP.gz ";
     not "pool:/" {
 	print [ 12  > "DL" > "AL" 0 1 "??pool??" > "AT" 205 97 237 125 21 0 "C<" 0 ];
 	exit_cgi ;

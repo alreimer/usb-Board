@@ -19,7 +19,7 @@ if "cron_enable:1/"
     write_par "_%cron_enable:0";
     fill_cfg "cron_enable";
     savecfg;
-	system "/etc/init.d/S40cron restart";
+	system "/etc/rc.d/rc.crond stop";
     boot_page "cron.term";
 end
 else
@@ -27,7 +27,7 @@ else
     write_par "_%cron_enable:1";
     fill_cfg "cron_enable";
     savecfg;
-	system "/etc/init.d/S40cron restart";
+	system "/etc/rc.d/rc.crond start";
     boot_page "cron.term";
 end
 fi
@@ -37,6 +37,6 @@ fi
 end
 
 < "A" 3
-    system "/etc/init.d/S40cron restart";
+    system "/etc/rc.d/rc.crond restart";
     boot_page "cron.term";
 end
