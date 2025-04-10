@@ -120,6 +120,7 @@ char *search[] = {"print",		//1
 			"else",		//36  see jump code!
 			"change_alines",	//37
 			"tbl_changed",	//38
+			"tbl_show",	//39
 //			"free_uppages",	//38
 			NULL
 			};
@@ -1016,6 +1017,7 @@ int get_cgi_body(struct cgi *ptr){
 				cfg_p = &(p->cfg);
 				tbl_name = &(p->tbl_name);
 				cgi_name = &(p->cgi_name);
+				tbl_show_all();//set all current tables to show
 				jump = 1;	//jump if all ok (find file)
 			    }
 			    break;
@@ -1026,6 +1028,7 @@ int get_cgi_body(struct cgi *ptr){
 				cfg_p = &(p->cfg);
 				tbl_name = &(p->tbl_name);
 				cgi_name = &(p->cgi_name);
+				tbl_show_all();//set all current tables to show
 				jump = 1;	//jump if all ok (find file)
 			    }
 			    break;
@@ -1064,6 +1067,9 @@ int get_cgi_body(struct cgi *ptr){
 		    case 38:	//tbl_changed
 			    jump = tbl_changed(arg);
 			    if(jump == 3) printf("Table: %s not found!", arg);
+			    break;
+		    case 39:	//tbl_show
+			    tbl_show(arg);
 			    break;
 		}//switch end
 	    before = i;		//which step was before

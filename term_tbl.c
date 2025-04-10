@@ -73,7 +73,9 @@ void parse_tbl(char *data, char clean){
 
 	(*ptr)->name = tmp2;
 	(*ptr)->begin = 0;
+	(*ptr)->begin_old = 0;
 	(*ptr)->changed = 1;
+	(*ptr)->show = 0;
 	(*ptr)->ptr = NULL;
 	(*ptr)->next = NULL;
 	old_p = NULL;
@@ -81,7 +83,14 @@ void parse_tbl(char *data, char clean){
 //    if(clean) free_rnd_tbl(&((*ptr)->ptr));
 	old_p = (*ptr)->ptr;
 	(*ptr)->ptr = NULL;
-	(*ptr)->changed = 0;
+	if((*ptr)->show == 1){		//used from tbl_show()
+	    (*ptr)->changed = 1;
+	    (*ptr)->show = 0;
+	} else (*ptr)->changed = 0;
+	if((*ptr)->begin != (*ptr)->begin_old){//changed window frame
+	    (*ptr)->changed = 1;
+	    (*ptr)->begin_old = (*ptr)->begin;
+	}
     }
 #ifdef DEBUG
 printf("script %s, changed: %d\n", (*ptr)->name, (*ptr)->changed);
@@ -437,7 +446,7 @@ printf("Special: %d %s %d\n", rnd_p->rnd_entry, rnd_p->entry, dirent->d_type);
 			rnd_p->flag = 0;
 			rnd_p->next = NULL;
 #ifdef DEBUG
-printf("Special: %d %s\n", rnd_p->rnd_entry, rnd_p->entry);
+printf("Special: %d %s %s\n", rnd_p->rnd_entry, rnd_p->entry, rnd_p->entries[0]);
 #endif
 
 //no double entries
@@ -478,13 +487,13 @@ printf("free double i=%d entries[0]: %s\n", i, rnd_p->entries[0]);
 //end of double entries
 			if(p == NULL){
 old_ptr = &old_p;
-p = NULL;
+k = 0;
 while(*old_ptr){
 p = *old_ptr;
 			    if(i == 1){
 				if(rnd_p->entry && p->entry 
 						 && !strcmp(rnd_p->entry, p->entry)){
-printf("free  matched: %s\n", rnd_p->entry);
+//printf("free  matched: %s\n", rnd_p->entry);
 				free(rnd_p->entry);
 				free(*rnd_ptr);
 				*rnd_ptr = p;
@@ -494,6 +503,7 @@ printf("free  matched: %s\n", rnd_p->entry);
 	rnd_ptr = &(p->next);
 	*old_ptr = p->next;
 	p->next = NULL;
+	k = 1;
 				break;
 				}
 			    } else {
@@ -505,7 +515,7 @@ printf("free  matched: %s\n", rnd_p->entry);
 				flag++;
 				}
 				if(flag == i){//matched compliete
-printf("free matched i=%d entries[0]: %s\n", i, rnd_p->entries[0]);
+//printf("free matched i=%d entries[0]: %s\n", i, rnd_p->entries[0]);
 					flag--;
 					while(flag >= 0){
 					    if(rnd_p->entries[flag] != NULL) free(rnd_p->entries[flag]);
@@ -519,13 +529,14 @@ printf("free matched i=%d entries[0]: %s\n", i, rnd_p->entries[0]);
 	rnd_ptr = &(p->next);
 	*old_ptr = p->next;
 	p->next = NULL;
+	k = 1;
 				break;
 				}
 			    }
 	old_ptr = &((*old_ptr)->next);
 }
 			num++;
-if(p){continue;//matched!!
+if(k){ continue;//matched!!
 }else (*ptr)->changed = 1;
 			rnd_ptr = &(rnd_p->next);
 			}//if(p == NULL)
@@ -550,7 +561,7 @@ p = NULL;
 while(*old_ptr){
     if((*old_ptr)->entry && !strcmp((*old_ptr)->entry, tmp)){
 	*rnd_ptr = p = *old_ptr;
-	p->p_flag = 0;
+	p->p_flag = 1;
 	p->flag = 0;
 	p->rnd_entry = num;
 	rnd_ptr = &(p->next);
@@ -713,6 +724,32 @@ unsigned char tbl_changed(char *name){
 	}
 	}
 	return 3;//if not exist -> 3
+}
+void tbl_show(char *name){
+	struct tbl *ptr;
+	if(tbl_name){
+	ptr = *tbl_name;
+
+	while(ptr){
+		if(!strcmp(ptr->name, name)){
+		    ptr->show = 1;
+//		    free_rnd_tbl(&(ptr->ptr));
+		    return;
+		}
+		ptr = ptr->next;
+	}
+	}
+}
+void tbl_show_all(void){
+	struct tbl *ptr;
+	if(tbl_name){
+	ptr = *tbl_name;
+
+	while(ptr){
+		ptr->show = 1;
+		ptr = ptr->next;
+	}
+	}
 }
 
 unsigned int *get_tbl_begin(char *name){

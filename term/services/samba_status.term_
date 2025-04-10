@@ -34,9 +34,13 @@ if:/[/*/]/<- 	/>
 if:/[/*/]/<- 	/>
 if:
 #end_table
-
+];
+	tbl_changed "list"{
+	    print [ >>>> "wait:" 10 0 ];
+	    exit_cgi;
+	}
+	print [
 12 > "DL" > "AL" 0 1
-
 if "case:0/"
 
 if "_@list+1:" > "AT" 2 1 100 29 1 0 "C" $_@list+1#1:10 0 else > "ZC" 101 0 "no USERs|use samba" 0 fi
@@ -79,6 +83,7 @@ end
 
 < "A" 1 8
 //	write_par "upid:??_@list?? ??_@list#3??";//pid and machine
+	tbl_show "list";
 	write_system ":buf:smbstatus -S";
 	print [
 table: paths
@@ -116,6 +121,7 @@ end
 end
 //toggle case
 < "A" 11
+	tbl_show "list";
 	if "case:0/" {
 	    write_par "case:1";
 	    boot_cgi [ "timeout" ];
