@@ -17,7 +17,7 @@ area:25000:buffer
     > "ZL" 55 40 $buffer::"/[/*/<- 	/>/*/<- 	/>/*/]/<- 	/>" "|" $buffer::"/*/<- 	/>/*/<- 	/>/*/<- 	/>"
     > "ZC" 51 75 if "_&time_mode:0/" "Manual" fi if "_&time_mode:1/" "NTP Server" fi if "_&time_mode:2/" "Time Server" fi 0
     > "AT" 104 65 201 93 2 0 "CGet Time" 0
-    > "AT" 104 97 201 125 3 0 "CRun|Script" 0
+    > "AT" 104 97 201 125 3 0 "CRestart|Script" 0
     > "AT" 205 1 237 29 8 0 "C<" 0
     > "AT" 205 33 237 61 9 0 "Ci" 0 ];
 end
@@ -56,7 +56,7 @@ end
 end
 < "A" 3
     if_changed "time_mode" {
-	system "/etc/init.d/S22time restart";
+	system "/etc/rc.d/rc.time restart";
     }
     boot_cgi [ "show" 0 ];
 end

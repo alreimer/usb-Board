@@ -22,8 +22,7 @@ while:/[/*/]\n
 if:/ /[/*/]/<- 	/>
 if:/[/*/]/<- 	/>
 if:
-#end_table
-];
+#end_table ];
 	tbl_changed "list"{
 	    print [ >>>> "wait:" 10 0 ];
 	    exit_cgi;

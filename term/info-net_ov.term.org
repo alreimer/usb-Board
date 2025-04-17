@@ -26,12 +26,7 @@ if "_@list+1:" > "ZL" 0 1  ">" $_@list+1#0:6 if "_@list+1#1:UP" " UP" else " DOW
 if "_@list+2:" > "ZL" 0 33 ">" $_@list+2#0:6 if "_@list+2#1:UP" " UP" else " DOWN" fi "|" $_@list+2#3:24 "|" $_@list+2#4:24 0 fi
 if "_@list+3:" > "ZL" 0 65 ">" $_@list+3#0:6 if "_@list+3#1:UP" " UP" else " DOWN" fi "|" $_@list+3#3:24 "|" $_@list+3#4:24 0 fi
 if "_@list+4:" > "AT" 205 97 237 125 7 0 "C->" 0 fi
-//    > "AT" 42 97 111 125 3 0 "Crestart|whole|network" 0
-
-> "ZL" 2 105 "Net|work:" 0
-> "AT" 42 97 101 125 3 0 "Crestart" 0
-> "AT" 105 97 151 125 2 0 "Cstart" 0
-> "AT" 155 97 201 125 1 0 "Cstop" 0
+    > "AT" 42 97 111 125 3 0 "Crestart|whole|network" 0
 
     > "AT" 205 65 237 93 11 0 "CMo|re" 0
     > "AT" 205 33 237 61 10 0 "C<" ifnot "_@_list:0/" "-" fi 0
@@ -53,11 +48,21 @@ end
 end
 
 < "A" 1
-	shell "/etc/rc.d/rc.inet1 stop &";
+	if "_@list+1#1:UP" {
+	    shell "ifconfig ??_@list+1#0?? down";
+	}
+	not "_@list+1#1:UP" {
+	    shell "ifconfig ??_@list+1#0?? up";
+	}
 	boot_cgi [ "timeout" ];
 end
 < "A" 2
-	shell "/etc/rc.d/rc.inet1 start &";
+	if "_@list+1#1:/*NOARP" {
+	    shell "ifconfig ??_@list+1#0?? arp";
+	}
+	not "_@list+1#1:/*NOARP" {
+	    shell "ifconfig ??_@list+1#0?? -arp";
+	}
 	boot_cgi [ "timeout" ];
 end
 < "A" 3

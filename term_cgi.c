@@ -526,7 +526,7 @@ char *print_(FILE *out, char *data, int make, int loop){
 		continue;
 	    }
 /*** end of IF configuration ***/
-	}else if(tmp = parsestr2(&strct, NULL, data, "table:/t/[/*\\n/]#end_table\\n")){
+	}else if(tmp = parsestr2(&strct, NULL, data, "table:/t/[/*\\n/]#end_table/t/B\\n/\\\\0/E")){
 	    if(make == 1){
 		parse_tbl(tmp, 1);//with clean
 	    }

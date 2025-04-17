@@ -25,19 +25,27 @@ singing
 table: list
 #-> parse_area: buffer
 while:/[/*/]\n
-check:/<-123456789/>
-if:/[/<-123456789/>/]/<- 	/>
+check:/<-0123456789/>
+if:/[/<-0123456789/>/]/<- 	/>
 if:/[/*/]/<- 	/>
 if:/[/*/]/<- 	/>
 if:/[/*/]/<- 	/>/B(/*)/<- 	/>/\/E
 if:/[/*/]/<- 	/>
 if:/[/*/]/<- 	/>
 if:
-#end_table
-];
+#end_table ];
 	tbl_changed "list"{
 	    print [ >>>> "wait:" 10 0 ];
 	    exit_cgi;
+	}
+	nnot "_@list+1:" {
+	    set_tbl "list != 0"{
+		set_tbl "list -= 2";
+		if "case:0/" {
+		    set_tbl "list -= 6";	//summery it is 8
+		}
+
+	    }
 	}
 	print [
 12 > "DL" > "AL" 0 1
@@ -56,7 +64,7 @@ if "_@list+9:" > "AT" 205 97 237 125 9 0 "C->" 0 fi
 
 else
 
-if "_@list+1:" > "AT" 2 1 201 61 1 0 "L>user: " $_@list+1#1:20 "|group: " $_@list+1#2:20 "|host: " $_@list+1#3:20 "|prot: " $_@list+1#4:20 "|encpt: " $_@list+1#5:20 "|sing: " $_@list+1#6:20 0 fi
+if "_@list+1:" > "AT" 2 1 201 61 1 0 "L>user: " $_@list+1#1:20 "|group: " $_@list+1#2:20 "|host: " $_@list+1#3:20 "|prot: " $_@list+1#4:20 "|encpt: " $_@list+1#5:20 "|sing: " $_@list+1#6:20 0 else > "ZC" 101 0 "no USERs|use samba" 0 fi
 if "_@list+2:" > "AT" 2 65 201 125 2 0 "L>user: " $_@list+2#1:20 "|group: " $_@list+2#2:20 "|host: " $_@list+2#3:20 "|prot: " $_@list+2#4:20 "|encpt: " $_@list+2#5:20 "|sing: " $_@list+2#6:20 0 fi
 if "_@list+3:" > "AT" 205 97 237 125 9 0 "C->" 0 fi
     > "AT" 205 65 237 93 11 0 "CLe|ss" 0

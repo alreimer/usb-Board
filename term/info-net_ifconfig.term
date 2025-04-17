@@ -18,8 +18,7 @@ if:/*inet6 /[/*/]
 if:/*/[ether/*/]  
 if:/*RX/*/[bytes /*/] 
 if:/*TX/*/[bytes /*/] 
-#end_table
-];
+#end_table ];
 	tbl_changed "list"{
 	    print [ >>>> "wait:" 10 0 ];
 	    exit_cgi;
