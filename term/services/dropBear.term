@@ -7,6 +7,7 @@ readcfg
     > "AT" 205 1 237 29 8 0 "C<" 0
     > "AT" 2 33 100 61 2 0 "CPort: " $dbear_port 0 //len of string is 11
 
+include: services_roll.incterm
 
 < "A" 2
     boot_page "services/dropBear-port.term_";

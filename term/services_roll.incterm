@@ -1,0 +1,6 @@
+< "timeout"
+	switch "/?_referrer?/";
+	boot_cgi [ "timeout" ] {
+	    boot_page "??_back??";
+	}
+end

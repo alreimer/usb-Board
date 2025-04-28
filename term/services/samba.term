@@ -8,6 +8,8 @@ readcfg
 //    > "AT" 104 65 201 93 4 0 "Csomethingelse" 0
     > "AT" 205 1 237 29 8 0 "C<" 0
 
+include: services_roll.incterm
+
 < "A" 8
     boot_page "services.term";
 end

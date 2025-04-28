@@ -15,6 +15,7 @@ if "_@list+3:" > "AT" 2 65 201 93 3 0 "C" $_@list+3:24:"/L/L" 0 fi
 if "_@list+4:" > "AT" 2 97 201 125 4 0 "C" $_@list+4:24:"/L/L" 0 fi
     > "AT" 205 1 237 29 13 0 "C<" 0
     > "AT" 205 33 237 61 8 0 "C<" ifnot "_@_list:0/" "-" fi 0
+    > "AT" 205 65 237 93 11 0 "CRo|ll" 0
 if "_etc_save:1" > "AT" 205 65 237 93 9 0 "CS" 0 fi
 if "_@list+5:" > "AT" 205 97 237 125 7 0 "C->" 0 fi ];
 end
@@ -30,6 +31,23 @@ end
 < "A" 7
 	set_tbl "list += 4";
 	boot_cgi [ "show" 0 ];
+end
+
+
+< "A" 11
+	set_tbl "list -= 1";
+	boot_cgi [ "timeout" ];
+end
+< "timeout"
+	free_upages;
+	set_tbl "list += 1";
+	nnot "_@list+1:"{
+	    set_tbl "list = 0";
+	}
+	if "_@list+1:" {
+	    include "??_@list+1??";
+	}
+	print [ >>>> "wait:" 15 0 ];
 end
 
 //page before

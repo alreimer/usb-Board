@@ -3,6 +3,8 @@
     > "BR" 1 20 20 150 40 1 255 1 1
     > "AB" 1
 
+include: services_roll.incterm
+
 < "B" 1 50 255
     print [ > "RL" 45 70 150 150 > "ZL" 50 80 "Aval: ??_nvalue??" 0];
 end

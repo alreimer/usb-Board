@@ -9,6 +9,8 @@ readcfg
     > "AT" 2 33 100 61 2 0 "CPort: " $ftp_port 0 //len of string is 11
     > "AT" 104 65 201 93 3 0 "CInetD" 0
 
+include: services_roll.incterm
+
 < "A" 2
     boot_page "services/ftpD-port.term_";
 end
