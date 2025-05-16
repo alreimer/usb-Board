@@ -10,25 +10,25 @@ readcfg
 end
 
 if "dhcp_client:0/"
-    > "ZC" 51 13 "Enable" 0
+    > "ZC" 51 13 "Disabled" 0
 < "A" 1
     write_par "_%dhcp_client:1";
     fill_cfg "dhcp_client";
     savecfg;
-	system "/etc/init.d/rc 3\ 2 stop; /etc/init.d/rc 2\ 3 start &";
-
+	shell "sed -i -e \"s/\\(USE_DHCP\\[0\\]=\\).*/\\1\\\"yes\\\"/\" /etc/rc.d/rc.inet1.conf";
+	system "/etc/rc.d/rc.inet1 restart &";
     boot_page "net-dhcp.term";
 end
 fi
 
 if "dhcp_client:1/"
-    > "ZC" 51 13 "Disable" 0
+    > "ZC" 51 13 "Enabled" 0
 < "A" 1
     write_par "_%dhcp_client:0";
     fill_cfg "dhcp_client";
     savecfg;
-	system "/etc/init.d/rc 3\ 2 stop; /etc/init.d/rc 2\ 3 start &";
-
+	shell "sed -i -e \"s/\\(USE_DHCP\\[0\\]=\\).*/\\1\\\"\\\"/\" /etc/rc.d/rc.inet1.conf";
+	system "/etc/rc.d/rc.inet1 restart &";
     boot_page "net-dhcp.term";
 end
 fi

@@ -18,7 +18,8 @@ include: net-keys.incterm
     fill_cfg "val";
     if_changed "val"{
 	savecfg;
-	system "/etc/init.d/S20network restart";
+	shell "sed -i -e \"s/\\(GATEWAY=\\).*/\\1\\\"??_%val??\\\"/\" /etc/rc.d/rc.inet1.conf";
+	system "/etc/rc.d/rc.inet1 restart &";
     }
     boot_page "net-gw.term";
 end
