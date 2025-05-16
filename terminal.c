@@ -198,6 +198,7 @@ struct file_n {
 
 char *parse_file_(char *data, struct file_n *f_n, int make, int loop){
 	char *ptr1, *tmp, *a, i;
+	unsigned int *pt;
 	unsigned long long digi, str_size;
 	struct cfg_parse1 *cfg_pointer,/* *cfg_pointer1,*/ **cfg;
 	struct parsestr parser;
@@ -565,6 +566,14 @@ printf("Collected area: --%s--%lld--\n", cfg_pointer->web_name, cfg_pointer->siz
 		//maybe return
 		}
 	    }
+	    continue;
+	}else if(tmp = parsestr2(&parser, NULL, data, "tbl_size:/t\"/[/*/]\"")){
+	    if(make == 1){
+		pt = get_tbl_begin_size(tmp, 1);//show count of begin parameter of tbl
+		if(pt) fprintf(fp, "%d", *pt);//show as digit
+		else fprintf(fp, "NE");//not exist
+	    }
+	    data = restore_str(&parser);
 	    continue;
 	}
 

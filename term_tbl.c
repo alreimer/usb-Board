@@ -792,6 +792,69 @@ unsigned int *get_tbl_begin(char *name){
     return NULL;
 }
 
+unsigned int *get_tbl_begin_size(char *name, char flag){
+    struct tbl *ptr;
+    struct rnd_tbl *p;
+    char *tmp1;
+    static unsigned int i;
+    unsigned int part = 0;
+    struct page_n *n;
+
+    if(tbl_name){
+    ptr = *tbl_name;
+
+	tmp1 = name;		//par="table_name+5#1%1"
+	while(*tmp1){		//par="table_name+5#1@parseFrase"
+	    if(*tmp1 == '@'){
+		*tmp1 = '\0';
+//		flag = 1;
+		n = get_page(tmp1+1);
+		if(n) ptr = n->tbl_name;
+		break;
+	    }else if(*tmp1 == '%'){
+//printf("tbl:%s\n", par);
+		*tmp1 = '\0';
+//		flag = 2;
+		n = get_last_page(tmp1+1, 0);
+//printf("tbl1:%s\n", tmp1+1);
+
+		if(n) ptr = n->tbl_name;
+//printf("tbl2:%s\n", ptr->name);
+		break;
+	    }else if(*tmp1 == '#'){
+		*tmp1 = '\0';
+		tmp1++;
+		if(!*tmp1) part = 0;
+		else{
+		    part = atoi(tmp1);
+		    if(part >= TAB_LEN){return NULL;}//out of range
+		}
+	    }
+	    tmp1++;
+	}
+
+    while(ptr){
+	if(!strcmp(ptr->name, name)){
+	    p = ptr->ptr;
+	    i = 0;
+	    while(p){
+		if(part && (p->entries[part] == NULL) || (!part && (p->entries[0] == NULL) && (p->entry == NULL))) break;
+		i += 1;
+		p = p->next;
+	    }
+	    if(!flag){
+		ptr->begin = i;
+		return &(ptr->begin);
+	    }else{
+		return &i;
+	    }
+	}
+    ptr = ptr->next;
+    }
+    }
+    return NULL;
+}
+
 /*
 //used in strncpy_()
 //var = tab_name#3	-row=4

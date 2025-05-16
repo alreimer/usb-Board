@@ -8,6 +8,7 @@ unsigned char tbl_changed(char *name);
 void tbl_show(char *name);
 void tbl_show_all(void);
 unsigned int *get_tbl_begin(char *name);//name of table
+unsigned int *get_tbl_begin_size(char *name, char flag); //if flag == 0 -> begin will be send and changed, otherweis static integer will be returned
 void change_tbl_stat(char *data);	//data="flag:name:frase(forParsing)"
 
 #define TAB_LEN 16

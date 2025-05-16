@@ -121,6 +121,7 @@ char *search[] = {"print",		//1
 			"change_alines",	//37
 			"tbl_changed",	//38
 			"tbl_show",	//39
+			"tbl_count",	//40
 //			"free_uppages",	//38
 			NULL
 			};
@@ -341,6 +342,7 @@ char *print_(FILE *out, char *data, int make, int loop){
 
 	char *tmp, *ptr = data, *ptr1, *a, ch, i;
 	char *name, *digit, *p, *ptr2;
+	unsigned int *pt;
 	int mk;
 	struct parsestr strct;
 	unsigned long long digi, str_size;
@@ -529,6 +531,14 @@ char *print_(FILE *out, char *data, int make, int loop){
 	}else if(tmp = parsestr2(&strct, NULL, data, "table:/t/[/*\\n/]#end_table/t/B\\n/\\\\0/E")){
 	    if(make == 1){
 		parse_tbl(tmp, 1);//with clean
+	    }
+	    data = restore_str(&strct);
+	    continue;
+	}else if(tmp = parsestr2(&strct, NULL, data, "tbl_size:/t\"/[/*/]\"")){
+	    if(make == 1){
+		pt = get_tbl_begin_size(tmp, 1);//show count of begin parameter of tbl
+		if(pt) fprintf(out, "%d", *pt);//show as digit
+		else fprintf(out, "NE");//not exist
 	    }
 	    data = restore_str(&strct);
 	    continue;
@@ -1070,6 +1080,9 @@ int get_cgi_body(struct cgi *ptr){
 			    break;
 		    case 39:	//tbl_show
 			    tbl_show(arg);
+			    break;
+		    case 40:	//tbl_count
+			    if(get_tbl_begin_size(arg, 0)) jump = 1;//if all ok -> write to begin of tbl & jump
 			    break;
 		}//switch end
 	    before = i;		//which step was before
