@@ -63,8 +63,8 @@ if "nmb_enable:1/"
 //		shell "echo \"#microsoft-ds	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\" >> ./etc/inetd.conf";
 //	}
 
-//	system "/etc/init.d/S30inetd reload";
 	system "/etc/rc.d/rc.samba restart &";
+	system "/etc/rc.d/rc.firewall restart &";
     boot_page "services/samba.term";
 end
 
@@ -82,8 +82,8 @@ else
 //		shell "echo \"microsoft-ds	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\" >> ./etc/inetd.conf";
 //	}
 
-//	system "/etc/init.d/S30inetd reload";
 	system "/etc/rc.d/rc.samba restart &";
+	system "/etc/rc.d/rc.firewall restart &";
     boot_page "services/samba.term";
 end
 fi

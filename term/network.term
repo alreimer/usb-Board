@@ -7,6 +7,12 @@ par:2:dhcp_client:DHCP_ENABLE:[01]
 par:17:hostname:HOSTNAME:
 readcfg
 
+table: list
+#-> parse_file: /etc/resolv.conf
+while:/[/*/]\n
+if:nameserver/t
+#end_table
+
     > "DL" > "AL" 0 1
     > "AT" 104 1 201 29 1 0 "CDHCP" 0
     > "AT" 205 1 237 29 8 0 "C<" 0
@@ -73,8 +79,8 @@ end
     > "ZL" 10 35 "IP: " $ip 0
     > "ZL" 10 45 "Netmask: " $netmask 0
     > "ZL" 10 55 "Gateway: " $gateway 0
-    > "ZL" 10 65 "DNS_Server1: " $dns_server0 0
-    > "ZL" 10 75 "DNS_Server2: " $dns_server1 0
+    if "_@list+1:" > "ZL" 10 65 "DNS_Srv1: " $_@list+1#0 0 fi
+    if "_@list+2:" > "ZL" 10 75 "DNS_Srv2: " $_@list+2#0 0 fi
     > "AT" 2 97 201 125 101 0 "CHostname:|" $hostname 0
 ];
 end
@@ -93,8 +99,8 @@ if "dhcp_client:1/"
     > "ZL" 10 35 "IP: " $ip 0
     > "ZL" 10 45 "Netmask: " $netmask 0
     > "ZL" 10 55 "Gateway: " $gateway 0
-    > "ZL" 10 65 "DNS_Server1: " $dns_server0 0
-    > "ZL" 10 75 "DNS_Server2: " $dns_server1 0
+    if "_@list+1:" > "ZL" 10 65 "DNS_Srv1: " $_@list+1#0 0 fi
+    if "_@list+2:" > "ZL" 10 75 "DNS_Srv2: " $_@list+2#0 0 fi
     > "AT" 2 97 201 125 101 0 "CHostname:|" $hostname 0
 fi
 
