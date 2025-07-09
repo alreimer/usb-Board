@@ -1,5 +1,8 @@
 area:45000:ar_name
 wr_shell: :ar_name:cd services/ 2>/dev/null; [ $? -eq 0 ] && for i in *.term ; do [[ -f "$i" ]] && echo "services/$i"; done
+area:2:roll_case
+wr_par: roll_case:0
+
 
 table: list
 #-> parse_area: ar_name
@@ -35,6 +38,7 @@ end
 
 
 < "A" 11
+	write_par "roll_case:1";
 	set_tbl "list -= 1";
 	boot_cgi [ "timeout" ];
 end

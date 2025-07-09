@@ -56,6 +56,7 @@ end
 end
 < "A" 3
     if_changed "time_mode" {
+	system "/etc/rc.d/rc.firewall restart &";
 	system "/etc/rc.d/rc.time restart";
     }
     boot_cgi [ "show" 0 ];

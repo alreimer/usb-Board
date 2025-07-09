@@ -7,7 +7,7 @@ readcfg
     > "AT" 104 1 201 29 1 0 "Cftp Daemon" 0
     > "AT" 205 1 237 29 8 0 "C<" 0
     > "AT" 2 33 100 61 2 0 "CPort: " $ftp_port 0 //len of string is 11
-    > "AT" 104 65 201 93 3 0 "CInetD" 0
+if "roll_case%1:1" else  > "AT" 104 65 201 93 3 0 "CInetD" 0 fi
 
 include: services_roll.incterm
 
@@ -30,6 +30,7 @@ if "ftp_enable:1/"
 	}
 
 	system "/etc/rc.d/rc.inetd restart &";
+	system "/etc/rc.d/rc.firewall restart &";
     boot_page "services/ftpD.term";
 end
 
@@ -45,9 +46,13 @@ else
 	}
 
 	system "/etc/rc.d/rc.inetd restart &";
+	system "/etc/rc.d/rc.firewall restart &";
     boot_page "services/ftpD.term";
 end
 fi
+
+if "roll_case%1:1"
+else
 
 if "inetd_enable:1/"
 
@@ -71,3 +76,4 @@ else
     boot_page "services/ftpD.term";
 end
 fi //inetd_enable
+fi //roll_case%1
