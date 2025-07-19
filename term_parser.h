@@ -28,7 +28,7 @@ int  ReadConfiguration(void);
 int  SaveConfiguration(void);
 void recover_saved(char *par);
 int cfg_arg_strcmp(char *parm, char flag);
-int cfg_arg_changed(char *web_name);
+int cfg_arg_changed(char *web_name, char flag);
 char *get_cfg_value(long long *size, char *field_name, int i);	//i is 0-value, 1-new_value, 2-fresh_value
 struct cfg_parse1 *get_cfg(char *field_name);
 //void fill_all_cfg(void);

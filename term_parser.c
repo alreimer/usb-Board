@@ -58,9 +58,10 @@ char *strstrcfg(char *d, char *c, int *len)	/*check c string in d string*/
     return NULL;
 }
 
-int cfg_arg_changed(char *web_name){	//if not found - returns 0 (as not changed)
+int cfg_arg_changed(char *web_name, char flag){	//if not found - returns 0 (as not changed)
 
     struct cfg_parse1 *p;
+    int val = 0;
 
     if(cfg_p){
     p = *cfg_p;
@@ -68,7 +69,9 @@ int cfg_arg_changed(char *web_name){	//if not found - returns 0 (as not changed)
     while (p){		/* search the variable value  */
         if((p->str != NULL) && (p->size != 0) && (p->size != 1) && 
 		(p->web_name != NULL) && strcmp(p->web_name, web_name) == 0 ){
-	    return p->changed;
+	    val = p->changed;
+	    if(flag) p->changed = 0;// if flag != 0 -> erase value after execution of this function
+	    return val; 
 	}
 	p = p->next;
     }

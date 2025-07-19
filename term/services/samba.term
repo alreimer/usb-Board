@@ -1,15 +1,10 @@
 par:2:nmb_enable:NMB_ENABLE:[01]
 readcfg
 area:60000:buffer
-wr_shell: :buffer:smbstatus -b
 
-12  > "DL" > "AL" 0 1
-    > "AT" 104 1 201 29 1 0 "CSamba" 0
-    > "AT" 104 33 201 61 3 0 "Csmbstatus" 0
-//    > "AT" 2 33 100 61 3 0 "Csmbstatus" 0
-//    > "AT" 104 65 201 93 4 0 "Csomethingelse" 0
-    > "AT" 205 1 237 29 8 0 "C<" 0
-
+< "show" 0
+    write_system ":buffer:smbstatus -b";
+    print [
 table: list
 #-> parse_area: buffer
 while:/[/*/]\n
@@ -21,27 +16,64 @@ if:/[/*/]/<- 	/>/B(/*)/<- 	/>/\/E
 if:/[/*/]/<- 	/>
 if:/[/*/]/<- 	/>
 if:
-#end_table
+#end_table ];
+    cnot_chngd "nmb_enable" {
+    nnot "roll_case%1:1" {
+	tbl_changed "list"{
+	    print [ >>>> "wait:" 10 0 ];
+	    exit_cgi;
+	}
+    }
+    }
+    print [ 12  > "DL" > "AL" 0 1
+    > "ZC" 51 13 if "nmb_enable:1/" "Enabled" else "Disabled" fi 0
+    > "AT" 104 1 201 29 1 0 "CSamba" 0
+    > "AT" 104 33 201 61 3 0 "Csmbstatus" 0
+//    > "AT" 2 33 100 61 3 0 "Csmbstatus" 0
+//    > "AT" 104 65 201 93 4 0 "Csomethingelse" 0
+    > "AT" 205 1 237 29 8 0 "C<" 0
 
 > "ZC" 104 70 "users: " tbl_size: "list#1" 0
-
+    ];
 //show last 3 users and machines
-< "last" 0
-    tbl_count "list#1";
-    set_tbl "list < 4"{
-	set_tbl "list = 0";
+//    if "roll_case%1:1" {
+	tbl_count "list#1";
+	set_tbl "list < 4"{
+	    set_tbl "list = 0";
+	}
+	set_tbl "list > 3"{
+	    set_tbl "list -= 3";
+	}
+	print [ > "ZL" 0 70 
+	if "_@list+1:" "|" $_@list+1#1:20 "   " $_@list+1#3:17 fi
+	if "_@list+2:" "|" $_@list+2#1:20 "   " $_@list+1#3:17 fi
+	if "_@list+3:" "|" $_@list+3#1:20 "   " $_@list+1#3:17 fi 0 ];
+//    }
+    nnot "roll_case%1:1"{
+	print [ >>>> "wait:" 10 0 ];
     }
-    set_tbl "list > 3"{
-	set_tbl "list -= 3";
-    }
-    print [ > "ZL" 0 70 
-    if "_@list+1:" "|" $_@list+1#1:20 "   " $_@list+1#3:17 fi
-    if "_@list+2:" "|" $_@list+2#1:20 "   " $_@list+1#3:17 fi
-    if "_@list+3:" "|" $_@list+3#1:20 "   " $_@list+1#3:17 fi 0 ];
 end
-cgi: "last" 0
+
+cgi: "show" 0
+
+
+if "roll_case%1:1"
 
 include: services_roll.incterm
+
+else //roll_case
+
+< "timeout"
+    boot_cgi [ "show" 0 ];
+end
+< "button"
+    boot_page "??_referrer??";
+end
+
+
+fi //roll_case
+
+
 
 < "A" 8
     boot_page "services.term";
@@ -50,40 +82,33 @@ end
     boot_page "services/samba_status.term_";
 end
 
-if "nmb_enable:1/"
-    > "ZC" 51 13 "Enabled" 0
 < "A" 1
-    write_par "_%nmb_enable:0";
+    if "nmb_enable:1/"{
+	write_par "_%nmb_enable:0";
+    }
+    not "nmb_enable:1/"{
+	write_par "_%nmb_enable:1";
+    }
     fill_cfg "nmb_enable";
     savecfg;
+    if "_%nmb_enable:0/"{
 //	change_line "./etc/inetd.conf:/*netbios-ssn:#netbios-ssn	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\n"{
 //		shell "echo \"#netbios-ssn	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\" >> ./etc/inetd.conf";
 //	}
 //	change_line "./etc/inetd.conf:/*microsoft-ds:#microsoft-ds	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\n"{
 //		shell "echo \"#microsoft-ds	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\" >> ./etc/inetd.conf";
 //	}
-
-	system "/etc/rc.d/rc.samba restart &";
-	system "/etc/rc.d/rc.firewall restart &";
-    boot_page "services/samba.term";
-end
-
-else
-
-    > "ZC" 51 13 "Disabled" 0
-< "A" 1
-    write_par "_%nmb_enable:1";
-    fill_cfg "nmb_enable";
-    savecfg;
+	system "(/etc/rc.d/rc.samba restart; /etc/rc.d/rc.firewall restart) &";
+    }
+    if "_%nmb_enable:1/"{
 //	change_line "./etc/inetd.conf:/*netbios-ssn:netbios-ssn	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\n"{
 //		shell "echo \"netbios-ssn	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\" >> ./etc/inetd.conf";
 //	}
 //	change_line "./etc/inetd.conf:/*microsoft-ds:microsoft-ds	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\n"{
 //		shell "echo \"microsoft-ds	stream	tcp	nowait	root	/mnt/sbin/smbd smbd\" >> ./etc/inetd.conf";
 //	}
-
-	system "/etc/rc.d/rc.samba restart &";
-	system "/etc/rc.d/rc.firewall restart &";
-    boot_page "services/samba.term";
+	system "(/etc/rc.d/rc.firewall restart; /etc/rc.d/rc.samba restart) &";
+    }
+	readcfg;
+	boot_cgi [ "show" 0 ];
 end
-fi

@@ -122,6 +122,8 @@ char *search[] = {"print",		//1
 			"tbl_changed",	//38
 			"tbl_show",	//39
 			"tbl_count",	//40
+			"cif_chngd",	//41
+			"cnot_chngd",	//42
 //			"free_uppages",	//38
 			NULL
 			};
@@ -881,10 +883,10 @@ int get_cgi_body(struct cgi *ptr){
 
 		    case 10:				//if_changed
 //printf("if_changed: %s; i=%d; bb=%d\n", ptr->arg[i], i, ptr->bb[i]);
-			    if(!cfg_arg_changed(arg)){ jump = 2;}
+			    if(!cfg_arg_changed(arg, 0)){ jump = 2;}
 			    break;
 		    case 11:				//not_changed or not found
-			    if(cfg_arg_changed(arg)) { jump = 2;}
+			    if(cfg_arg_changed(arg, 0)) { jump = 2;}
 			    break;
 		    case 12:				//if
 //printf("if: %s; i=%d; bb=%d\n", ptr->arg[i], i, ptr->bb[i]);
@@ -1083,6 +1085,12 @@ int get_cgi_body(struct cgi *ptr){
 			    break;
 		    case 40:	//tbl_count
 			    if(get_tbl_begin_size(arg, 0)) jump = 1;//if all ok -> write to begin of tbl & jump
+			    break;
+		    case 41:	//cif_chngd		the same as if_changed but erased value after this function
+			    if(!cfg_arg_changed(arg, 1)){ jump = 2;}
+			    break;
+		    case 42:	//cnot_chngd
+			    if(cfg_arg_changed(arg, 1)) { jump = 2;}
 			    break;
 		}//switch end
 	    before = i;		//which step was before

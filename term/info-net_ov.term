@@ -53,15 +53,15 @@ end
 end
 
 < "A" 1
-	shell "/etc/rc.d/rc.inet1 stop &";
+	system "(/etc/rc.d/rc.inet1 stop; /etc/rc.d/rc.firewall stop) &";
 	boot_cgi [ "timeout" ];
 end
 < "A" 2
-	shell "/etc/rc.d/rc.inet1 start &";
+	system "(/etc/rc.d/rc.inet1 start; /etc/rc.d/rc.firewall start) &";
 	boot_cgi [ "timeout" ];
 end
 < "A" 3
-	shell "/etc/rc.d/rc.inet1 restart &";
+	system "(/etc/rc.d/rc.inet1 restart; /etc/rc.d/rc.firewall restart) &";
 	boot_cgi [ "timeout" ];
 end
 
