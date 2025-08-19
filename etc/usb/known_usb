@@ -1,0 +1,17 @@
+### AUTOSTART can be empty
+### IF PARTITIONNR == * (ALL PARTITIONS)
+#$SERIAL:$PARTITIONNR:$MOUNTPFAD:$AUTOSTART
+
+###  128 MB Musik Stick ###
+NTXPRIVATE0002:1:/mnt/home/usb/128MB_MP3_Stick:
+
+###  Backup Disk 250 GB ###
+EEF100795B55:*:/mnt/home/backup-disk:
+
+###  128 MB Musik Stick ###
+NTXPRIVATE0001:*:/mnt/home/usb/128MB_MP3_Stick:
+
+#my usbstick
+2C1A1240FE417BC5:1:/mnt/home/usb/128MB_stick:
+
+12279500029351:1:/mnt/usb/12279500029351:

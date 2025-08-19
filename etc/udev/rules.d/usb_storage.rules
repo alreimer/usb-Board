@@ -1,0 +1,6 @@
+##############################################################################################################
+# USB Storages automount and unmount
+#
+KERNEL=="sd[a-z]", SUBSYSTEM=="block", SUBSYSTEMS=="usb", DRIVERS=="usb", ACTION=="add", RUN+="/etc/usb/usb_storage.sh %k 1 0 $attr{serial}", RUN+="/etc/usb/usb_log.sh 1 %k '$attr{version}' '$attr{manufacturer}' '$attr{product}' '$attr{idVendor}' '$attr{idProduct}' '$attr{serial}'"
+KERNEL=="sd[a-z]", SUBSYSTEM=="block", SUBSYSTEMS=="usb", DRIVERS=="usb", ACTION=="remove", RUN+="/etc/usb/usb_storage.sh %k 0 0 $attr{serial}", RUN+="/etc/usb/usb_log.sh 0 %k '$attr{version}' '$attr{manufacturer}' '$attr{product}' '$attr{idVendor}' '$attr{idProduct}' '$attr{serial}'"
+

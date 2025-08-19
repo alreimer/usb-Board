@@ -1,0 +1,16 @@
+#!/bin/sh
+#
+# /etc/rc.d/rc.hdparm:  configuring the spin of disk.
+#
+. /etc/config
+
+echo -e " *** Configuring spintime of SDD"
+	for i in "/dev/sda:" "/dev/sdb:B" "/dev/sdc:C"
+	do
+	    device=`echo $i | cut -d ":" -f 1`
+	    sleeppar=`echo $i | cut -d ":" -f 2`
+	    s=$["SLEEP_MODE$sleeppar"]
+	    [ -e $device ] && ( echo "set $device to $s"; hdparm -S$s $device )
+	done
+
+#    hdparm -S 240 /dev/hda

@@ -1,0 +1,11 @@
+##############################################################################################################
+# USB-Board which uses usb connection
+#
+#KERNEL=="ttyUSB[0-9]", SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", ATTRS{product}=="USB-Board", ACTION=="add", RUN+="/usr/bin/logger ucbgbfbmount", PROGRAM="/usr/sbin/terminal /sys$env{DEVPATH} $attr{busnum} $attr{devnum}"
+KERNEL=="ttyUSB[0-9]", SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", ATTRS{product}=="USB-Board", ACTION=="add", RUN+="/etc/term.sh start %n"
+KERNEL=="ttyUSB[0-9]", SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", ATTRS{product}=="USB-Board", ACTION=="remove", RUN+="/etc/term.sh stop %n"
+
+# %kernel == %k == ttyUSB0
+# %number == %n == 0 (last of ttyUSB)
+
+#ENV{ID_MTP_DEVICE}!="1", ENV{MTP_NO_PROBE}!="1", ENV{COLOR_MEASUREMENT_DEVICE}!="1", ENV{ID_GPHOTO}!="1", ENV{libsane_matched}!="yes", ATTR{bDeviceClass}=="00|02|06|ef|ff", PROGRAM="mtp-probe /sys$env{DEVPATH} $attr{busnum} $attr{devnum}", RESULT=="1", SYMLINK+="libmtp-%k", ENV{ID_MTP_DEVICE}="1", ENV{ID_MEDIA_PLAYER}="1"
