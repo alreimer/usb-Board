@@ -1,12 +1,15 @@
 12 > "DL" > "TC" 0
 > "AL" 0 1
+> "ZL" 0 1 "Visit my page on GitHub:|github.com/alreimer/usb-Board||if you want to buy my device|take a look at:|www.ebay.de/itm/335985004843" 0 
+/*
 > "AT" 9 9 114 58 1 0 "CTrem|Login" 0
 > "AT" 9 69 114 117 2 0 "Cmc|Midnight|Commander" 0
 > "AT" 125 9 229 58 3 0 "CAccess" 0
+*/
 > "AT" 125 69 172 117 5 0 "CBack|<" 0
-> "AT" 182 69 229 117 4 0 "CNext|>" 0
+//> "AT" 182 69 229 117 4 0 "CNext|>" 0
 
-
+/*
 < "A" 1
     boot_page "tLogin.term";
 end
@@ -19,6 +22,7 @@ end
 < "A" 4
     boot_page "index-main_5.term";
 end
+*/
 < "A" 5
-    boot_page "index-main_3.term";
+    boot_page "index-main_4.term";
 end

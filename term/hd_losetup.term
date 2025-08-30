@@ -1,0 +1,131 @@
+/* change ./etc/fstab to /etc/fstab */
+
+area:25000:lopoint
+area:2048:pool
+area:300:info
+wr_par: info:info-mount.term
+
+table: list
+#-> parse_file: /etc/fstab
+while:/[/*/]\n
+mixed
+check:/!/B/!/*loop=/\/!/*encryption=/E
+if:/*loop=/[/*/]/<- ,	/>
+if:/*encryption=/[/*/]/<- ,	/>
+#end_table
+
+< "show" 0
+	print [ 12   > "DL" > "AL" 0 1
+if "_@list+1:" > "AT" 2 1 100 29 1 0 "C" $_@list+1#0:10 "|" $_@list+1#1:10 0 fi
+if "_@list+2:" > "AT" 104 1 201 29 2 0 "C" $_@list+2#0:10 "|" $_@list+2#1:10 0 fi
+if "_@list+3:" > "AT" 2 33 100 61 3 0 "C" $_@list+3#0:10 "|" $_@list+3#1:10 0 fi
+if "_@list+4:" > "AT" 104 33 201 61 4 0 "C" $_@list+4#0:10 "|" $_@list+4#1:10 0 fi
+if "_@list+5:" > "AT" 2 65 100 93 5 0 "C" $_@list+5#0:10 "|" $_@list+5#1:10 0 fi
+if "_@list+6:" > "AT" 104 65 201 93 6 0 "C" $_@list+6#0:10 "|" $_@list+6#1:10 0 fi
+if "_@list+7:" > "AT" 2 97 100 125 7 0 "C" $_@list+7#0:10 "|" $_@list+7#1:10 0 fi
+if "_@list+8:" > "AT" 104 97 201 125 8 0 "C" $_@list+8#0:10 "|" $_@list+8#1:10 0 fi
+if "_@list+9:" > "AT" 205 97 237 125 9 0 "C->" 0 fi
+
+    > "AT" 205 33 237 61 10 0 "C<" ifnot "_@_list:0/" "-" fi 0
+    > "AT" 205 65 237 93 11 0 "Cdel" 0
+    > "AT" 205 1 237 29 13 0 "C<" 0 ];
+end
+
+< "A" 1 8
+    if "_@list#1:AES" {
+	copy_ppar "_@list:lopoint:0";
+//print [ 12   > "DL" > "AL" 0 1   $_@list ];
+//print [ 12   > "DL" > "AL" 0 1 "mntpt: " $lopoint ];
+	print [ >>>> "paSsWord" ];
+	exit_cgi;
+    }
+
+    print [ 12 > "DL" > "AL" 0 1 ];
+//simple mount
+    not "_@list#1:AES" {
+//	shell "mount ??_@list??";
+	write_system  ":pool:losetup -F ??_@list??";
+	not "pool:/" {
+	    print [ "??pool??" > "AT" 205 97 237 125 25 0 "C<" 0 ];
+	    exit_cgi;
+	}
+	print [ > "AT" 205 1 237 29 25 0 "C<" 0 > "ZC" 100 25 "loop: " $_@list:14 0 ];
+	exit_cgi;
+    }
+    print [ > "ZC" 120 25 "Unable get variable" 0 ];
+end
+
+< "clean_buf" 0
+    clean_par "_buf";
+end
+
+< "script"
+    print [ 12 > "DL" > "AL" 0 1 ];
+//for check the password
+//    write_system  "_buffer:pool:dd if=/dev/stdin of=/chack";
+
+//in _buffer is a password
+//needed stdin implement -p 0 -> read password from stdin (0)
+    write_system  "_buffer:pool:losetup -p 0 -F ??lopoint??";
+    not "pool:/" {
+	print [ "??pool??" > "AT" 205 97 237 125 25 0 "C<" 0 ];
+	exit_cgi;
+    }
+    print [ > "AT" 205 1 237 29 25 0 "C<" 0 > "ZC" 100 25 "loop connected: " $lopoint:14 0 ];
+    clean_par "_buf";	//clean whole buffer (including _buffer)
+end
+
+//back to 'show' menu
+< "break"
+    boot_cgi [ "show" 0 ];
+    boot_cgi [ "clean_buf" 0 ];
+end
+
+//next page
+< "A" 9
+	set_tbl "list += 8";
+	boot_cgi [ "show" 0 ];
+end
+
+//page before
+< "A" 10
+    set_tbl "list == 0"{
+        if "_referrer:/*menu.term/" {	//if last page was *menu.term
+	switch_n "2";
+	boot_cgi [ "show" 0 ] {		//if cgi not found
+	    boot_cgi [ "timeout" ] {
+		boot_page "??_back2??";
+	    }
+	}
+	exit_cgi;
+        }
+	boot_page "??_referrer??";
+
+    }
+    set_tbl "list != 0"{
+	set_tbl "list -= 8";
+	boot_cgi [ "show" 0 ];
+    }
+end
+< "A" 13
+    if "_referrer:/*menu.term/" {	//if last page was *menu.term
+	switch_n "2";
+	boot_cgi [ "show" 0 ] {		//if cgi not found
+	    boot_cgi [ "timeout" ] {
+		boot_page "??_back2??";
+	    }
+	}
+	exit_cgi;
+    }
+    boot_page "??_referrer??";
+end
+< "A" 11
+    boot_page "hd_ulosetup.term";
+end
+//back to 'show' menu
+< "A" 25
+    boot_cgi [ "show" 0 ];
+end
+
+cgi: "show" 0
+cgi: "clean_buf" 0

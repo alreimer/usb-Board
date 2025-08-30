@@ -4,11 +4,17 @@ area:25000:mntpoint
 area:2048:pool
 area:300:info
 wr_par: info:info-mount.term
+area:10:menu_logo
+area:20:menu_cgi
+//menu_logo is max 20 chars
+wr_par: menu_logo:losetup
+wr_par: menu_cgi:hd_losetup.term
 
 table: list
 #-> parse_file: /etc/fstab
 while:/[/*/]\n
-if:/ /[//dev//sd/<1abcdefg/>/<1123456789/>/]/<- 	/>
+check:/ /B//dev//sd/<1abcdefg/>/<1123456789/>/\/*encryption=/E
+if:/ /[/*/]/<- 	/>
 if:/[/*/]/<- 	/>
 if:/*/<- 	/>/[/*/]/<- 	/>
 #end_table
@@ -26,14 +32,14 @@ smartcard.
 
 < "show" 0
 	print [ 12   > "DL" > "AL" 0 1
-if "_@list+1:" > "AT" 2 1 100 29 1 0 "C" $_@list+1#0:10 if "_@list+1#2:/*encrypt" " e" fi "|" $_@list+1#1:11 0 fi
-if "_@list+2:" > "AT" 104 1 201 29 2 0 "C" $_@list+2#0:10 if "_@list+2#2:/*encrypt" " e" fi "|" $_@list+2#1:11 0 fi
-if "_@list+3:" > "AT" 2 33 100 61 3 0 "C" $_@list+3#0:10 if "_@list+3#2:/*encrypt" " e" fi "|" $_@list+3#1:11 0 fi
-if "_@list+4:" > "AT" 104 33 201 61 4 0 "C" $_@list+4#0:10 if "_@list+4#2:/*encrypt" " e" fi "|" $_@list+4#1:11 0 fi
-if "_@list+5:" > "AT" 2 65 100 93 5 0 "C" $_@list+5#0:10 if "_@list+5#2:/*encrypt" " e" fi "|" $_@list+5#1:11 0 fi
-if "_@list+6:" > "AT" 104 65 201 93 6 0 "C" $_@list+6#0:10 if "_@list+6#2:/*encrypt" " e" fi "|" $_@list+6#1:11 0 fi
-if "_@list+7:" > "AT" 2 97 100 125 7 0 "C" $_@list+7#0:10 if "_@list+7#2:/*encrypt" " e" fi "|" $_@list+7#1:11 0 fi
-if "_@list+8:" > "AT" 104 97 201 125 8 0 "C" $_@list+8#0:10 if "_@list+8#2:/*encrypt" " e" fi "|" $_@list+8#1:11 0 fi
+if "_@list+1:" > "AT" 2 1 100 29 1 0 "C" $_@list+1#0:10:"/B/[//dev/\/L/L/E" if "_@list+1#2:/*encryption=" " e" fi "|" $_@list+1#1:11:"/L/L" 0 fi
+if "_@list+2:" > "AT" 104 1 201 29 2 0 "C" $_@list+2#0:10:"/B/[//dev/\/L/L/E" if "_@list+2#2:/*encryption=" " e" fi "|" $_@list+2#1:11:"/L/L" 0 fi
+if "_@list+3:" > "AT" 2 33 100 61 3 0 "C" $_@list+3#0:10:"/B/[//dev/\/L/L/E" if "_@list+3#2:/*encryption=" " e" fi "|" $_@list+3#1:11:"/L/L" 0 fi
+if "_@list+4:" > "AT" 104 33 201 61 4 0 "C" $_@list+4#0:10:"/B/[//dev/\/L/L/E" if "_@list+4#2:/*encryption=" " e" fi "|" $_@list+4#1:11:"/L/L" 0 fi
+if "_@list+5:" > "AT" 2 65 100 93 5 0 "C" $_@list+5#0:10:"/B/[//dev/\/L/L/E" if "_@list+5#2:/*encryption=" " e" fi "|" $_@list+5#1:11:"/L/L" 0 fi
+if "_@list+6:" > "AT" 104 65 201 93 6 0 "C" $_@list+6#0:10:"/B/[//dev/\/L/L/E" if "_@list+6#2:/*encryption=" " e" fi "|" $_@list+6#1:11:"/L/L" 0 fi
+if "_@list+7:" > "AT" 2 97 100 125 7 0 "C" $_@list+7#0:10:"/B/[//dev/\/L/L/E" if "_@list+7#2:/*encryption=" " e" fi "|" $_@list+7#1:11:"/L/L" 0 fi
+if "_@list+8:" > "AT" 104 97 201 125 8 0 "C" $_@list+8#0:10:"/B/[//dev/\/L/L/E" if "_@list+8#2:/*encryption=" " e" fi "|" $_@list+8#1:11:"/L/L" 0 fi
 if "_@list+9:" > "AT" 205 97 237 125 9 0 "C->" 0 fi
 
     > "AT" 205 33 237 61 10 0 "C<" ifnot "_@_list:0/" "-" fi 0
@@ -42,7 +48,7 @@ if "_@list+9:" > "AT" 205 97 237 125 9 0 "C->" 0 fi
 end
 
 < "A" 1 8
-    if "_@list#2:/*encrypt" {
+    if "_@list#2:/*encryption=" {
 	copy_ppar "_@list:mntpoint:0";
 //print [ 12   > "DL" > "AL" 0 1   $_@list ];
 //print [ 12   > "DL" > "AL" 0 1 "mntpt: " $mntpoint ];
@@ -52,7 +58,7 @@ end
 
     print [ 12 > "DL" > "AL" 0 1 ];
 //simple mount
-    not "_@list#2:/*encrypt" {
+    not "_@list#2:/*encryption=" {
 //	shell "mount ??_@list??";
 	write_system  ":pool:mount ??_@list??";
 	not "pool:/" {
@@ -72,14 +78,14 @@ end
 < "script"
     print [ 12 > "DL" > "AL" 0 1 ];
 //in _buffer is a password
-//needed stdin implement
-    write_system  "_buffer:pool:mount ??mntpoint??";
+//needed stdin implement -p 0 -> read password from stdin (0)
+    write_system  "_buffer:pool:mount -p 0 ??mntpoint??";
     not "pool:/" {
 	print [ "??pool??" > "AT" 205 97 237 125 25 0 "C<" 0 ];
 	exit_cgi;
     }
     print [ > "AT" 205 1 237 29 25 0 "C<" 0 > "ZC" 100 25 "mount: " $mntpoint:14 0 ];
-    clean_par "_buf";
+    clean_par "_buf";	//clean whole buffer (including _buffer)
 end
 
 //back to 'show' menu

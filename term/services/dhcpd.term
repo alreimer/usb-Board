@@ -17,7 +17,7 @@ if "dhcpd_enable:1/"
     write_par "_%dhcpd_enable:0";
     fill_cfg "dhcpd_enable";
     savecfg;
-	system "/etc/rc.d/rc.dhcpd restart &";
+	system "(/etc/rc.d/rc.dhcpd restart; /etc/rc.d/rc.firewall restart) &";
     boot_page "services/dhcpd.term";
 end
 
@@ -28,7 +28,7 @@ else
     write_par "_%dhcpd_enable:1";
     fill_cfg "dhcpd_enable";
     savecfg;
-	system "/etc/rc.d/rc.dhcpd restart &";
+	system "(/etc/rc.d/rc.firewall restart; /etc/rc.d/rc.dhcpd restart) &";
     boot_page "services/dhcpd.term";
 end
 fi

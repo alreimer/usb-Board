@@ -1,27 +1,27 @@
 12   > "DL" > "TC" 0 > "AL" 0 1
-> "AT" 2 1 98 60 1 0 "CMount HDD" 0
-> "AT" 106 1 201 60 2 0 "CUmount HDD" 0
+> "AT" 2 1 98 60 1 0 "CConnect|Loop|devices" 0
+> "AT" 106 1 201 60 2 0 "CRelease|Loop|devices" 0
+/*
 > "AT" 2 67 98 125 3 0 "CSleep HDD" 0
 > "AT" 106 67 201 125 4 0 "CHDD Tunes" 0
+*/
 > "AT" 205 1 237 29 5 0 "C<" 0
-> "AT" 205 97 237 125 6 0 "C>" 0
+//> "AT" 205 97 237 125 6 0 "C>" 0
 
 < "A" 1
-    boot_page "hd_mounts.term";
+    boot_page "hd_losetup.term";
 end
 < "A" 2
-    boot_page "hd_umounts.term";
+    boot_page "hd_ulosetup.term";
 end
+/*
 < "A" 3
     boot_page "hd_sleep.term";
 end
 < "A" 4
     boot_page "hd_tunes.term";
 end
+*/
 < "A" 5
-    boot_page "index-main_1.term";
+    boot_page "hd.term";
 end
-< "A" 6
-    boot_page "hd-1.term";
-end
-

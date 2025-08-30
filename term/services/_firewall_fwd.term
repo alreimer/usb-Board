@@ -1,0 +1,70 @@
+par:2:bt_enable:BTORRENT_ENABLE:[01]
+readcfg
+
+< "info" 0
+	print [ 12  > "DL" > "AL" 0 1
+> "ZC" 102 0 "FireWall FORWARD" 0
+> "ZL" 2 8 "bitTorrent: " if "_&bt_enable:1" "open" else "clesed" fi 0
+
+//if "_@help+17%1:" > "AT" 205 97 237 125 9 0 "C->" 0 fi
+//  > "AT" 205 33 237 61 10 0 "C<-" 0
+    > "AT" 205 1 237 29 11 0 "C<" 0 ];
+end
+
+< "A" 11
+    if "roll_case%1:1"{
+	boot_page "services.term";
+    }
+    boot_cgi [ "show" 0 ];
+end
+
+
+if "roll_case%1:1"
+
+include: services_roll.incterm
+cgi: "info" 0
+
+else //roll_case
+
+< "show" 0
+	print [
+12 > "DL" > "AL" 0 1
+> "ZC" 102 13 "FireWall FORWARD" 0
+> "AT" 2 33 201 61 1 0 "CbitTorrent: " if "_&bt_enable:1" "open" else "clesed" fi 0	//freshvalue
+//if "_@list+3:" > "AT" 2 65 201 93 3 0 "C>" $_@list+3#0:24 "| term: " $_@list+3#1:20 "| time:" $_@list+3#2:20 0 fi
+//if "_@list+4:" > "AT" 2 97 201 125 4 0 "C>" $_@list+4#0:24 "| term: " $_@list+4#1:20 "| time:" $_@list+4#2:20 0 fi
+//if "_@list+5:" > "AT" 205 97 237 125 7 0 "C->" 0 fi
+
+//    > "AT" 205 33 237 61 10 0 "C<" ifnot "_@_list:0/" "-" fi 0
+    > "AT" 205 65 237 93 20 0 "Ci" 0
+    > "AT" 205 1 237 29 21 0 "C<" 0 ];
+end
+
+
+< "A" 1
+    if "bt_enable:1/"{
+	write_par "_%bt_enable:0";
+    }
+    not "bt_enable:1/"{
+	write_par "_%bt_enable:1";
+    }
+    fill_cfg "bt_enable";
+    savecfg;
+
+    system "/etc/rc.d/rc.firewall restart &";
+    readcfg;
+    boot_cgi [ "show" 0 ];
+end
+
+
+
+< "A" 20
+    boot_cgi [ "info" 0 ];
+end
+< "A" 21
+    boot_page "services.term";
+end
+
+
+cgi: "show" 0
+fi //roll_case
