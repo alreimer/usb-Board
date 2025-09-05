@@ -1,4 +1,4 @@
-extern unsigned char *point[2];
+extern unsigned char *point[3];
 extern unsigned long number;
 extern unsigned long value_;
 
@@ -6,11 +6,32 @@ unsigned char *parsestr(unsigned char *a, unsigned char *b);
 unsigned char *parsestr1( unsigned char *a, unsigned char *b);
 char *parsestr1_( char *a, char *b);
 struct parsestr{
-    char ch;
+//in parameters
+    FILE *fd;
+    char *arg;
+    char flags;
+//end of in
+//out parameters
+    char *begin;	//will be set by /[
     unsigned long num;
-    char *zero;		//place, were ch was stored (for restoring)
+    unsigned long val;
     char *end;		//end of matched string
+//end of out
+//internal parameters
+    char ch;
+    char *zero;		//place, were ch was stored (for restoring) the "ch"
+//end of internals
 };
+
+struct cascade{
+    unsigned long s;		//stack
+    unsigned long e;		//exec
+    unsigned long c;		//case number
+    unsigned long n;		//number
+    unsigned long v;		//value
+    struct cascade *next;
+};
+void free_cascade(void);
 
 struct strctexec{
     unsigned long exec;
@@ -25,6 +46,7 @@ void free_strctexec(void);
 
 char *parsestr2(struct parsestr *ptr, exec_fnctn *fn, char *a, char *b);
 char *restore_str( struct parsestr *ptr);//return the end of matched string (struct parsestr->end)
+char *parsestr2_s( struct parsestr *ptr, exec_fnctn *fn, char *d, char *c);
 
 char *get_var(unsigned long long *size_ptr, char *var_index);		//parse Varialbles
 

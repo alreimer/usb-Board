@@ -46,25 +46,51 @@ void print_pstr(FILE *out, char *tmp){
 	}
 }
 
-unsigned char *point[2] = {NULL, NULL};		//0 - place where is ch_zero by /]; 1 - end of string
+//in parameters
+FILE *fdtr = NULL;
+char *arg_ = NULL;
+char parse_flags = 0b00000000;
+exec_fnctn *fn_exec = NULL;	//if NULL -> no /e (or /c)->no_more because of /W
+unsigned char *bucks = NULL;
+//end of in
+
+//internal pars
+unsigned char *point[3] = {NULL, NULL, NULL};		//0 - place where is ch_zero by /]; 1 - end of string; 2 - technical var
 unsigned char ch_zero = '\0';
 
+unsigned char *begin_ = NULL;
+//unsigned char *end_ = NULL;
 unsigned long number = 0;
 unsigned long value_ = 0;
 unsigned long stack_ = 0;
 
 unsigned long exec_ = 0;	//if == 0 -> no /c
-//unsigned char *begin_ = NULL;
-//unsigned char *end_ = NULL;
+unsigned long ca_se_ = 0;
+//end of internals
+//only internal pars
+char stop_ = 0;			//if == 1 -> stop parsing, return NULL;
+struct cascade *cascade = NULL;
 struct strctexec *point_exec = NULL;//if NULL -> no /e
-unsigned char *bucks = NULL;
-exec_fnctn *fn_exec = NULL;	//if NULL -> no /e or /c
+//end of only internals
+
+void free_cascade_1(struct cascade **ptr){
+	if(!ptr || !*ptr) return;
+	free_cascade_1(&((*ptr)->next));
+	free(*ptr);
+	*ptr = NULL;
+}
+void free_cascade(void){
+	free_cascade_1(&cascade);
+}
 
 unsigned char *parsestr1(unsigned char *d, unsigned char *c)	//try identic strings!, "xxx*NULL" combination
 {
 	unsigned char *tmp, *tmp2, *tmp3, *tmp4, *tmp5, ch;
+	unsigned char *text = "parsestr(): too much /\\ or /E";
 	unsigned int i;
-	unsigned long digi, val, stc, exc;
+	unsigned long digi, val, stc, exc, cse;
+
+
 
 	while (*c)
 	{
@@ -76,52 +102,84 @@ unsigned char *parsestr1(unsigned char *d, unsigned char *c)	//try identic strin
 			      c++; while(1){tmp = parsestr1(d, c); if (tmp) return tmp; if(! *d) break; d++;} return NULL;//depend on continues parsing
 							//if * in b string -> some symbols between
 //	!a*(b+c) = !(a+!(b+c))->	/!/Ba/\/!/Bb/\c/\/E/E
-		    case 'B': c++; tmp = NULL; tmp2 = c; i = 0;
-					while(*tmp2){
-					    if(*tmp2 == '/' && *(tmp2+1) == '/') tmp2++; //tmp2+=2
-					    else if(*tmp2 == '/' && *(tmp2+1) == 'B' && i <= 1024) i++; //if(/B)
-					    else if(*tmp2 == '/' && *(tmp2+1) == 'E'){	//if(/E)	-optional
-						if(i == 0){tmp = tmp2; break;}
-						else i--;
-					    }
-					    tmp2++;
-					}
-				//tmp - end of compare-string
-				//tmp2 - can be used,
+		    case 'B': c++;
+
 //check				tmp3 = NULL;
+
+//printf("/B%.5s--/E%.5s--\n",c, tmp );
 				while(1){	//not matched
 				    tmp3 = point[1];//Use only in parsestr, parsestr1_ or parsest2. it must be NULL at the beginning
-				    tmp2 = parsestr1(d, c);
+				    tmp = parsestr1(d, c);
 //check				    if(tmp3 != NULL && tmp3 > point[1]) point[1] = tmp3;
-				    if(tmp3 > point[1]) point[1] = tmp3;//Use only in parsestr, parsestr1_ or parsest2
-				    if(tmp2) break;
+
+/*				    if(tmp){
+					if(tmp3 > point[1]) point[1] = tmp3;//Use only in parsestr, parsestr1_ or parsest2
+				        break;
+				    }
+*/
+
+				    if(tmp3 > point[1]) point[1] = tmp3;//Use only in parsestr, parsestr1_ or parsest2 or parsestr2_s
+				    if(tmp) break;
+
 				    i = 0;
 				    while(1){
 					if(*c == '/' && *(c+1) == '/') c++; //c+=2
 					else if(*c == '/' && *(c+1) == 'B' && i <= 1024) {i++; c++;}
-					else if(i != 0 && *c == '/' && *(c+1) == 'E'){ i--; c++;}
 					else if(i == 0 && *c == '/' && *(c+1) == '\\'){c = c + 2; break;} // if(/\) 
-					else if((tmp && (c == tmp)) || (*c == '\0')) return NULL;	//end of compare-strings - no matches - return NULL
+					else if(*c == '/' && *(c+1) == 'E'){	//if(/E)
+						if(i == 0){return NULL;}	//nothing to compare
+						else{ i--; c++;}
+					}
+
+					else if(*c == '\0') return NULL;	//end of compare-strings - no matches - return NULL
+/*					else if(*c == '/' && *(c+1) == 'm' && (tmp4 = parsestr2_s(NULL, NULL, c, message))){
+						c = tmp4;
+						continue;
+					}
+*/
 					c++;
 				    }
+
 //check				    tmp3 = point[1];
 				}
-//printf("str:%s d=%s c=%s\n", tmp2,d,c);
-				if(tmp && *tmp2) {
-//					return parsestr1(tmp2, tmp+2);}
-//					d = tmp2; /*tmp2 is not always the end of string!! check it out*/
-					d = point[1];
-//printf("c=%.5s,d=%.5s\n", tmp, d);
-					c = tmp + 2; continue;}
-				else return tmp2;
-		    case '{': c++; ch = *c; c++; tmp = NULL; tmp2 = c; i = 0;
-					while(*tmp2){
+//printf("str:%.5s d=%.5s c=%.5s\n", tmp,d,c);
+
+				i = 0;
+				while(1){
+				    if(*c == '\0') return tmp;
+				    else if(*c == '/' && *(c+1) == '/') c++; //c+=2
+				    else if(*c == '/' && *(c+1) == 'B' && i <= 1024) {i++; c++;}
+				    else if(*c == '/' && *(c+1) == 'E'){	//if(/E)
+					if(i == 0){ c += 2; break;}
+					else{ i--; c++;}
+				    }
+				    /*c == /m --needed here because of recursivity*/
+/*				    else if(*c == '/' && *(c+1) == 'm' && (tmp3 = parsestr2_s(NULL, NULL, c, message))){
+					c = tmp3;
+					continue;
+				    }
+*/
+				    c++;
+				}
+
+				//in c last after /E
+				d = point[1];
+				continue;
+		    case '{': c++; ch = *c; c++; /* tmp = NULL; */ tmp2 = c; i = 0;
+					while(1){
+					    if(*tmp2 == '\0') return NULL;//new here 23.11.2021
 					    if(*tmp2 == '/' && *(tmp2+1) == '/') tmp2++; //tmp2+=2
 					    else if(*tmp2 == '/' && *(tmp2+1) == '{' && i <= 1024){ i++; tmp2++;} //if(/{)
 					    else if(*tmp2 == '/' && *(tmp2+1) == '}'){
 						if(i == 0){tmp = tmp2 + 2; break;}
-						else i--;
+						else{ i--; tmp2++;}
 					    }
+
+/*					    else if(*tmp2 == '/' && *(tmp2+1) == 'm' && (tmp3 = parsestr2_s(NULL, NULL, tmp2, message))){
+						tmp2 = tmp3;
+						continue;
+					    }
+*/
 					    tmp2++;
 					}
 				//tmp - end of compare-string
@@ -133,47 +191,67 @@ unsigned char *parsestr1(unsigned char *d, unsigned char *c)	//try identic strin
 				//	 c		tmp
 
 				if(ch == '*'){//  /{*..../}  - 0 Times or more
+//printf("/{%.5s--/}%.5s--\n",c,tmp );
 					while(1){
 					    if(tmp){
 						tmp2 = parsestr1(d, tmp);
-						if(tmp2) return tmp2;
+//20220813						if(stop_){ stop_ = 0; return NULL;}
+						if(tmp2 /*&& tmp2 != d*/) return tmp2;
 					    }
 					    tmp3 = point[1];
+				point[1] = NULL;
 					    tmp2 = parsestr1(d, c);
+				if(point[1] == NULL) point[1] = tmp3;
 					    if(tmp2 == NULL) return NULL;
-					    if(tmp3 != point[1]) tmp2 = point[1];	//new here
-					    if(tmp2 == d) return NULL;		//new here, no progress
-					    if(*tmp2 == '\0') return tmp2;
-					    d = tmp2;
+					    if(stop_){ stop_ = 0; return NULL;}
+					     //returned by /\ or /E and not from /}
+					    if(point[1] != point[2]){printf("%s #*\n", text); return NULL;}
+//					    if(tmp3 != point[1]) tmp2 = point[1];	//new here
+//----					    if(tmp2 == d) return NULL;		//no progress
+//----					    d = tmp2;
+				if(d != point[2]) d = point[2];	//progress!!
+				else return NULL;
 					}
 				}
 				if(ch == '-'){//  /{-..../}  - 1 Time or more
-//printf("chars: %c%c%c\n", *tmp,*(tmp+1), *(tmp+2));
+//printf("chars: %.3s\n", tmp);
 					while(1){
 					    tmp3 = point[1];
+				point[1] = NULL;
 					    tmp2 = parsestr1(d, c);
+				if(point[1] == NULL) point[1] = tmp3;
 					    if(tmp2 == NULL) return NULL;
-//printf("a\n");
-					    if(tmp3 != point[1]) tmp2 = point[1];	//new here
-					    if(tmp2 == d) return NULL;		//new here, no progress
-					    if(*tmp2 == '\0') return tmp2;
-					    d = tmp2;
+					    if(stop_){ stop_ = 0; return NULL;}
+					     //returned by /\ or /E and not from /}
+					    if(point[1] != point[2]){printf("%s #-\n", text); return NULL;}
+//					    if(tmp3 != point[1]) tmp2 = point[1];	//new here
+//-----					    if(tmp2 == d) return NULL;		//no progress
+//-----					    d = tmp2;
+				if(d != point[2]) d = point[2];	//progress!!
+				else return NULL;
 					    if(tmp){
-//printf("charsd: %c%c%c\n", *d,*(d+1), *(d+2));
+//printf("charsd: %.3s\n", d);
 						tmp2 = parsestr1(d, tmp);
-						if(tmp2) return tmp2;
+//20220813						if(stop_){ stop_ = 0; return NULL;}
+						if(tmp2 /*&& tmp2 != d*/) return tmp2;
 					    }
 					}
 				}
 				if(ch == 'R' || ch == 'r'){//  /{R..../}  - Repead 1 Time or more
 					i = 0;			// /{r..../}  - Repead 0 Time or more
 					while(1){
-					    tmp3 = point[1];
+//21.11.2021					    tmp3 = point[1];
 					    tmp2 = parsestr1(d, c);
 					    if(tmp2 == NULL) break;
-					    if(tmp3 != point[1]) tmp2 = point[1];	//new here
+					    if(stop_){ stop_ = 0; break;}
+					     //returned by /\ or /E and not from /}
+					    if(point[1] != point[2]){printf("%s #R\n", text); return NULL;}
+//21.11.2021					    if(tmp3 != point[2]) tmp2 = point[2];	//new here
+					    if(d != point[2]) d = point[2];	//progress!!
+					    else break;
+/*23.11.2021					    if(d != point[2]) tmp2 = point[2];	//new here
 					    if(tmp2 == d) break;	//no progress
-					    d = tmp2; i = 1;
+					    d = tmp2;*/ i = 1;
 					}
 					if(ch == 'R' && i == 0) return NULL;
 					c = tmp; continue;
@@ -181,7 +259,9 @@ unsigned char *parsestr1(unsigned char *d, unsigned char *c)	//try identic strin
 				if(ch == 'C'){//  /{C..../}  - Compare witch pointer is bigger
 					tmp2 = parsestr1(d, c);
 					if(tmp2 == NULL) return NULL;
-					tmp2 = point[1];
+					 //returned by /\ or /E and not from /}
+					if(point[1] != point[2]){printf("%s #C\n", text); return NULL;}
+					tmp2 = point[2];
 					tmp3 = parsestr1(d, tmp);
 					if(tmp3 == NULL) return NULL;
 					tmp3 = point[1];
@@ -233,17 +313,21 @@ unsigned char *parsestr1(unsigned char *d, unsigned char *c)	//try identic strin
 					} else return NULL;
 				// in d - end of parsed string in c - str after /)...
 				continue;
-		    case '\\':
-		    case 'E':
 		    case ':':
 		    case ')':
-		    case '}':	point[1] = d;//importend !!!
+		    case '}':	point[2] = d;
+		    case '\\':
+		    case 'E':	point[1] = d;//importend !!!
 				return d;
-		    case 'S':	c++;ch = *c;		//make var in stack
-				if(ch == 'S') digi = stack_;	//if /SS -> stack_ in stack
+		    case 'P':	c++;ch = *c;		//make var in stack
+				if(ch == 'S') digi = stack_;	//if /PS -> stack_ in stack
 				tmp = parsestr1(d, c+1);
 				if(ch == 'S') stack_ = digi;
 				return tmp;
+		    case 'S':	c++;ch = *c;		//make stop
+				if(ch == 't') stop_ = 1;	//if /St -> stop
+				c++;
+				continue;
 	    /*  set number to /n10N   or stack to /n15S or exec to /n15E or value to /n20V*/
 		    case 'n': c++; tmp = c;
 				while(*tmp && *tmp != 'N' && *tmp != 'S' && *tmp != 'E' && *tmp != 'V' &&
@@ -428,8 +512,7 @@ unsigned char *parsestr1(unsigned char *d, unsigned char *c)	//try identic strin
 			    default:
 			    case '\0': c--; continue; //  rest='<\0'
 			}
-//		    case 'b': begin_ = d; c++; continue;
-		    case '[': if(parsestr1(d, c+1)){ /*point[0] = d;*/ return d;} return NULL;		//if [ in b so this pointer will be returned, and c is move forward. BEGINNofSTR
+		    case '[': if(parsestr1(d, c+1)){ /*point[0] = d;*/ begin_ = d; return d;} return NULL;		//if [ in b so this pointer will be returned, and c is move forward. BEGINNofSTR
 
 		    case ']':/* printf("d:%s\n", d);*/
 //			      end_ = d;
@@ -457,7 +540,7 @@ unsigned char *parsestr1(unsigned char *d, unsigned char *c)	//try identic strin
 		    case '\0': if(*d != '\0') return NULL; point[1] = d; return d;
 		
 		    case '!':		//Negotiation
-					//  \!\*ab	-no more "ab" in rest of string
+					//  /!/*ab	-no more "ab" in rest of string
 			    tmp2 = point[1];
 			    tmp = parsestr1(d, c+1);
 			    if(tmp)	return NULL;
@@ -611,6 +694,7 @@ unsigned char *parsestr1(unsigned char *d, unsigned char *c)	//try identic strin
 			    tmp2++;						//and don't have /\\ or /}, /), /E, /:
 			}
 			if(ch == 'w') print_pstr(fdcr, c); //putout to WEB: /mw....\0  without matching!
+			if(ch == '*') print_pstr(stderr, c); //putout to console: /m*....\0 without matching. used for testing of strings
 			tmp = parsestr1(d, tmp2);
 			if(ch == '-' && tmp == NULL) print_pstr(stderr, c);
 			if(ch == '+' && tmp != NULL) print_pstr(stderr, c); //if matched the rest - putout to stderr: /m+...\0
@@ -672,6 +756,7 @@ unsigned char *parsestr1(unsigned char *d, unsigned char *c)	//try identic strin
 				tmp5 = bucks;
 				tmp2 = point[0];
 				tmp3 = point[1];
+				tmp4 = point[2];
 				ch = ch_zero;
 				digi = number;
 				val = value_;
@@ -695,6 +780,7 @@ unsigned char *parsestr1(unsigned char *d, unsigned char *c)	//try identic strin
 				value_ = val;
 				number = digi;
 				ch_zero = ch;
+				point[2] = tmp4;
 				point[1] = tmp3;
 				point[0] = tmp2;
 				bucks = tmp5;
@@ -758,54 +844,101 @@ void free_strctexec(void){
 }
 
 unsigned char *parsestr(unsigned char *d, unsigned char *c){		//push and pop the pointers
-    char *tmp;
+    char *tmp, flags;
 
     point[0] = NULL;
     point[1] = NULL;
+    point[2] = NULL;
+    begin_ = NULL;
+    struct cascade *cascade_ = cascade;
+    cascade = NULL;
+
+    flags = parse_flags;
+    parse_flags = 0b00000000;//default setting
 
     tmp = parsestr1(d, c);
 
+    parse_flags = flags;
+
+    free_cascade();
+    cascade = cascade_;
+    if(begin_ == NULL) begin_ = tmp;
 
     return tmp;
 }
 
-char *parsestr1_( char *d, char *c){		//push and pop the pointers
-    char *tmp, *a, *b;
+char *parsestr1_(char *d, char *c){		//push and pop the pointers
+    char *tmp, *a, *b, *e, flags;
     exec_fnctn *fn;
+    struct cascade *cascade_;
 
     a = point[0];
     b = point[1];
+    e = point[2];
     fn = fn_exec;
+    cascade_ = cascade;
+    cascade = NULL;
+
+    flags = parse_flags;
+    parse_flags = 0b00000000;//default setting
 
     fn_exec = NULL;	//switch off the /e and /c functions
     point[0] = NULL;
     point[1] = NULL;
+    point[2] = NULL;
+    begin_ = NULL;
 
     tmp = parsestr1(d, c);
 
+    parse_flags = flags;
+
+    free_cascade();
+    cascade = cascade_;
+
+//    free_strctexec();
     fn_exec = fn;
     point[0] = a;
     point[1] = b;
-//    free_strctexec();
+    point[2] = e;
+    if(begin_ == NULL) begin_ = tmp;
 
     return tmp;
 }
 
 char *parsestr2( struct parsestr *ptr, exec_fnctn *fn, char *d, char *c){		//use the pointers in struct
-    char *tmp;
+    FILE *fd;
+    char *tmp, *arg, flags;
     exec_fnctn *fnct;
+    struct cascade *cascade_;
 
     number = 0;
     point[0] = NULL;
     point[1] = NULL;
+    point[2] = NULL;
+    begin_ = NULL;
+
+    fd = fdtr;//write to fdtr
+    fdtr = ptr->fd;
+    arg = arg_;//write to arg_
+    arg_ = ptr->arg;
+    flags = parse_flags;
+    parse_flags = ptr->flags;
 
     fnct = fn_exec;
     fn_exec = fn;	//the /e and /c functions
+    cascade_ = cascade;
+    cascade = NULL;
 
-    if(tmp = parsestr1(d, c) /*&& (ptr != NULL)*/){
+    tmp = parsestr1(d, c);
+    if(begin_ == NULL) begin_ = tmp;
+    if(tmp /*&& (ptr != NULL)*/){
+	ptr->begin = begin_;
+	ptr->flags = parse_flags;//new here from 30.10.2023
 	ptr->ch = ch_zero;
 	ptr->num = number;
+	ptr->val = value_;
 	ptr->zero = point[0];	//if NULL -> restore_str is not made
+//printf("str2:%c:%s\n", ch_zero, point[0]);
 //	ptr->end = point[1];
     } else {
 	if(point[0]){	//new here
@@ -815,8 +948,77 @@ char *parsestr2( struct parsestr *ptr, exec_fnctn *fn, char *d, char *c){		//use
     }
     ptr->end = point[1];
 
+    free_cascade();
+    cascade = cascade_;
     free_strctexec();
     fn_exec = fnct;
+    parse_flags = flags;
+    arg_ = arg;
+    fdtr = fd;
+
+    return tmp;
+}
+
+//if ptr == NULL -> just parse without writting to ptr
+char *parsestr2_s( struct parsestr *ptr, exec_fnctn *fn, char *d, char *c){		//use the pointers in struct
+	char *tmp;
+	unsigned char *tmp2, *tmp3, *tmp4,/* *tmp5,*/ ch, ch1;
+	unsigned long digi, val, stc, exc, cse;
+
+
+//	tmp5 = bucks;
+	tmp2 = point[0];
+	tmp3 = point[1];
+	tmp4 = point[2];
+	ch = ch_zero;
+	digi = number;
+	val = value_;
+	stc = stack_;
+	exc = exec_;
+	cse = ca_se_;
+
+	ch1 = stop_;
+	stop_ = 0;
+	unsigned char *beg = begin_;
+//	unsigned char *en = end_;
+
+	struct strctexec *pexec = point_exec;
+	point_exec = NULL;//for new beginning
+
+	if(ptr){
+		tmp = parsestr2(ptr, fn, d, c);
+	} else {
+		exec_fnctn *fnexec = fn_exec;
+		fn_exec = fn;	//the /e and /c functions
+//moved to parsestr()
+//		struct cascade *cascade_ = cascade;
+//		cascade = NULL;
+
+		tmp = parsestr(d, c);
+
+//		free_cascade();
+//		cascade = cascade_;
+
+		free_strctexec();//free this new beginning
+		fn_exec = fnexec;
+	}
+
+	point_exec = pexec;
+
+
+//	end_ = en;
+	begin_ = beg;
+	stop_ = ch1;
+	ca_se_ = cse;
+	exec_ = exc;
+	stack_ = stc;
+	value_ = val;
+	number = digi;
+	ch_zero = ch;
+	point[2] = tmp4;
+	point[1] = tmp3;
+	point[0] = tmp2;
+//	bucks = tmp5;
 
     return tmp;
 }
@@ -828,7 +1030,6 @@ char *restore_str( struct parsestr *ptr){	//note: in parsestring MUST BE-> "/]"
     }
     return ptr->end;
 }
-
 
 /*find in *str character mark and replace them throw /0, set *str to next charakter and return pointer to begining of *str
  if charakter in string not found return NULL*/

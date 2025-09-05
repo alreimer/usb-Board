@@ -437,7 +437,8 @@ char *print_(FILE *out, char *data, int make, int loop){
 			    i = 0;
 			    if((ptr2 = parsestr(ptr1, "\"/[/*/N\\N/]\"/")) != NULL){
 				a = parsestr2(&strct, NULL, a, ptr2);
-				if(a != NULL) i = 1;//used for restoring of string after
+				if(a != NULL){ i = 1;//used for restoring of string after
+					a = strct.begin; }	//new here
 			    }
 
 			    if(a != NULL){//printout!

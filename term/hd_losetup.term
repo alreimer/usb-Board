@@ -49,7 +49,7 @@ end
 	    print [ "??pool??" > "AT" 205 97 237 125 25 0 "C<" 0 ];
 	    exit_cgi;
 	}
-	print [ > "AT" 205 1 237 29 25 0 "C<" 0 > "ZC" 100 25 "loop: " $_@list:14 0 ];
+	print [ > "AT" 205 1 237 29 25 0 "C<" 0 > "ZC" 100 25 "loop:|" $_@list:14 0 ];
 	exit_cgi;
     }
     print [ > "ZC" 120 25 "Unable get variable" 0 ];
@@ -71,7 +71,7 @@ end
 	print [ "??pool??" > "AT" 205 97 237 125 25 0 "C<" 0 ];
 	exit_cgi;
     }
-    print [ > "AT" 205 1 237 29 25 0 "C<" 0 > "ZC" 100 25 "loop connected: " $lopoint:14 0 ];
+    print [ > "AT" 205 1 237 29 25 0 "C<" 0 > "ZC" 100 25 "loop connected:|" $lopoint:14 0 ];
     clean_par "_buf";	//clean whole buffer (including _buffer)
 end
 

@@ -382,6 +382,7 @@ printf("Special: %d %s %d\n", rnd_p->rnd_entry, rnd_p->entry, dirent->d_type);
 			if(check && (parsestr(tmp, check) == NULL)) continue;//if check not found -> skip parseing  //new
 			if((tmp6 = parsestr2(&prsstr, NULL, tmp, tmp4[0])) == NULL)//think about!!	//was parsestr1
 			    continue;
+			tmp6 = prsstr.begin;//new here
 
 			*rnd_ptr = (struct rnd_tbl *)malloc(sizeof(struct rnd_tbl));
 			if(*rnd_ptr == NULL){
@@ -432,12 +433,14 @@ printf("Special: %d %s %d\n", rnd_p->rnd_entry, rnd_p->entry, dirent->d_type);
 		    if(mixed == NULL) tmp = restore_str(&prsstr);
 		    else restore_str(&prsstr);
 		    tmp6 = parsestr2(&prsstr, NULL, tmp, tmp4[flag+1]);//think about!//was parsestr1
+		    if(tmp6) tmp6 = prsstr.begin;//new here
 		} else tmp6 = NULL;
 	    } else {
 		rnd_p->entries[flag] = NULL;
 		if(flag+1 < i){
 		    if(prsstr.end) tmp = prsstr.end;
 		    tmp6 = parsestr2(&prsstr, NULL, tmp, tmp4[flag+1]);
+		    if(tmp6) tmp6 = prsstr.begin;//new here
 		}
 	    }
 	flag ++;

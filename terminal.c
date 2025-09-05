@@ -459,7 +459,8 @@ printf("Collected area: --%s--%lld--\n", cfg_pointer->web_name, cfg_pointer->siz
 			    i = 0;
 			    if((ptr2 = parsestr(ptr1, "\"/[/*/N\\N/]\"/")) != NULL){
 				a = parsestr2(&parser, NULL, a, ptr2);
-				if(a != NULL) i = 1;//used for restoring of string after
+				if(a != NULL){ i = 1;//used for restoring of string after
+					a = parser.begin;}//new here
 			    }
 
 			    if(a != NULL){//printout!

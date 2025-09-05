@@ -1,0 +1,10 @@
+/dev/nvme0n1p2   /                f2fs        defaults         1   1
+/dev/nvme0n1p1   /boot/efi        vfat        defaults         1   2
+/dev/sda1        /mnt/hd          ext4        defaults         1   2
+/dev/cdrom       /mnt/cdrom       auto        noauto,owner,ro,comment=x-gvfs-show 0   0
+/dev/dvd         /mnt/dvd         auto        noauto,owner,ro,comment=x-gvfs-show 0   0
+/dev/fd0         /mnt/floppy      auto        noauto,owner     0   0
+devpts           /dev/pts         devpts      gid=5,mode=620   0   0
+proc             /proc            proc        defaults         0   0
+tmpfs            /dev/shm         tmpfs       nosuid,nodev,noexec 0   0
+/test_part   /home/Shares/1_owner  ext2        defaults,user,noauto,encryption=AES128,loop=/dev/loop0  0    0
