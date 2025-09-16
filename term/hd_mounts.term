@@ -13,7 +13,7 @@ wr_par: menu_cgi:hd_losetup.term
 table: list
 #-> parse_file: /etc/fstab
 while:/[/*/]\n
-check:/ /B//dev//sd/<1abcdefg/>/<1123456789/>/\/*encryption=/E
+check:/ /B//dev///Bsd/<1abcdefg/>/<1123456789/>/\cdrom/\dvd/E/\/*encryption=/E
 if:/ /[/*/]/<- 	/>
 if:/[/*/]/<- 	/>
 if:/*/<- 	/>/[/*/]/<- 	/>
