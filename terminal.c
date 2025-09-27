@@ -191,6 +191,116 @@ struct page_n *get_page_cmp_next(char *name, int flag){
 
 }
 
+void save_page_history(void){
+    FILE *f;
+    struct page_n *ptr = p_n;
+    char *file_name = ROOT_PATH "sc_images/history";
+
+    if((f=fopen(file_name, "r")) == NULL){//file must exist!
+	return;
+    }
+    fclose(f);
+
+    if((f=fopen(file_name, "w")) == NULL){
+	printf("ERR: write history\n");
+	return;
+    }
+
+    while(ptr){
+	if(ptr->name){
+	    fprintf(f, "\"%s\" %d %s", ptr->name, ( ptr->cfg ? 1 : 0 ) + ( ptr->tbl_name ? 2 : 0 ) + ( ptr->cgi_name ? 4 : 0), ptr->next ? "\n" : "" );// write to history-file "name1\nname2\n....last without:\n"
+	}
+	ptr = ptr->next;
+    }
+
+    fclose(f);
+    return;
+}
+
+char read_page_history(void){
+    FILE *f, *fp_save;
+    struct stat stbuf;
+    struct page_n **p1;
+    struct parsestr parser, parser1;
+    char *p, *ptr, *ptr2, *file_name = ROOT_PATH "sc_images/history";
+    unsigned long long str_size;
+
+    if(stat(file_name, &stbuf) || stbuf.st_size > 1024*64 || (f=fopen(file_name, "r")) == NULL){
+	return 0;
+    }
+	ptr = (char *)malloc(stbuf.st_size+1);
+	if(ptr == NULL){
+	    printf("ERR: Allocate memory for history file\n");
+	    fclose(f);
+	    return 0;
+	}
+
+	fread(ptr, stbuf.st_size, 1, f);
+	ptr[stbuf.st_size] = '\0';
+	fclose(f);
+
+	free_page_n(p_n);
+	p_n = NULL;
+	p = ptr;
+
+//think about last page and filedescripor output
+    while(ptr && (ptr2 = parsestr2(&parser, NULL, ptr, "/n0N/[/*/]/B\n/\\\\01/E")) != NULL){
+	if(parsestr2(&parser1, NULL, ptr2, "\"/[/*/]\" /sV") != NULL){ /*here allocate page*/
+	    ptr2 = parser1.begin;
+	if(parser.num == 0){
+	    if(parser1.val){//switchof the output to display
+		fp_save = fp;
+		fp = NULL;
+printf("parse_str:%s\n", ptr2);
+		parse_file(ptr2, 2);//parse file w/o erease of other parameters
+		fp = fp_save;
+	    }else{
+printf("empty name:%s\n", ptr2);
+
+		p1 = &p_n;
+
+		while(1){
+		    if(*p1 == NULL){
+			*p1 = (struct page_n *)malloc(sizeof(struct page_n));
+			if(*p1 != NULL){
+			    str_size = strlen(ptr2) + 1;
+			    (*p1)->name = malloc(str_size + 1);
+			    if((*p1)->name){
+				strncpy((*p1)->name, ptr2, str_size);
+				(*p1)->size = str_size;
+				(*p1)->next = NULL;
+				(*p1)->cfg = NULL;
+				cfg_p = &((*p1)->cfg);
+				(*p1)->tbl_name = NULL;
+				tbl_name = &((*p1)->tbl_name);
+				(*p1)->cgi_name = NULL;
+				cgi_name = &((*p1)->cgi_name);
+
+				break;
+			    }
+			    free(*p1);
+			    *p1 = NULL;
+			}
+			printf("Error allocate memory_page from history\n");
+			break;
+		    }
+		    p1 = &((*p1)->next);
+		}//while(1)
+
+	    }
+	}else{//n = 1
+printf("parsesrt2:%s\n", ptr2);
+	    parse_file(ptr2, 2);//the last file must be showed
+	    break;
+	}
+	}//if(parsestr2())
+    ptr = restore_str(&parser);
+    }//while(ptr&&*ptr)
+
+    free(p);
+    return 1;
+}
+
 struct file_n {
     char		*file_name;	//name of file
     char		*begin;	//begin of file
@@ -367,7 +477,7 @@ printf("Collected area: --%s--%lld--\n", cfg_pointer->web_name, cfg_pointer->siz
 		    }
 		    break;
 		case 8:
-		    my_shell(fp, tmp);
+		    if(fp) my_shell(fp, tmp);
 /*			str_size = parser.zero - tmp;
 			if(str_size != 0){
 			ptr1 = (char *)malloc(str_size + 2);
@@ -398,16 +508,16 @@ printf("Collected area: --%s--%lld--\n", cfg_pointer->web_name, cfg_pointer->siz
 		    parse_tbl(tmp, 0);//without clean
 		    break;
 		case 21:
-		    print_str(fp, tmp);//string:  "??variable?? \"text\""
+		    if(fp) print_str(fp, tmp);//string:  "??variable?? \"text\""
 		    break;
 		case 22:
 		    //digits parse
 		    digi = value_;
 		    if(digi > 255){ printf("char #%ld is > 255 in file %s\n", tmp-(f_n->begin), f_n->file_name);}
-		    putc(digi % 256, fp);
+		    if(fp) putc(digi % 256, fp);
 		    break;
 		case 23:
-		    putc(27, fp);	//0x1b = ESC
+		    if(fp) putc(27, fp);	//0x1b = ESC
 		    break;
 
 	    }//switch(num)
@@ -467,10 +577,10 @@ printf("Collected area: --%s--%lld--\n", cfg_pointer->web_name, cfg_pointer->siz
 				if(str_size != 0){
 				    p = a + str_size;
 				    while(*a && a < p){
-					putc(*a, fp);
+					if(fp) putc(*a, fp);
 					a++;
 				    }
-				}else fprintf(fp, "%s", a);
+				}else if(fp) fprintf(fp, "%s", a);
 			    if(i) restore_str(&parser);
 			    }else printf("parsestring: %s not match!\n", ptr1);
 			}else printf("Name: %s not found!\n", name);
@@ -500,7 +610,7 @@ printf("Collected area: --%s--%lld--\n", cfg_pointer->web_name, cfg_pointer->siz
 		    //if(a = get_cfg_value(NULL, ptr1, 0)){		//give 'value' and show
 		//show variables value
 		    if(a = get_var(NULL, ptr1)){
-			print(fp, a);
+			if(fp) print(fp, a);
 		    }else printf("Name: %s not found!\n", ptr1);
 		    free(ptr1);
 		}
@@ -571,8 +681,10 @@ printf("Collected area: --%s--%lld--\n", cfg_pointer->web_name, cfg_pointer->siz
 	}else if(tmp = parsestr2(&parser, NULL, data, "tbl_size:/t\"/[/*/]\"")){
 	    if(make == 1){
 		pt = get_tbl_begin_size(tmp, 1);//show count of begin parameter of tbl
-		if(pt) fprintf(fp, "%d", *pt);//show as digit
-		else fprintf(fp, "NE");//not exist
+		if(fp){
+			if(pt) fprintf(fp, "%d", *pt);//show as digit
+			else fprintf(fp, "NE");//not exist
+		}
 	    }
 	    data = restore_str(&parser);
 	    continue;
@@ -712,7 +824,8 @@ void sig_handler(int signo){
     default: printf("SIgnal %d\n", signo);
 //#endif
     }
-    fclose(fp);
+    if(fp) fclose(fp);
+    save_page_history();
 //    free_page_mem();	//clear all memory used for page
     free_page_n(p_n);
     exit(0);
@@ -739,8 +852,8 @@ char *line[] = {
 int read_buf__(char *buff){
 //    printf("%d\n", sizeof(buf));
 
-    int n = 0;
-    char size = 0;
+    int n = 0, val;
+    char size = 0, a = 0;
     unsigned long long buf_s = 0;
     int i = 0, k, time;
     char brk[] = "\n\n\rbreAk\r\rbReaK ";
@@ -755,6 +868,9 @@ int read_buf__(char *buff){
 	    case 0:
 		    //print ">SV";
 		    //get dspl-version "<V,len,string"
+		    if((a == 0) && read_page_history()){
+			a = 1;
+		    }else
 		    parse_file(INDEX_NAME, 0);
 		    break;
 	    case 1: //fprintf(fp, "07121035142015");//%m%d%H%M%S20%Y
@@ -865,10 +981,13 @@ int read_buf__(char *buff){
 	}
     }
 
-    buff[i] = getc(fp);
+//    if(ferror(fp)) {printf("bla");break;}
+    val = getc(fp);
+    if(val == EOF){ printf("EOF: %d\n", val); break;}
+    buff[i] = val;
 //let it here for check of inputs, see bugfix for details
-printf("%c i=%d, n=%d size of buff:%d\n", buff[i], i, n, sizeof(buff));
-
+printf("%c %d i=%d, n=%d size of buff:%d\n", buff[i], buff[i], i, n, sizeof(buff));
+//printf("%d ", buff[i]);
     if(line[n] != NULL){
 	if(buff[i] == line[n][i]){
 	    i++;
@@ -955,12 +1074,15 @@ int main(int argc, char *argv[]){
 
     chdir( ROOT_PATH );
 //    chdir(CONFIG.WEB_ROOT);		//just use it!!
-
+    while(1){
 	if((fp=fopen(dev,"r+")) == NULL){
 	    printf("Error open device: %s\n", dev);
-	    exit(5);
+	    break;
 	}
 
 	read_buf__(buffer);
+	fclose(fp);
+    }
+    save_page_history();
 }
 

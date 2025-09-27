@@ -22,4 +22,5 @@ struct page_n *get_last_page(char *num, int flag);//num="0" or "1" or ... "5"
 struct page_n *get_page(char *name);
 struct page_n *get_page_cmp(char *name);	//if return page with name == name
 struct page_n *get_page_cmp_next(char *name, int flag);	//if return page witch next name is == name
+void save_page_history(void);
 

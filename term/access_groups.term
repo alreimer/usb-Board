@@ -9,6 +9,9 @@ area:2:switch
 wr_par: switch:1
 area:2:case
 
+//set default case
+wr_par: case:0
+
 area:2048:value
 area:28:hname
 
@@ -134,6 +137,7 @@ end
 //	    free_upages;
 	    exit_cgi;
 	}
+	boot_cgi [ "show1" 0 ];
 end
 
 < "retinput_back" 0

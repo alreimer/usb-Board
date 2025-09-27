@@ -29,6 +29,7 @@
 
 void print_pstr(FILE *out, char *tmp){
 	char ch;
+	if(!out) return;
 	while(*tmp){
 	    ch = *tmp;
 	    if(*tmp == '\\'){
@@ -806,7 +807,16 @@ unsigned char *parsestr1(unsigned char *d, unsigned char *c)	//try identic strin
 	    /* \0 the same as "bla/"; if after is "bla\02" -> "bla\0" + number=2 */
 		    case '0': if(*d != '\0') return NULL;
 				    c++; int digi = 0; i = 0;
-				    while(c[i] >= '0' && c[i] <= '9'){ digi = digi*10 + (c[i] - '0'); i++; if(i > 5) break;}
+				    while(c[i]){
+					if(c[i] == '!'){// \0!
+					    if(parse_flags & 0b00000001) return NULL;//if it is double or more -> return NULL
+					    parse_flags |= 0b00000001;
+					    c++;
+					    continue;
+					}
+					if(c[i] >= '0' && c[i] <= '9'){ digi = digi*10 + (c[i] - '0'); i++; if(i > 5) break; continue;}
+					/*c += i;*/ break;
+				    }
 				    if(i) number = digi;	//set number to digi
 				point[1] = d;//new 14.07.2019
 				return d;

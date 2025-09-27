@@ -11,6 +11,9 @@ area:2048:pool
 area:2:case
 area:28:value
 
+//set default case
+wr_par: case:0
+
 /*
 min
 hour

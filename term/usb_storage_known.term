@@ -8,6 +8,10 @@ area:2048:value
 area:2048:path
 area:20:dcase
 
+//set default case
+wr_par: case:0
+
+
 < "show" 0
 	print [
 ifnot "serialNum:/"

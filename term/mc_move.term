@@ -3,6 +3,9 @@ area:3000:value
 area:3000:path
 area:20:dcase
 
+//set default case
+wr_par: case:0
+
 area:2048:pool
 
 area:3000:target
@@ -124,6 +127,7 @@ end
 	free_upages;
 	exit_cgi;
 	}
+	boot_cgi [ "show" 0 ];
 end
 < "retinput_back" 0
 //	boot_page "??_referrer??";

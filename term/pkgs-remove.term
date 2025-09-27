@@ -1,6 +1,6 @@
 area:64000:ar_name
-wr_shell: :ar_name:for i in $(ipkg-cl -V 0 list_installed 2>/dev/null | cut -d' ' -f1); do echo "$i"; done
-//for i in $(ipkg-cl -V 0 list_installed 2>/dev/null | cut -d' ' -f1); do echo "$(ipkg-cl -V 0 list $i 2>/dev/null)"; done
+wr_shell: :ar_name:cd /var/lib/pkgtools/packages/ 2>/dev/null; [ $? -eq 0 ] && for i in * ; do [[ -f "$i" ]] && echo "$i"; done 
+//wr_shell: :ar_name:for i in $(ipkg-cl -V 0 list_installed 2>/dev/null | cut -d' ' -f1); do echo "$i"; done
 
 table: list
 #-> parse_area: ar_name
@@ -10,10 +10,10 @@ if:
 
 < "show" 0
 	print [ 12   > "DL" > "AL" 0 1
-if "_@list+1:" > "AT" 2 1 201 29 1 0 "C" $_@list+1:24 0 fi
-if "_@list+2:" > "AT" 2 33 201 61 2 0 "C" $_@list+2:24 0 fi
-if "_@list+3:" > "AT" 2 65 201 93 3 0 "C" $_@list+3:24 0 fi
-if "_@list+4:" > "AT" 2 97 201 125 4 0 "C" $_@list+4:24 0 fi
+if "_@list+1:" > "AT" 2 1 201 29 1 0 "C" $_@list+1:24:"/[/*/]-" 0 fi
+if "_@list+2:" > "AT" 2 33 201 61 2 0 "C" $_@list+2:24:"/[/*/]-" 0 fi
+if "_@list+3:" > "AT" 2 65 201 93 3 0 "C" $_@list+3:24:"/[/*/]-" 0 fi
+if "_@list+4:" > "AT" 2 97 201 125 4 0 "C" $_@list+4:24:"/[/*/]-" 0 fi
     > "AT" 205 1 237 29 13 0 "C<" 0
     > "AT" 205 33 237 61 8 0 "C<" ifnot "_@_list:0/" "-" fi 0
 if "_@list+5:" > "AT" 205 97 237 125 7 0 "C->" 0 fi ];
@@ -22,7 +22,7 @@ end
 < "A" 1 4
     print [ > "AL" 0 0 > "RL" 34 28 204 98
 > "GR" 36 30 202 96 > "ZC" 120 60 "Please Wait" 0 ];
-    shell "ipkg-cl remove \"??_@list??\"";
+    shell "removepkg \"??_@list??\"";
     boot_page "pkgs-remove.term";
 end
 

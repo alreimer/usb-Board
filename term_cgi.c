@@ -826,7 +826,7 @@ int get_cgi_body(struct cgi *ptr){
 		}
 		switch (ptr->cmd[i]){
 		    case 1: //print
-			    print(fp, arg);
+			    if(fp) print(fp, arg);
 			//    jump = print(out, arg); //run in braces if print returns 0;
 			    break;
 		    case 2:
@@ -898,10 +898,10 @@ int get_cgi_body(struct cgi *ptr){
 			    break;
 		    case 14:shell(arg);		//shell
 			    break;
-		    case 15:my_shell(fp, arg);		//my_shell
+		    case 15:if(fp) my_shell(fp, arg);		//my_shell
 			    break;
 		    case 16: system_(arg);break;
-		    case 17: my_system(fp, arg);break;
+		    case 17: if(fp) my_system(fp, arg);break;
 		    case 18://clean_par arg="par:par1:par2.."
 			    tmp1 = arg;
 			    while(tmp2 = w_strtok(&tmp1, ':')){
@@ -978,7 +978,7 @@ int get_cgi_body(struct cgi *ptr){
 			    if(size && (tmp = malloc(size+1))){
 				strncpy_(tmp, arg, size);
 //printf("get_file:%s %ld\n", tmp, size);
-				if(!copy_file(tmp, fp)) jump = 1; //exec in braces if file not found 
+				if(fp && !copy_file(tmp, fp)) jump = 1; //exec in braces if file not found 
 									//jump if error memory allocate
 				free(tmp);
 			    }else jump = 1;//error allocate memory
@@ -992,10 +992,10 @@ int get_cgi_body(struct cgi *ptr){
 //printf("get_file:%s %ld\n", tmp, stbuf.st_size);
 					ch = (char) (stbuf.st_size >> 8);
 //printf("1:%d\n", ch);
-					putc(ch, fp);
+					if(fp) putc(ch, fp);
 					ch = (char) (stbuf.st_size);
 //printf("2:%d\n", ch);
-					putc(ch, fp);
+					if(fp) putc(ch, fp);
 				}
 				//if(!copy_file(tmp, fp)) jump = 1; //exec in braces if file not found 
 									//jump if error memory allocate
@@ -1095,7 +1095,7 @@ int get_cgi_body(struct cgi *ptr){
 			    break;
 		}//switch end
 	    before = i;		//which step was before
-	    fflush(fp);
+	    if(fp) fflush(fp);
 	    if(allocated) free(arg);
 //printf("check: [%d]: %s a=%d b=%d\n", i, ptr->arg[i], ptr->a, ptr->b);
 	    if(jump){

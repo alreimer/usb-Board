@@ -22,7 +22,7 @@ end
 < "A" 1 4
     print [ > "AL" 0 0 > "RL" 34 28 204 98
 > "GR" 36 30 202 96 > "ZC" 120 60 "Please Wait" 0 ];
-    shell "ipkg-cl install \"/mnt/packages/??_@list??\"";
+    shell "installpkg \"/mnt/packages/??_@list??\"";
     boot_page "pkgs-install.term";
 end
 
