@@ -206,6 +206,7 @@ void save_page_history(void){
 	return;
     }
 
+    fprintf(f, "version: %s\n", version);
     while(ptr){
 	if(ptr->name){
 	    fprintf(f, "\"%s\" %d %s", ptr->name, ( ptr->cfg ? 1 : 0 ) + ( ptr->tbl_name ? 2 : 0 ) + ( ptr->cgi_name ? 4 : 0), ptr->next ? "\n" : "" );// write to history-file "name1\nname2\n....last without:\n"
@@ -225,6 +226,8 @@ char read_page_history(void){
     char *p, *ptr, *ptr2, *file_name = ROOT_PATH "sc_images/history";
     unsigned long long str_size;
 
+	if( (auth[0] != '0') || (auth[1] != '\0') ){ return 0;}//not authorised
+
     if(stat(file_name, &stbuf) || stbuf.st_size > 1024*64 || (f=fopen(file_name, "r")) == NULL){
 	return 0;
     }
@@ -243,9 +246,15 @@ char read_page_history(void){
 	p_n = NULL;
 	p = ptr;
 
+	if(parsestr2(&parser1, NULL, ptr, "version: /[/*/]\n") != NULL){ /*here allocate page*/
+//printf("parser1:%s\n", parser1.begin);
+	    if(strcmp(parser1.begin, version)){free(p);return 0;}
+	}else{ free(p); return 0;}
+	ptr = restore_str(&parser1);
+
 //think about last page and filedescripor output
-    while(ptr && (ptr2 = parsestr2(&parser, NULL, ptr, "/n0N/[/*/]/B\n/\\\\01/E")) != NULL){
-	if(parsestr2(&parser1, NULL, ptr2, "\"/[/*/]\" /sV") != NULL){ /*here allocate page*/
+    while((ptr2 = parsestr2(&parser, NULL, ptr, "/n0N/[/*/]/B\n/\\\\01/E")) != NULL){
+	if(parsestr2(&parser1, NULL, ptr2, "\"/[/*/]\" /sV") != NULL){
 	    ptr2 = parser1.begin;
 	if(parser.num == 0){
 	    if(parser1.val){//switchof the output to display
@@ -868,9 +877,6 @@ int read_buf__(char *buff){
 	    case 0:
 		    //print ">SV";
 		    //get dspl-version "<V,len,string"
-		    if((a == 0) && read_page_history()){
-			a = 1;
-		    }else
 		    parse_file(INDEX_NAME, 0);
 		    break;
 	    case 1: //fprintf(fp, "07121035142015");//%m%d%H%M%S20%Y
@@ -914,6 +920,9 @@ int read_buf__(char *buff){
 	    case 7:
 	    case 13:
 //printf("CT:%s - %d\n", line[n], strlen(line[n]));
+		    if((a == 0) && read_page_history()){
+			a = 1;
+		    }else
 		    get_cgi(0, strlen(line[n]), line[n]);	//('A', 1, buf+1)
 		    break;
 	    case 6:
@@ -969,6 +978,9 @@ int read_buf__(char *buff){
 			size--;
 		    }while(size);
 		    printf("button: %d\n", buff[k]);
+		    if((a == 0) && read_page_history()){
+			a = 1;
+		    }else
 		    get_cgi(buff[k-2], buff[k-1], buff+k);		//char, num, buf: ('A', 1, buf+1)
 		    break;
 	}//switch

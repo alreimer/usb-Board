@@ -1,6 +1,6 @@
 12 > "DL" > "TC" 0
 > "AL" 0 1
-> "AT" 9 9 114 58 1 0 "CTrem|Login" 0
+> "AT" 9 9 114 58 1 0 "CTrem|Login|& History" 0
 > "AT" 9 69 114 117 2 0 "Cmc|Midnight|Commander" 0
 > "AT" 125 9 229 58 3 0 "CAccess" 0
 > "AT" 125 69 172 117 5 0 "CBack|<" 0
@@ -8,7 +8,7 @@
 
 
 < "A" 1
-    boot_page "tLogin.term";
+    boot_page "term.term";
 end
 < "A" 2
     boot_page "mc.term";

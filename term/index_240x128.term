@@ -68,5 +68,6 @@ end
 	fi
     fi
 else		//passwd not exist or == \0
+    wr_par: _auth:0
     include: index_.term
 fi
