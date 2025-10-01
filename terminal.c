@@ -221,7 +221,7 @@ void save_page_history(void){
 char read_page_history(void){
     FILE *f, *fp_save;
     struct stat stbuf;
-    struct page_n **p1;
+    struct page_n **p1, *p2;
     struct parsestr parser, parser1;
     char *p, *ptr, *ptr2, *file_name = ROOT_PATH "sc_images/history";
     unsigned long long str_size;
@@ -242,15 +242,16 @@ char read_page_history(void){
 	ptr[stbuf.st_size] = '\0';
 	fclose(f);
 
-	free_page_n(p_n);
-	p_n = NULL;
 	p = ptr;
 
-	if(parsestr2(&parser1, NULL, ptr, "version: /[/*/]\n") != NULL){ /*here allocate page*/
-//printf("parser1:%s\n", parser1.begin);
-	    if(strcmp(parser1.begin, version)){free(p);return 0;}
-	}else{ free(p); return 0;}
+	if(parsestr2(&parser1, NULL, ptr, "version: /?_version/?\n") == NULL){
+	    free(p);
+	    return 0;
+	}
 	ptr = restore_str(&parser1);
+
+	p2 = p_n;//backup p_n
+	p_n = NULL;
 
 //think about last page and filedescripor output
     while((ptr2 = parsestr2(&parser, NULL, ptr, "/n0N/[/*/]/B\n/\\\\01/E")) != NULL){
@@ -303,9 +304,15 @@ printf("parsesrt2:%s\n", ptr2);
 	    break;
 	}
 	}//if(parsestr2())
+	else{
+printf("parser abort\n");
+	    free_page_n(p_n);
+	    p_n = p2;//restore p_n back
+	    free(p); return 0;}
     ptr = restore_str(&parser);
     }//while(ptr&&*ptr)
 
+    free_page_n(p2);
     free(p);
     return 1;
 }
