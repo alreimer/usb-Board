@@ -196,6 +196,8 @@ void save_page_history(void){
     struct page_n *ptr = p_n;
     char *file_name = ROOT_PATH "sc_images/history";
 
+	if( (auth[0] != '0') || (auth[1] != '\0') ){ return;}
+
     if((f=fopen(file_name, "r")) == NULL){//file must exist!
 	return;
     }
