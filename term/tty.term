@@ -1,0 +1,39 @@
+//this i like menu.term must be inluded
+area:2000:menu_name
+wr_par: menu_name:??_back??
+
+< "show" 0
+	print [ 12 > "DL" > "AL" 0 1
+> "AT" 2 1 100 29 7 0 "Ctty7|X" 0
+> "AT" 104 1 201 29 8 0 "Ctty8|usb-Board" 0
+> "AT" 2 33 100 61 9 0 "Ctty9|Firewall|log" 0
+> "AT" 104 33 201 61 10 0 "Ctty10|syslog" 0
+/*
+if "_@list+5:" > "AT" 2 65 100 93 5 0 "C" $_@list+5:11 0 fi
+if "_@list+6:" > "AT" 104 65 201 93 6 0 "C" $_@list+6:11 0 fi
+if "_@list+7:" > "AT" 2 97 100 125 7 0 "C" $_@list+7:11 0 fi
+if "_@list+8:" > "AT" 104 97 201 125 8 0 "C" $_@list+8:11 0 fi
+if "_@list+9:" > "AT" 205 97 237 125 9 0 "C->" 0 fi
+*/
+//    > "AT" 205 33 237 61 30 0 "C<" ifnot "_@_list:0/" "-" fi 0
+//    > "AT" 205 65 237 93 31 0 "Cm" 0
+    > "AT" 205 1 237 29 33 0 "C<" 0 ];
+end
+
+< "A" 1 10
+    shell "chvt ??_nvalue?? &";
+    boot_cgi [ "show" 0 ];
+end
+
+
+< "A" 33
+    switch "/?menu_name?/";
+    boot_cgi [ "show" 0 ] {
+	boot_cgi [ "timeout" ] {
+	    boot_page "??_back??";
+	}
+    }
+//    boot_page "??_back??";
+end
+
+cgi: "show" 0
