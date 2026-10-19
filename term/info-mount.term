@@ -35,6 +35,7 @@ if "_@list+3:" > "ZL" 0 65 ">" $_@list+3#0:24 "| used: " $_@list+3#2:4 " of " $_
 if "_@list+4:" > "ZL" 0 97 ">" $_@list+4#0:24 "| used: " $_@list+4#2:4 " of " $_@list+4#1:6 "|" $_@list+4#3:25 0 fi
 if "_@list+5:" > "AT" 205 97 237 125 7 0 "C->" 0 fi
 
+    > "AT" 205 65 237 93 11 0 "CTe|mp" 0
     > "AT" 205 33 237 61 10 0 "C<" ifnot "_@_list:0/" "-" fi 0
     > "AT" 205 1 237 29 13 0 "C<" 0
     >>>> "wait:" 10 0 ];
@@ -58,7 +59,6 @@ end
 	set_tbl "list += 4";
 	boot_cgi [ "timeout" ];
 end
-
 //page before
 < "A" 10
     set_tbl "list == 0"{
@@ -77,6 +77,10 @@ end
 	set_tbl "list -= 4";
 	boot_cgi [ "timeout" ];
     }
+end
+//show temperature
+< "A" 11
+	boot_page "info-disktemp.term";
 end
 < "A" 13
     if "_referrer:/*menu.term/" {	//if last page was *menu.term

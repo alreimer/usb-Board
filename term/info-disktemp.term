@@ -1,0 +1,89 @@
+/*with timeout*/
+area:25000:buffer
+//wr_shell: :buffer:df -h
+
+
+
+/*
+disk
+temperature
+*/
+
+< "timeout"
+	write_system ":buffer:DRIVES=\"sda sdb sdc sde sdd nvme0 nvme1 nvme2 nvme3\"; for DISK in $DRIVES; do TEMP=$(smartctl -A /dev/$DISK 2>/dev/null | awk '$1 == 194 {print $10}'); [ -z \"$TEMP\" ] && TEMP=$(smartctl -iA /dev/$DISK 2>/dev/null | grep -i \"temperature:\" | awk '{print $2}'); [ ! -z \"$TEMP\" ] && echo -e /dev/$DISK $TEMP; done ";
+	print [ 
+table: list
+#-> parse_area: buffer
+while:/[/*/]\n
+if:/ /[//dev/*/]/<- 	/>
+if:
+#end_table
+];
+	tbl_changed "list"{
+	    print [ >>>> "wait:" 10 0 ];
+	    exit_cgi;
+	}
+	print [
+12 > "DL" > "AL" 0 1
+if "_@list+1:" > "ZL" 0 1  ">" $_@list+1#0:24 "| temp.: " $_@list+1#1:4 " C" 0 fi
+if "_@list+2:" > "ZL" 0 33 ">" $_@list+2#0:24 "| temp.: " $_@list+2#1:4 " C" 0 fi
+if "_@list+3:" > "ZL" 0 65 ">" $_@list+3#0:24 "| temp.: " $_@list+3#1:4 " C" 0 fi
+if "_@list+4:" > "ZL" 0 97 ">" $_@list+4#0:24 "| temp.: " $_@list+4#1:4 " C" 0 fi
+if "_@list+5:" > "AT" 205 97 237 125 7 0 "C->" 0 fi
+
+    > "AT" 205 33 237 61 10 0 "C<" ifnot "_@_list:0/" "-" fi 0
+    > "AT" 205 1 237 29 13 0 "C<" 0
+    >>>> "wait:" 10 0 ];
+end
+
+< "button"
+    if "_referrer:/*menu.term/" {	//if last page was *menu.term
+	switch_n "2";
+	boot_cgi [ "show" 0 ] {		//if cgi not found
+	    boot_cgi [ "timeout" ] {
+		boot_page "??_back2??";
+	    }
+	}
+	exit_cgi;
+    }
+    boot_page "??_referrer??";
+end
+
+//next page
+< "A" 7
+	set_tbl "list += 4";
+	boot_cgi [ "timeout" ];
+end
+
+//page before
+< "A" 10
+    set_tbl "list == 0"{
+    if "_referrer:/*menu.term/" {	//if last page was *menu.term
+	switch_n "2";
+	boot_cgi [ "show" 0 ] {		//if cgi not found
+	    boot_cgi [ "timeout" ] {
+		boot_page "??_back2??";
+	    }
+	}
+	exit_cgi;
+    }
+	boot_page "??_referrer??";
+    }
+    set_tbl "list != 0"{
+	set_tbl "list -= 4";
+	boot_cgi [ "timeout" ];
+    }
+end
+< "A" 13
+    if "_referrer:/*menu.term/" {	//if last page was *menu.term
+	switch_n "2";
+	boot_cgi [ "show" 0 ] {		//if cgi not found
+	    boot_cgi [ "timeout" ] {
+		boot_page "??_back2??";
+	    }
+	}
+	exit_cgi;
+    }
+    boot_page "??_referrer??";
+end
+cgi: "timeout"
